@@ -1,0 +1,28 @@
+plugins {
+	id 'com.github.johnrengelman.shadow' version '2.0.1'
+	id 'java'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile 'org.ow2.asm:asm:5.2'
+	compile 'org.yaml:snakeyaml:1.18'
+	testCompile 'junit:junit:4.12'
+}
+
+sourceCompatibility = 1.8
+version = '1.0-SNAPSHOT'
+
+jar {
+	manifest {
+		attributes (
+			'Implementation-Title': project.name,
+			'Implementation-Version': version,
+			'Premain-Class': 'org.to2mbn.authlibtweaker.javaagent.AuthlibInjectorPremain',
+			'TweakClass': 'org.to2mbn.authlibtweaker.tweaker.AuthlibInjectorTweaker'
+		)
+	}
+}
