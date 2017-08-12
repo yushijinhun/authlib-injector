@@ -1,0 +1,54 @@
+## General housekeeping
+*.class
+*.iml
+*.ipr
+*.iws
+*.log
+*.jar
+*.war
+*.ear
+.cache
+libs/
+natives/
+logs/
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# virtual machine crash logs
+hs_err_pid*
+
+## Because Macs
+.DS_Store
+._*
+
+## Gradle
+.gradle/
+build/
+gradle/
+gradlew
+out/
+output/
+run/
+
+## sublime
+*.sublime*
+
+## eclipse
+.classpath
+.metadata/
+.project
+.settings/
+bin/
+eclipse/
+
+## Intellij IDEA
+.idea/
+
+## netbeans
+nbbuild/
+nbproject/
+
+# vim
+*~
+
