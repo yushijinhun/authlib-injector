@@ -20,7 +20,7 @@ gradle clean shadowJar
 
 可以通过以下方法生成一个新的RSA私钥：
 ```
-openssl genrsa -out key.pem
+openssl genrsa -out key.pem 4096
 ```
 
 然后从私钥产生公钥：
