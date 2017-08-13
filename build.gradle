@@ -5,11 +5,15 @@ plugins {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://libraries.minecraft.net/' }
 }
 
 dependencies {
 	compile 'org.ow2.asm:asm:5.2'
 	compile 'org.yaml:snakeyaml:1.18'
+	compileOnly ('net.minecraft:launchwrapper:1.12') {
+		transitive = false
+	}
 	testCompile 'junit:junit:4.12'
 }
 
@@ -21,8 +25,12 @@ jar {
 		attributes (
 			'Implementation-Title': project.name,
 			'Implementation-Version': version,
-			'Premain-Class': 'org.to2mbn.authlibtweaker.javaagent.AuthlibInjectorPremain',
-			'TweakClass': 'org.to2mbn.authlibtweaker.tweaker.AuthlibInjectorTweaker'
+			'Premain-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain',
+			'TweakClass': 'org.to2mbn.authlibinjector.tweaker.AuthlibInjectorTweaker'
 		)
 	}
+}
+
+shadowJar {
+	classifier = null
 }
