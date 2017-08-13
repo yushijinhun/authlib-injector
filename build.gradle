@@ -1,5 +1,6 @@
 plugins {
 	id 'com.github.johnrengelman.shadow' version '2.0.1'
+	id 'com.palantir.git-version' version '0.8.0'
 	id 'java'
 }
 
@@ -18,7 +19,7 @@ dependencies {
 }
 
 sourceCompatibility = 1.8
-version = '1.0-SNAPSHOT'
+version = '1.0.' + (System.getenv('BUILD_NUMBER')?:'0-SNAPSHOT') + '-' + versionDetails().gitHash[0..6]
 
 jar {
 	manifest {
