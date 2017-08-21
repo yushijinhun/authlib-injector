@@ -1,7 +1,10 @@
 package org.to2mbn.authlibinjector;
 
+import static java.util.Optional.ofNullable;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import org.to2mbn.authlibinjector.internal.org.json.JSONObject;
 import org.to2mbn.authlibinjector.transform.SkinWhitelistTransformUnit;
 import org.to2mbn.authlibinjector.transform.TransformUnit;
 import org.to2mbn.authlibinjector.transform.YggdrasilApiTransformUnit;
@@ -13,7 +16,8 @@ public class InjectorConfig {
 		final String header = "-----BEGIN PUBLIC KEY-----\n";
 		final String end = "-----END PUBLIC KEY-----";
 		if (input.startsWith(header) && input.endsWith(end)) {
-			return Base64.getDecoder().decode(input.substring(header.length(), input.length() - end.length()).replace("\n", ""));
+			return Base64.getDecoder()
+					.decode(input.substring(header.length(), input.length() - end.length()).replace("\n", ""));
 		} else {
 			throw new IllegalArgumentException("Bad key format");
 		}
@@ -62,5 +66,16 @@ public class InjectorConfig {
 		if (publicKey != null) {
 			units.add(new YggdrasilKeyTransformUnit(decodePublicKey(publicKey)));
 		}
+	}
+
+	public void readFromJson(JSONObject json) {
+		skinWhitelistDomains = new ArrayList<>();
+		ofNullable(json.optJSONArray("skinDomains"))
+				.ifPresent(it -> it.forEach(domain -> {
+					if (domain instanceof String)
+						skinWhitelistDomains.add((String) domain);
+				}));
+		ofNullable(json.optString("signaturePublickey"))
+				.ifPresent(it -> publicKey = it);
 	}
 }

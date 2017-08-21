@@ -1,5 +1,7 @@
 # authlib-injector
-通过运行时修改authlib实现游戏外登录
+通过运行时修改authlib实现游戏外登录，并为Yggdrasil服务端的实现提供规范
+
+关于该项目的详细介绍见[wiki](https://github.com/to2mbn/authlib-injector/wiki)。
 
 ## 编译
 ```
@@ -9,7 +11,6 @@ gradle clean shadowJar
 
 或者直接从[Jenkins](https://ci.to2mbn.org/job/authlib-injector)下载构建好的JAR。
 
-
 ## 部署
 
 ### 配置
@@ -18,15 +19,7 @@ gradle clean shadowJar
 #### 生成签名公钥
 服务端返回的profile properties需要带有数字签名。
 
-可以通过以下方法生成一个新的RSA私钥：
-```
-openssl genrsa -out key.pem 4096
-```
-
-然后从私钥产生公钥：
-```
-openssl rsa -in key.pem -pubout
-```
+生成方法见[签名密钥对](https://github.com/to2mbn/authlib-injector/wiki/%E7%AD%BE%E5%90%8D%E5%AF%86%E9%92%A5%E5%AF%B9)。
 
 ### 加载
 #### 作为javaagent加载
@@ -52,6 +45,8 @@ authlib-injector提供了以下方式来指定配置文件（按优先级排序�
    * 可以在编译时向`src/main/resources`中添加配置文件，或者直接向JAR中添加（JAR为zip格式）
 4. 当前目录下的`authlib-injector.yaml`文件
 
-## 本项目与authlib-agent的关系
-authlib-agent项目存在较多历史遗留问题，并且原项目的javaagent部分及后端部分耦合在一起，需要一起构建。因此将原项目的javaagent部分重写，并更名authlib-injector，同时提供更加友好的配置方式，以供其它yggdrasil服务端实现使用。
-
+### 远程自动配置
+对于实现了本规范中[扩展API](https://github.com/to2mbn/authlib-injector/wiki/Yggdrasil%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83#%E6%89%A9%E5%B1%95api)的Yggdrasil服务端，可以直接通过添加以下JVM参数来配置，不需要配置文件：
+```
+-javaagent:{authlib-injector.jar的路径}=@{Yggdrasil服务端的URL（API Root）}
+```
