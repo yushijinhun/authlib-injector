@@ -2,12 +2,12 @@ package org.to2mbn.authlibinjector;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static org.to2mbn.authlibinjector.util.HttpRequester.http;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.instrument.ClassFileTransformer;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +17,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import org.to2mbn.authlibinjector.internal.org.json.JSONException;
 import org.to2mbn.authlibinjector.internal.org.json.JSONObject;
-import org.to2mbn.authlibinjector.internal.org.json.JSONTokener;
 import org.to2mbn.authlibinjector.transform.ClassTransformer;
 import org.yaml.snakeyaml.Yaml;
 
@@ -118,8 +117,8 @@ public final class AuthlibInjector {
 
 		JSONObject remoteConfig;
 		try {
-			remoteConfig = jsonGet(url);
-		} catch (IOException e) {
+			remoteConfig = new JSONObject(http.request("GET", url));
+		} catch (IOException | JSONException e) {
 			log("unable to configure remotely: {0}", e);
 			return empty();
 		}
@@ -134,14 +133,6 @@ public final class AuthlibInjector {
 		}
 
 		return of(config);
-	}
-
-	private static JSONObject jsonGet(String url) throws IOException {
-		try (Reader reader = new InputStreamReader(new URL(url).openStream(), StandardCharsets.UTF_8)) {
-			return new JSONObject(new JSONTokener(reader));
-		} catch (JSONException e) {
-			throw new IOException("Unresolvable JSON", e);
-		}
 	}
 
 }
