@@ -34,4 +34,9 @@ jar {
 
 shadowJar {
 	classifier = null
+
+	exclude 'META-INF/maven/**'
+
+	relocate 'org.yaml.snakeyaml', 'org.to2mbn.authlibinjector.internal.org.yaml.snakeyaml'
+	relocate 'org.objectweb.asm', 'org.to2mbn.authlibinjector.internal.org.objectweb.asm'
 }
