@@ -1,6 +1,6 @@
 plugins {
 	id 'com.github.johnrengelman.shadow' version '2.0.1'
-	id 'com.palantir.git-version' version '0.8.0'
+	id 'com.palantir.git-version' version '0.10.0'
 	id 'java'
 }
 
@@ -11,21 +11,28 @@ repositories {
 
 dependencies {
 	compile 'org.ow2.asm:asm:5.2'
-	compile 'org.yaml:snakeyaml:1.18'
+	compile 'org.yaml:snakeyaml:1.19'
 	compileOnly ('net.minecraft:launchwrapper:1.12') {
 		transitive = false
 	}
 	testCompile 'junit:junit:4.12'
 }
 
+def gitInfo = versionDetails()
 sourceCompatibility = 1.8
-version = '1.0.' + (System.getenv('BUILD_NUMBER')?:'0-SNAPSHOT') + '-' + versionDetails().gitHash[0..6]
+version = '1.0.' + (System.getenv('BUILD_NUMBER')?:'0-SNAPSHOT') + '-' + gitInfo.gitHashFull[0..6]
+if (!gitInfo.isCleanTag) version += '.dirty'
 
 jar {
 	manifest {
 		attributes (
 			'Implementation-Title': project.name,
 			'Implementation-Version': version,
+			'Implementation-Vendor': 'to2mbn',
+			'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+			'Git-Commit': gitInfo.gitHashFull,
+			'Git-Branch': gitInfo.branchName,
+			'Git-IsClean': gitInfo.isCleanTag,
 			'Premain-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain',
 			'TweakClass': 'org.to2mbn.authlibinjector.tweaker.AuthlibInjectorTweaker'
 		)
@@ -40,3 +47,9 @@ shadowJar {
 	relocate 'org.yaml.snakeyaml', 'org.to2mbn.authlibinjector.internal.org.yaml.snakeyaml'
 	relocate 'org.objectweb.asm', 'org.to2mbn.authlibinjector.internal.org.objectweb.asm'
 }
+
+tasks.withType(JavaCompile) {
+	options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+defaultTasks 'clean', 'shadowJar'

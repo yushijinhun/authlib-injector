@@ -1214,7 +1214,7 @@ public class JSONObject implements Serializable {
 						return d;
 					}
 				} else {
-					Long myLong = new Long(string);
+					Long myLong = Long.valueOf(string);
 					if (string.equals(myLong.toString())) {
 						if (myLong.longValue() == myLong.intValue()) {
 							return Integer.valueOf(myLong.intValue());
@@ -1439,7 +1439,7 @@ public class JSONObject implements Serializable {
 			Collection<?> coll = (Collection<?>) value;
 			new JSONArray(coll).write(writer, indentFactor, indent);
 		} else if (value.getClass().isArray()) {
-			new JSONArray((Object[])value).write(writer, indentFactor, indent);
+			new JSONArray((Object[]) value).write(writer, indentFactor, indent);
 		} else if (value instanceof Number) {
 			writer.write(numberToString((Number) value));
 		} else if (value instanceof Boolean) {
