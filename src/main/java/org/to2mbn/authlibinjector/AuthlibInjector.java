@@ -27,7 +27,7 @@ public final class AuthlibInjector {
 
 	private static final String[] nonTransformablePackages = new String[] { "java.", "javax.", "com.sun.",
 			"com.oracle.", "jdk.", "sun.", "org.apache.", "com.google.", "oracle.", "com.oracle.", "com.paulscode.",
-			"io.netty.", "org.lwjgl.", "net.java.", "org.w3c.", "javassist." };
+			"io.netty.", "org.lwjgl.", "net.java.", "org.w3c.", "javassist.", "org.xml." };
 
 	private AuthlibInjector() {}
 
@@ -89,7 +89,7 @@ public final class AuthlibInjector {
 
 	private static Optional<InjectorConfig> tryRemoteConfig() {
 		String configProperty = System.getProperty("org.to2mbn.authlibinjector.config");
-		if (!configProperty.startsWith("@")) {
+		if (configProperty == null || !configProperty.startsWith("@")) {
 			return empty();
 		}
 		String url = configProperty.substring(1);

@@ -13,11 +13,12 @@ import org.to2mbn.authlibinjector.transform.YggdrasilKeyTransformUnit;
 public class InjectorConfig {
 
 	private static byte[] decodePublicKey(String input) {
-		final String header = "-----BEGIN PUBLIC KEY-----\n";
+		input = input.replace("\n", "");
+		final String header = "-----BEGIN PUBLIC KEY-----";
 		final String end = "-----END PUBLIC KEY-----";
 		if (input.startsWith(header) && input.endsWith(end)) {
 			return Base64.getDecoder()
-					.decode(input.substring(header.length(), input.length() - end.length()).replace("\n", ""));
+					.decode(input.substring(header.length(), input.length() - end.length()));
 		} else {
 			throw new IllegalArgumentException("Bad key format");
 		}
