@@ -1,4 +1,9 @@
 # authlib-injector
+[![Jenkins](https://img.shields.io/jenkins/s/https/ci.to2mbn.org/job/authlib-injector.svg?style=flat-square)](https://ci.to2mbn.org/job/authlib-injector/)
+[![license](https://img.shields.io/github/license/to2mbn/authlib-injector.svg?style=flat-square)](https://github.com/to2mbn/authlib-injector/blob/master/LICENSE)
+![language](https://img.shields.io/badge/language-java-yellow.svg?style=flat-square)
+![require java 1.8+](https://img.shields.io/badge/require%20java-1.8%2B-orange.svg?style=flat-square)
+
 通过运行时修改authlib实现游戏外登录，并为Yggdrasil服务端的实现提供规范
 
 关于该项目的详细介绍见[wiki](https://github.com/to2mbn/authlib-injector/wiki)。
