@@ -1,6 +1,6 @@
 package org.to2mbn.authlibinjector.transform;
 
-import static org.objectweb.asm.Opcodes.ASM5;
+import static org.objectweb.asm.Opcodes.ASM6;
 import static org.objectweb.asm.Opcodes.BASTORE;
 import static org.objectweb.asm.Opcodes.BIPUSH;
 import static org.objectweb.asm.Opcodes.DUP;
@@ -25,12 +25,12 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 	@Override
 	public Optional<ClassVisitor> transform(String className, ClassVisitor writer, Runnable modifiedCallback) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
-			return Optional.of(new ClassVisitor(ASM5, writer) {
+			return Optional.of(new ClassVisitor(ASM6, writer) {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 					if ("<init>".equals(name)) {
-						return new MethodVisitor(ASM5, super.visitMethod(access, name, desc, signature, exceptions)) {
+						return new MethodVisitor(ASM6, super.visitMethod(access, name, desc, signature, exceptions)) {
 
 							int state = 0;
 

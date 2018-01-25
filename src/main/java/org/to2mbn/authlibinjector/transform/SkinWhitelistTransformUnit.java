@@ -2,7 +2,7 @@ package org.to2mbn.authlibinjector.transform;
 
 import static org.objectweb.asm.Opcodes.AASTORE;
 import static org.objectweb.asm.Opcodes.ANEWARRAY;
-import static org.objectweb.asm.Opcodes.ASM5;
+import static org.objectweb.asm.Opcodes.ASM6;
 import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
@@ -23,12 +23,12 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 	@Override
 	public Optional<ClassVisitor> transform(String className, ClassVisitor writer, Runnable modifiedCallback) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
-			return Optional.of(new ClassVisitor(ASM5, writer) {
+			return Optional.of(new ClassVisitor(ASM6, writer) {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 					if ("<clinit>".equals(name)) {
-						return new MethodVisitor(ASM5, super.visitMethod(access, name, desc, signature, exceptions)) {
+						return new MethodVisitor(ASM6, super.visitMethod(access, name, desc, signature, exceptions)) {
 
 							int status = 0;
 

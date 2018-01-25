@@ -1,5 +1,5 @@
 plugins {
-	id 'com.github.johnrengelman.shadow' version '2.0.1'
+	id 'com.github.johnrengelman.shadow' version '2.0.2'
 	id 'com.palantir.git-version' version '0.10.0'
 	id 'java'
 }
@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-	compile 'org.ow2.asm:asm:5.2'
+	compile 'org.ow2.asm:asm:6.0'
 	compile 'org.yaml:snakeyaml:1.19'
 	compileOnly ('net.minecraft:launchwrapper:1.12') {
 		transitive = false
