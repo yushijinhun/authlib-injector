@@ -87,6 +87,9 @@ public class ClassTransformer implements ClassFileTransformer {
 					}
 					return classBuffer;
 				} else {
+					if (debug) {
+						log("no transform performed on {0}", className);
+					}
 					return null;
 				}
 			} catch (Throwable e) {
