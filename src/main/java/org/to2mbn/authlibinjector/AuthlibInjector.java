@@ -2,7 +2,6 @@ package org.to2mbn.authlibinjector;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import static org.to2mbn.authlibinjector.util.HttpRequester.http;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,8 +14,6 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.Optional;
 import java.util.function.Consumer;
-import org.to2mbn.authlibinjector.internal.org.json.JSONException;
-import org.to2mbn.authlibinjector.internal.org.json.JSONObject;
 import org.to2mbn.authlibinjector.transform.ClassTransformer;
 import org.yaml.snakeyaml.Yaml;
 
@@ -115,23 +112,22 @@ public final class AuthlibInjector {
 		String url = configProperty.substring(1);
 		log("trying to config remotely: {0}", url);
 
-		JSONObject remoteConfig;
+		InjectorConfig config = new InjectorConfig();
+		config.setDebug("true".equals(System.getProperty("org.to2mbn.authlibinjector.remoteconfig.debug")));
+
+		RemoteConfiguration remoteConfig;
 		try {
-			remoteConfig = new JSONObject(http.request("GET", url));
-		} catch (IOException | JSONException e) {
+			remoteConfig = RemoteConfiguration.fetch(url);
+		} catch (IOException e) {
 			log("unable to configure remotely: {0}", e);
 			return empty();
 		}
-
-		InjectorConfig config = new InjectorConfig();
-		config.setApiRoot(url.endsWith("/") ? url : url + "/");
-		config.setDebug("true".equals(System.getProperty("org.to2mbn.authlibinjector.remoteconfig.debug")));
-		config.readFromJson(remoteConfig);
 
 		if (config.isDebug()) {
 			log("fetched remote config: {0}", remoteConfig);
 		}
 
+		remoteConfig.applyToInjectorConfig(config);
 		return of(config);
 	}
 

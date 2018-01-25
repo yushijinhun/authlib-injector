@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import org.to2mbn.authlibinjector.internal.org.json.JSONException;
+import org.to2mbn.authlibinjector.internal.org.json.JSONObject;
 
 public final class IOUtils {
 
@@ -18,6 +20,10 @@ public final class IOUtils {
 			w.write(buf, 0, read);
 		}
 		return new String(w.toCharArray());
+	}
+
+	public static JSONObject asJson(String data) throws JSONException {
+		return new JSONObject(data);
 	}
 
 	private IOUtils() {}
