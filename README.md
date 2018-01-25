@@ -10,7 +10,7 @@
 
 ## 编译
 ```
-gradle clean shadowJar
+gradle
 ```
 构建输出位于`build/libs`下。
 
