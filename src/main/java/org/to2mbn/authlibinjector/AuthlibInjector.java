@@ -2,12 +2,10 @@ package org.to2mbn.authlibinjector;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +34,13 @@ public final class AuthlibInjector {
 	}
 
 	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
-		InjectorConfig config = loadConfig();
+		Optional<InjectorConfig> optionalConfig = configure();
+		if (!optionalConfig.isPresent()) {
+			log("no config is found, exiting");
+			return;
+		}
+
+		InjectorConfig config = optionalConfig.get();
 		ClassTransformer transformer = new ClassTransformer();
 
 		if (config.isDebug()) transformer.debug = true;
@@ -48,52 +52,70 @@ public final class AuthlibInjector {
 		transformerRegistry.accept(transformer);
 	}
 
-	private static InjectorConfig loadConfig() {
-		Optional<InjectorConfig> remoteConfig = tryRemoteConfig();
-		if (remoteConfig.isPresent()) return remoteConfig.get();
+	private static Optional<InjectorConfig> configure() {
+		// 1. remote config
+		Optional<InjectorConfig> localConfig = loadLocalConfig();
+		if (localConfig.isPresent()) return localConfig;
 
-		try (Reader reader = new InputStreamReader(lookupConfig(), StandardCharsets.UTF_8)) {
-			Yaml yaml = new Yaml();
-			return yaml.loadAs(reader, InjectorConfig.class);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
+		// 2. local config
+		Optional<InjectorConfig> remoteConfig = loadRemoteConfig();
+		if (remoteConfig.isPresent()) return remoteConfig;
+
+		return empty();
 	}
 
-	private static InputStream lookupConfig() throws IOException {
+	private static Optional<InjectorConfig> loadLocalConfig() {
+		try {
+			Optional<InputStream> localConfig = locateLocalConfig();
+			if (localConfig.isPresent()) {
+				try (Reader reader = new InputStreamReader(localConfig.get(), StandardCharsets.UTF_8)) {
+					return of(new Yaml().loadAs(reader, InjectorConfig.class));
+				}
+			}
+		} catch (IOException e) {
+			log("unable to configure locally: {0}", e);
+		}
+		return empty();
+	}
+
+	private static Optional<InputStream> locateLocalConfig() throws IOException {
+		// 1. the specified config file
 		String configProperty = System.getProperty("org.to2mbn.authlibinjector.config");
 		if (configProperty != null && !configProperty.startsWith("@")) {
 			Path configFile = Paths.get(configProperty);
-			if (!Files.exists(configFile)) {
-				log("file not exists: {0}", configProperty);
-			} else {
+			if (Files.exists(configFile)) {
 				log("using config: " + configProperty);
-				return Files.newInputStream(configFile);
+				return of(Files.newInputStream(configFile));
+			} else {
+				log("file not exists: {0}", configProperty);
 			}
 		}
 
+		// 2. the config file in jar
 		InputStream packedConfig = AuthlibInjector.class.getResourceAsStream("/authlib-injector.yaml");
 		if (packedConfig != null) {
 			log("using config: jar:/authlib-injector.yaml");
-			return packedConfig;
+			return of(packedConfig);
 		}
 
+		// 3. the config in the current dir
 		Path currentConfigFile = Paths.get("authlib-injector.yaml");
-		if (!Files.exists(currentConfigFile)) {
-			throw new FileNotFoundException("no config is found");
-		} else {
+		if (Files.exists(currentConfigFile)) {
 			log("using config: ./authlib-injector.yaml");
-			return Files.newInputStream(currentConfigFile);
+			return of(Files.newInputStream(currentConfigFile));
 		}
+
+		return empty();
 	}
 
-	private static Optional<InjectorConfig> tryRemoteConfig() {
+	private static Optional<InjectorConfig> loadRemoteConfig() {
 		String configProperty = System.getProperty("org.to2mbn.authlibinjector.config");
 		if (configProperty == null || !configProperty.startsWith("@")) {
 			return empty();
 		}
 		String url = configProperty.substring(1);
 		log("trying to config remotely: {0}", url);
+
 		JSONObject remoteConfig;
 		try {
 			remoteConfig = jsonGet(url);
@@ -101,13 +123,16 @@ public final class AuthlibInjector {
 			log("unable to configure remotely: {0}", e);
 			return empty();
 		}
+
 		InjectorConfig config = new InjectorConfig();
 		config.setApiRoot(url.endsWith("/") ? url : url + "/");
 		config.setDebug("true".equals(System.getProperty("org.to2mbn.authlibinjector.remoteconfig.debug")));
 		config.readFromJson(remoteConfig);
+
 		if (config.isDebug()) {
 			log("fetched remote config: {0}", remoteConfig);
 		}
+
 		return of(config);
 	}
 
