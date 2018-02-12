@@ -18,9 +18,15 @@ public class AuthlibInjectorTweaker implements ITweaker {
 
 	@Override
 	public void injectIntoClassLoader(LaunchClassLoader launchClassLoader) {
-		log("launched from tweaker");
-		bootstrap(transformers::add);
-		launchClassLoader.registerTransformer(TweakerTransformerAdapter.class.getName());
+		ClassLoader originalCtxCl = Thread.currentThread().getContextClassLoader();
+		Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+		try {
+			log("launched from tweaker");
+			bootstrap(transformers::add);
+			launchClassLoader.registerTransformer(TweakerTransformerAdapter.class.getName());
+		} finally {
+			Thread.currentThread().setContextClassLoader(originalCtxCl);
+		}
 	}
 
 	@Override
