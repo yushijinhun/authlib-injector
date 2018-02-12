@@ -22,15 +22,23 @@ public final class AuthlibInjector {
 	private static final String[] nonTransformablePackages = new String[] { "java.", "javax.", "com.sun.",
 			"com.oracle.", "jdk.", "sun.", "org.apache.", "com.google.", "oracle.", "com.oracle.", "com.paulscode.",
 			"io.netty.", "org.lwjgl.", "net.java.", "org.w3c.", "javassist.", "org.xml.", "org.jcp.", "paulscode.",
-			"com.ibm.", "joptsimple." };
+			"com.ibm.", "joptsimple.", "org.to2mbn.authlibinjector." };
 
 	private AuthlibInjector() {}
+
+	private static boolean booted = false;
 
 	public static void log(String message, Object... args) {
 		System.err.println("[authlib-injector] " + MessageFormat.format(message, args));
 	}
 
 	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
+		if (booted) {
+			log("already booted, skipping");
+			return;
+		}
+		booted = true;
+
 		Optional<InjectorConfig> optionalConfig = configure();
 		if (!optionalConfig.isPresent()) {
 			log("no config is found, exiting");
