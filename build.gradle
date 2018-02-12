@@ -1,6 +1,6 @@
 plugins {
 	id 'com.github.johnrengelman.shadow' version '2.0.2'
-	id 'com.palantir.git-version' version '0.10.0'
+	id 'com.palantir.git-version' version '0.10.1'
 	id 'java'
 }
 
@@ -35,6 +35,13 @@ jar {
 			'Premain-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain',
 			'TweakClass': 'org.to2mbn.authlibinjector.tweaker.AuthlibInjectorTweaker'
 		)
+	}
+}
+
+processResources {
+	from('LICENSE') {
+		rename('LICENSE', 'authlib-injector.txt')
+		into 'META-INF/licenses'
 	}
 }
 
