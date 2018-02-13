@@ -50,15 +50,14 @@ public final class AuthlibInjector {
 	}
 
 	private static Optional<InjectorConfig> configure() {
-		String configProperty = System.getProperty("org.to2mbn.authlibinjector.config");
-		if (configProperty == null || !configProperty.startsWith("@")) {
+		String url = System.getProperty("org.to2mbn.authlibinjector.config");
+		if (url == null) {
 			return empty();
 		}
-		String url = configProperty.substring(1);
 		log("trying to config remotely: {0}", url);
 
 		InjectorConfig config = new InjectorConfig();
-		config.setDebug("true".equals(System.getProperty("org.to2mbn.authlibinjector.remoteconfig.debug")));
+		config.setDebug("true".equals(System.getProperty("org.to2mbn.authlibinjector.debug")));
 
 		RemoteConfiguration remoteConfig;
 		try {
