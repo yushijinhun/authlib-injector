@@ -1,5 +1,6 @@
 package org.to2mbn.authlibinjector;
 
+import static java.text.MessageFormat.format;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Objects.requireNonNull;
@@ -94,6 +95,7 @@ public class YggdrasilConfiguration {
 
 	@Override
 	public String toString() {
-		return "YggdrasilConfiguration [apiRoot=" + apiRoot + ", skinDomains=" + skinDomains + ", signaturePublickey=" + signaturePublickey + ", meta=" + meta + "]";
+		return format("YggdrasilConfiguration [apiRoot={0}, skinDomains={1}, signaturePublickey={2}, decodedPublickey={3}, meta={4}]", apiRoot, skinDomains, signaturePublickey, decodedPublickey, meta);
 	}
+
 }
