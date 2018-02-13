@@ -1,7 +1,7 @@
 package org.to2mbn.authlibinjector.transform;
 
 import static org.objectweb.asm.Opcodes.ASM6;
-import static org.to2mbn.authlibinjector.AuthlibInjector.log;
+import static org.to2mbn.authlibinjector.AuthlibInjector.info;
 import java.util.Optional;
 import java.util.function.Function;
 import org.objectweb.asm.ClassVisitor;
@@ -29,7 +29,7 @@ public class LdcTransformUnit implements TransformUnit {
 							Optional<String> transformed = ldcMapper.apply((String) cst);
 							if (transformed.isPresent() && !transformed.get().equals(cst)) {
 								modifiedCallback.run();
-								log("transform [{0}] to [{1}]", cst, transformed.get());
+								info("transform [{0}] to [{1}]", cst, transformed.get());
 								super.visitLdcInsn(transformed.get());
 							} else {
 								super.visitLdcInsn(cst);
