@@ -6,21 +6,16 @@ plugins {
 
 repositories {
 	mavenCentral()
-	maven { url 'https://libraries.minecraft.net/' }
 }
 
 dependencies {
 	compile 'org.ow2.asm:asm:6.0'
-	compile 'org.yaml:snakeyaml:1.19'
-	compileOnly ('net.minecraft:launchwrapper:1.12') {
-		transitive = false
-	}
 	testCompile 'junit:junit:4.12'
 }
 
 def gitInfo = versionDetails()
 sourceCompatibility = 1.8
-version = '1.0.' + (System.getenv('BUILD_NUMBER')?:'0-SNAPSHOT') + '-' + gitInfo.gitHashFull[0..6]
+version = '1.1.' + (System.getenv('BUILD_NUMBER')?:'0-SNAPSHOT') + '-' + gitInfo.gitHashFull[0..6]
 if (!gitInfo.isCleanTag) version += '.dirty'
 
 jar {
@@ -32,8 +27,7 @@ jar {
 			'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
 			'Git-Commit': gitInfo.gitHashFull,
 			'Git-IsClean': gitInfo.isCleanTag,
-			'Premain-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain',
-			'TweakClass': 'org.to2mbn.authlibinjector.tweaker.AuthlibInjectorTweaker'
+			'Premain-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain'
 		)
 	}
 }
@@ -51,7 +45,6 @@ shadowJar {
 	exclude 'META-INF/maven/**'
 	exclude 'module-info.class'
 
-	relocate 'org.yaml.snakeyaml', 'org.to2mbn.authlibinjector.internal.org.yaml.snakeyaml'
 	relocate 'org.objectweb.asm', 'org.to2mbn.authlibinjector.internal.org.objectweb.asm'
 }
 

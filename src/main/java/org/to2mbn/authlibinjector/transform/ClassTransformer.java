@@ -1,6 +1,7 @@
 package org.to2mbn.authlibinjector.transform;
 
-import static org.to2mbn.authlibinjector.AuthlibInjector.log;
+import static org.to2mbn.authlibinjector.AuthlibInjector.debug;
+import static org.to2mbn.authlibinjector.AuthlibInjector.info;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -21,7 +22,7 @@ public class ClassTransformer implements ClassFileTransformer {
 
 	public List<TransformUnit> units = new ArrayList<>();
 	public Set<String> ignores = new HashSet<>();
-	public boolean debug;
+	public boolean debugSaveClass;
 
 	private static class TransformHandle {
 
@@ -51,7 +52,7 @@ public class ClassTransformer implements ClassFileTransformer {
 				ClassReader reader = new ClassReader(classBuffer);
 				reader.accept(optionalVisitor.get(), 0);
 				if (currentModified) {
-					log("transform {0} using {1}", className, unit);
+					info("transform {0} using {1}", className, unit);
 					modified = true;
 					classBuffer = writer.toByteArray();
 				}
@@ -82,18 +83,16 @@ public class ClassTransformer implements ClassFileTransformer {
 				units.forEach(handle::accept);
 				if (handle.getResult().isPresent()) {
 					byte[] classBuffer = handle.getResult().get();
-					if (debug) {
+					if (debugSaveClass) {
 						saveClassFile(className, classBuffer);
 					}
 					return classBuffer;
 				} else {
-					if (debug) {
-						log("no transform performed on {0}", className);
-					}
+					debug("no transform performed on {0}", className);
 					return null;
 				}
 			} catch (Throwable e) {
-				log("unable to transform {0}: {1}", internalClassName, e);
+				info("unable to transform {0}: {1}", internalClassName, e);
 				e.printStackTrace();
 			}
 		}
@@ -104,7 +103,7 @@ public class ClassTransformer implements ClassFileTransformer {
 		try {
 			Files.write(Paths.get(className + "_dump.class"), classBuffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (IOException e) {
-			log("unable to dump class {0}: {1}", className, e);
+			info("unable to dump class {0}: {1}", className, e);
 			e.printStackTrace();
 		}
 	}
