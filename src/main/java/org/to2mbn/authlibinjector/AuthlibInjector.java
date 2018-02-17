@@ -15,7 +15,7 @@ import org.to2mbn.authlibinjector.transform.YggdrasilKeyTransformUnit;
 
 public final class AuthlibInjector {
 
-	private static final String[] nonTransformablePackages = new String[] { "java.", "javax.", "com.sun.",
+	public static final String[] nonTransformablePackages = new String[] { "java.", "javax.", "com.sun.",
 			"com.oracle.", "jdk.", "sun.", "org.apache.", "com.google.", "oracle.", "com.oracle.", "com.paulscode.",
 			"io.netty.", "org.lwjgl.", "net.java.", "org.w3c.", "javassist.", "org.xml.", "org.jcp.", "paulscode.",
 			"com.ibm.", "joptsimple.", "org.to2mbn.authlibinjector." };

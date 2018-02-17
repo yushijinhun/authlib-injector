@@ -27,7 +27,10 @@ jar {
 			'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
 			'Git-Commit': gitInfo.gitHashFull,
 			'Git-IsClean': gitInfo.isCleanTag,
-			'Premain-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain'
+			'Premain-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain',
+			'Agent-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain',
+			'Can-Retransform-Classes': true,
+			'Can-Redefine-Classes': true
 		)
 	}
 }
