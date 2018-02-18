@@ -27,6 +27,11 @@ public final class IOUtils {
 		return new String(w.toCharArray());
 	}
 
+	public static String removeNewLines(String input) {
+		return input.replace("\n", "")
+				.replace("\r", "");
+	}
+
 	private IOUtils() {}
 
 }

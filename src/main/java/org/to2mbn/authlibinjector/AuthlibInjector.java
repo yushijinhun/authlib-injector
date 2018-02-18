@@ -1,11 +1,14 @@
 package org.to2mbn.authlibinjector;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.to2mbn.authlibinjector.util.IOUtils.readURL;
+import static org.to2mbn.authlibinjector.util.IOUtils.removeNewLines;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.text.MessageFormat;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.to2mbn.authlibinjector.transform.ClassTransformer;
@@ -56,9 +59,10 @@ public final class AuthlibInjector {
 		if (apiRoot == null) return empty();
 		info("api root: {0}", apiRoot);
 
-		String metadataResponse = System.getProperty("org.to2mbn.authlibinjector.config.prefetched");
+		String metadataResponse;
 
-		if (metadataResponse == null) {
+		String prefetched = System.getProperty("org.to2mbn.authlibinjector.config.prefetched");
+		if (prefetched == null) {
 			info("fetching metadata");
 			try {
 				metadataResponse = readURL(apiRoot);
@@ -69,6 +73,14 @@ public final class AuthlibInjector {
 
 		} else {
 			info("prefetched metadata detected");
+			try {
+				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched)), UTF_8);
+			} catch (IllegalArgumentException e) {
+				info("unable to decode metadata: {0}\n"
+						+ "metadata to decode:\n"
+						+ "{1}", e, prefetched);
+				return empty();
+			}
 		}
 
 		debug("metadata: {0}", metadataResponse);

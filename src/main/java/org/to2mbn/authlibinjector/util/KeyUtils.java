@@ -1,5 +1,6 @@
 package org.to2mbn.authlibinjector.util;
 
+import static org.to2mbn.authlibinjector.util.IOUtils.removeNewLines;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PublicKey;
@@ -9,7 +10,7 @@ import java.util.Base64;
 public final class KeyUtils {
 
 	public static byte[] decodePublicKey(String pem) throws IllegalArgumentException {
-		pem = pem.replace("\n", "");
+		pem = removeNewLines(pem);
 		final String header = "-----BEGIN PUBLIC KEY-----";
 		final String end = "-----END PUBLIC KEY-----";
 		if (pem.startsWith(header) && pem.endsWith(end)) {
