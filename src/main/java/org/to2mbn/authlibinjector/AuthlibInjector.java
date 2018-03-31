@@ -3,14 +3,17 @@ package org.to2mbn.authlibinjector;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import static org.to2mbn.authlibinjector.util.IOUtils.readURL;
+import static org.to2mbn.authlibinjector.util.IOUtils.asString;
+import static org.to2mbn.authlibinjector.util.IOUtils.getURL;
 import static org.to2mbn.authlibinjector.util.IOUtils.removeNewLines;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.text.MessageFormat;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import org.to2mbn.authlibinjector.httpd.DeprecatedApiHandle;
 import org.to2mbn.authlibinjector.transform.ClassTransformer;
 import org.to2mbn.authlibinjector.transform.SkinWhitelistTransformUnit;
 import org.to2mbn.authlibinjector.transform.YggdrasilApiTransformUnit;
@@ -26,7 +29,7 @@ public final class AuthlibInjector {
 
 	private AuthlibInjector() {}
 
-	private static boolean booted = false;
+	private static AtomicBoolean booted = new AtomicBoolean(false);
 	private static boolean debug = "true".equals(System.getProperty("org.to2mbn.authlibinjector.debug"));
 
 	public static void info(String message, Object... args) {
@@ -40,19 +43,17 @@ public final class AuthlibInjector {
 	}
 
 	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
-		if (booted) {
+		if (!booted.compareAndSet(false, true)) {
 			info("already booted, skipping");
 			return;
 		}
-		booted = true;
 
 		Optional<YggdrasilConfiguration> optionalConfig = configure();
-		if (!optionalConfig.isPresent()) {
+		if (optionalConfig.isPresent()) {
+			transformerRegistry.accept(createTransformer(optionalConfig.get()));
+		} else {
 			info("no config available");
-			return;
 		}
-
-		transformerRegistry.accept(createTransformer(optionalConfig.get()));
 	}
 
 	private static Optional<YggdrasilConfiguration> configure() {
@@ -66,7 +67,7 @@ public final class AuthlibInjector {
 		if (prefetched == null) {
 			info("fetching metadata");
 			try {
-				metadataResponse = readURL(apiRoot);
+				metadataResponse = asString(getURL(apiRoot));
 			} catch (IOException e) {
 				info("unable to fetch metadata: {0}", e);
 				return empty();
@@ -106,8 +107,14 @@ public final class AuthlibInjector {
 		for (String ignore : nonTransformablePackages)
 			transformer.ignores.add(ignore);
 
+		if (!"true".equals(System.getProperty("org.to2mbn.authlibinjector.httpd.disable"))) {
+			transformer.units.add(DeprecatedApiHandle.createTransformUnit(config));
+		}
+
 		transformer.units.add(new YggdrasilApiTransformUnit(config.getApiRoot()));
+
 		transformer.units.add(new SkinWhitelistTransformUnit(config.getSkinDomains().toArray(new String[0])));
+
 		config.getDecodedPublickey().ifPresent(
 				key -> transformer.units.add(new YggdrasilKeyTransformUnit(key.getEncoded())));
 
