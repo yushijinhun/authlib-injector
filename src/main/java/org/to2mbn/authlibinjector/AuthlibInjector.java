@@ -6,9 +6,11 @@ import static java.util.Optional.of;
 import static org.to2mbn.authlibinjector.util.IOUtils.asString;
 import static org.to2mbn.authlibinjector.util.IOUtils.getURL;
 import static org.to2mbn.authlibinjector.util.IOUtils.removeNewLines;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.debug;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.info;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.isDebugOn;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
-import java.text.MessageFormat;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,17 +32,6 @@ public final class AuthlibInjector {
 	private AuthlibInjector() {}
 
 	private static AtomicBoolean booted = new AtomicBoolean(false);
-	private static boolean debug = "true".equals(System.getProperty("org.to2mbn.authlibinjector.debug"));
-
-	public static void info(String message, Object... args) {
-		System.err.println("[authlib-injector] " + MessageFormat.format(message, args));
-	}
-
-	public static void debug(String message, Object... args) {
-		if (debug) {
-			info(message, args);
-		}
-	}
 
 	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
 		if (!booted.compareAndSet(false, true)) {
@@ -103,7 +94,7 @@ public final class AuthlibInjector {
 
 	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
 		ClassTransformer transformer = new ClassTransformer();
-		transformer.debugSaveClass = debug;
+		transformer.debugSaveClass = isDebugOn();
 		for (String ignore : nonTransformablePackages)
 			transformer.ignores.add(ignore);
 

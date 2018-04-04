@@ -1,7 +1,7 @@
 package org.to2mbn.authlibinjector.transform;
 
-import static org.to2mbn.authlibinjector.AuthlibInjector.debug;
-import static org.to2mbn.authlibinjector.AuthlibInjector.info;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.debug;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.info;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;

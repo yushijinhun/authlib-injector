@@ -1,9 +1,9 @@
 package org.to2mbn.authlibinjector.javaagent;
 
 import static org.to2mbn.authlibinjector.AuthlibInjector.bootstrap;
-import static org.to2mbn.authlibinjector.AuthlibInjector.debug;
-import static org.to2mbn.authlibinjector.AuthlibInjector.info;
 import static org.to2mbn.authlibinjector.AuthlibInjector.nonTransformablePackages;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.debug;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.info;
 import java.lang.instrument.Instrumentation;
 import java.util.Arrays;
 

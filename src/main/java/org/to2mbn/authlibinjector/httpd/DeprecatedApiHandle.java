@@ -1,6 +1,6 @@
 package org.to2mbn.authlibinjector.httpd;
 
-import static org.to2mbn.authlibinjector.AuthlibInjector.info;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.info;
 import java.io.IOException;
 import org.to2mbn.authlibinjector.YggdrasilConfiguration;
 import org.to2mbn.authlibinjector.transform.DeprecatedApiTransformUnit;

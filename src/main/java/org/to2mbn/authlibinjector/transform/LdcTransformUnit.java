@@ -1,7 +1,7 @@
 package org.to2mbn.authlibinjector.transform;
 
 import static org.objectweb.asm.Opcodes.ASM6;
-import static org.to2mbn.authlibinjector.AuthlibInjector.info;
+import static org.to2mbn.authlibinjector.util.LoggingUtils.info;
 import java.util.Optional;
 import java.util.function.Function;
 import org.objectweb.asm.ClassVisitor;
