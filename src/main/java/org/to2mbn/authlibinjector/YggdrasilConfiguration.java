@@ -35,17 +35,16 @@ public class YggdrasilConfiguration {
 							skinDomains.add((String) domain);
 					}));
 
-			Optional<String> signaturePublickey = ofNullable(response.optString("signaturePublickey"));
 			Optional<PublicKey> decodedPublickey;
-
-			if (signaturePublickey.isPresent()) {
+			String publickeyString = response.optString("signaturePublickey");
+			if (publickeyString == null) {
+				decodedPublickey = empty();
+			} else {
 				try {
-					decodedPublickey = of(loadX509PublicKey(decodePublicKey(signaturePublickey.get())));
+					decodedPublickey = of(loadX509PublicKey(decodePublicKey(publickeyString)));
 				} catch (IllegalArgumentException | GeneralSecurityException e) {
 					throw new IOException("Bad signature publickey", e);
 				}
-			} else {
-				decodedPublickey = empty();
 			}
 
 			Map<String, String> meta = new TreeMap<>();
@@ -53,7 +52,7 @@ public class YggdrasilConfiguration {
 					.map(JSONObject::toMap)
 					.ifPresent(it -> it.forEach((k, v) -> meta.put(k, String.valueOf(v))));
 
-			return new YggdrasilConfiguration(apiRoot, unmodifiableList(skinDomains), signaturePublickey, unmodifiableMap(meta), decodedPublickey);
+			return new YggdrasilConfiguration(apiRoot, unmodifiableList(skinDomains), unmodifiableMap(meta), decodedPublickey);
 		} catch (JSONException e) {
 			throw new IOException("Invalid json", e);
 		}
@@ -61,14 +60,12 @@ public class YggdrasilConfiguration {
 
 	private String apiRoot;
 	private List<String> skinDomains;
-	private Optional<String> signaturePublickey;
 	private Optional<PublicKey> decodedPublickey;
 	private Map<String, String> meta;
 
-	public YggdrasilConfiguration(String apiRoot, List<String> skinDomains, Optional<String> signaturePublickey, Map<String, String> meta, Optional<PublicKey> decodedPublickey) {
+	public YggdrasilConfiguration(String apiRoot, List<String> skinDomains, Map<String, String> meta, Optional<PublicKey> decodedPublickey) {
 		this.apiRoot = requireNonNull(apiRoot);
 		this.skinDomains = requireNonNull(skinDomains);
-		this.signaturePublickey = requireNonNull(signaturePublickey);
 		this.meta = requireNonNull(meta);
 		this.decodedPublickey = requireNonNull(decodedPublickey);
 	}
@@ -81,10 +78,6 @@ public class YggdrasilConfiguration {
 		return skinDomains;
 	}
 
-	public Optional<String> getSignaturePublickey() {
-		return signaturePublickey;
-	}
-
 	public Map<String, String> getMeta() {
 		return meta;
 	}
@@ -95,7 +88,7 @@ public class YggdrasilConfiguration {
 
 	@Override
 	public String toString() {
-		return format("YggdrasilConfiguration [apiRoot={0}, skinDomains={1}, signaturePublickey={2}, decodedPublickey={3}, meta={4}]", apiRoot, skinDomains, signaturePublickey, decodedPublickey, meta);
+		return format("YggdrasilConfiguration [apiRoot={0}, skinDomains={1}, decodedPublickey={2}, meta={3}]", apiRoot, skinDomains, decodedPublickey, meta);
 	}
 
 }
