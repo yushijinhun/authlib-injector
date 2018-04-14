@@ -2,7 +2,7 @@
  * $Id: JSONObject.java,v 1.1 2006/04/15 14:10:48 platform Exp $
  * Created on 2006-4-10
  */
-package org.json.simple;
+package org.to2mbn.authlibinjector.internal.org.json.simple;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -40,7 +40,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
      * Encode a map into JSON text and write it to out.
      * If this map is also a JSONAware or JSONStreamAware, JSONAware or JSONStreamAware specific behaviours will be ignored at this top level.
      * 
-     * @see org.json.simple.JSONValue#writeJSONString(Object, Writer)
+     * @see org.to2mbn.authlibinjector.internal.org.json.simple.JSONValue#writeJSONString(Object, Writer)
      * 
      * @param map
      * @param out
@@ -78,7 +78,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	 * Convert a map to JSON text. The result is a JSON object. 
 	 * If this map is also a JSONAware, JSONAware specific behaviours will be omitted at this top level.
 	 * 
-	 * @see org.json.simple.JSONValue#toJSONString(Object)
+	 * @see org.to2mbn.authlibinjector.internal.org.json.simple.JSONValue#toJSONString(Object)
 	 * 
 	 * @param map
 	 * @return JSON text, or "null" if map is null.
@@ -121,7 +121,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	 * Escape quotes, \, /, \r, \n, \b, \f, \t and other control characters (U+0000 through U+001F).
 	 * It's the same as JSONValue.escape() only for compatibility here.
 	 * 
-	 * @see org.json.simple.JSONValue#escape(String)
+	 * @see org.to2mbn.authlibinjector.internal.org.json.simple.JSONValue#escape(String)
 	 * 
 	 * @param s
 	 * @return

@@ -1,4 +1,4 @@
-package org.json.simple.parser;
+package org.to2mbn.authlibinjector.internal.org.json.simple.parser;
 
 import java.util.List;
 import java.util.Map;
@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Container factory for creating containers for JSON object and JSON array.
  * 
- * @see org.json.simple.parser.JSONParser#parse(java.io.Reader, ContainerFactory)
+ * @see org.to2mbn.authlibinjector.internal.org.json.simple.parser.JSONParser#parse(java.io.Reader, ContainerFactory)
  * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */

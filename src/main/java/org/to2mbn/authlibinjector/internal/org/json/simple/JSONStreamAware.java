@@ -1,4 +1,4 @@
-package org.json.simple;
+package org.to2mbn.authlibinjector.internal.org.json.simple;
 
 import java.io.IOException;
 import java.io.Writer;

@@ -2,7 +2,7 @@
  * $Id: Yytoken.java,v 1.1 2006/04/15 14:10:48 platform Exp $
  * Created on 2006-4-15
  */
-package org.json.simple.parser;
+package org.to2mbn.authlibinjector.internal.org.json.simple.parser;
 
 /**
  * @author FangYidong<fangyidong@yahoo.com.cn>

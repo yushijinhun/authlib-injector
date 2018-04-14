@@ -3,4 +3,4 @@
  * <p>
  * See license in META-INF/licenses/json-simple.txt
  */
-package org.json.simple;
+package org.to2mbn.authlibinjector.internal.org.json.simple;
