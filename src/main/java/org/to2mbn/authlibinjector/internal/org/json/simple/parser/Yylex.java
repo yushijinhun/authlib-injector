@@ -2,6 +2,11 @@
 
 package org.to2mbn.authlibinjector.internal.org.json.simple.parser;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+
 class Yylex {
 
 	/** This character denotes the end of file */
@@ -221,7 +226,7 @@ class Yylex {
 	}
 
 	/** the input device */
-	private java.io.Reader zzReader;
+	private Reader zzReader;
 
 	/** the current state of the DFA */
 	private int zzState;
@@ -265,24 +270,24 @@ class Yylex {
 
 	/**
 	 * Creates a new scanner
-	 * There is also a java.io.InputStream version of this constructor.
+	 * There is also a InputStream version of this constructor.
 	 *
 	 * @param in
-	 *            the java.io.Reader to read input from.
+	 *            the Reader to read input from.
 	 */
-	Yylex(java.io.Reader in) {
+	Yylex(Reader in) {
 		zzReader = in;
 	}
 
 	/**
 	 * Creates a new scanner.
-	 * There is also java.io.Reader version of this constructor.
+	 * There is also Reader version of this constructor.
 	 *
 	 * @param in
-	 *            the java.io.Inputstream to read input from.
+	 *            the Inputstream to read input from.
 	 */
-	Yylex(java.io.InputStream in) {
-		this(new java.io.InputStreamReader(in));
+	Yylex(InputStream in) {
+		this(new InputStreamReader(in));
 	}
 
 	/**
@@ -311,10 +316,10 @@ class Yylex {
 	 *
 	 * @return <code>false</code>, iff there was new input.
 	 *
-	 * @exception java.io.IOException
+	 * @exception IOException
 	 *                if any I/O-Error occurs
 	 */
-	private boolean zzRefill() throws java.io.IOException {
+	private boolean zzRefill() throws IOException {
 
 		/* first: make room (if you can) */
 		if (zzStartRead > 0) {
@@ -363,7 +368,7 @@ class Yylex {
 	/**
 	 * Closes the input stream.
 	 */
-	public final void yyclose() throws java.io.IOException {
+	public final void yyclose() throws IOException {
 		zzAtEOF = true; /* indicate end of file */
 		zzEndRead = zzStartRead; /* invalidate buffer */
 
@@ -382,7 +387,7 @@ class Yylex {
 	 * @param reader
 	 *            the new input stream
 	 */
-	public final void yyreset(java.io.Reader reader) {
+	public final void yyreset(Reader reader) {
 		zzReader = reader;
 		zzAtEOF = false;
 		zzEndRead = zzStartRead = 0;
@@ -461,7 +466,7 @@ class Yylex {
 			message = ZZ_ERROR_MSG[ZZ_UNKNOWN_ERROR];
 		}
 
-		throw new Error(message);
+		throw new IllegalStateException(message);
 	}
 
 	/**
@@ -485,10 +490,10 @@ class Yylex {
 	 * the end of input is encountered or an I/O-Error occurs.
 	 *
 	 * @return the next token
-	 * @exception java.io.IOException
+	 * @exception IOException
 	 *                if any I/O-Error occurs
 	 */
-	public Yytoken yylex() throws java.io.IOException, ParseException {
+	public Yytoken yylex() throws IOException, ParseException {
 		int zzInput;
 		int zzAction;
 
@@ -608,7 +613,7 @@ class Yylex {
 				case 33:
 					break;
 				case 1: {
-					throw new ParseException(yychar, ParseException.ERROR_UNEXPECTED_CHAR, new Character(yycharat(0)));
+					throw new ParseException(yychar, ParseException.ERROR_UNEXPECTED_CHAR, yycharat(0));
 				}
 				case 34:
 					break;
