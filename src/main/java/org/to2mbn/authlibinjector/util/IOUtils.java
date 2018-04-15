@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -52,6 +53,14 @@ public final class IOUtils {
 	public static String removeNewLines(String input) {
 		return input.replace("\n", "")
 				.replace("\r", "");
+	}
+
+	public static UncheckedIOException newUncheckedIOException(String message) throws UncheckedIOException {
+		return new UncheckedIOException(new IOException(message));
+	}
+
+	public static UncheckedIOException newUncheckedIOException(String message, Throwable cause) throws UncheckedIOException {
+		return new UncheckedIOException(new IOException(message, cause));
 	}
 
 	private IOUtils() {}

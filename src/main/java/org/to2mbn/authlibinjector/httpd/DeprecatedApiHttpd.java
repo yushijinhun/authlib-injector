@@ -1,11 +1,18 @@
 package org.to2mbn.authlibinjector.httpd;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singleton;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static java.util.Optional.ofNullable;
 import static org.to2mbn.authlibinjector.util.IOUtils.asString;
 import static org.to2mbn.authlibinjector.util.IOUtils.getURL;
+import static org.to2mbn.authlibinjector.util.IOUtils.newUncheckedIOException;
 import static org.to2mbn.authlibinjector.util.IOUtils.postURL;
+import static org.to2mbn.authlibinjector.util.JsonUtils.asArray;
+import static org.to2mbn.authlibinjector.util.JsonUtils.asObject;
+import static org.to2mbn.authlibinjector.util.JsonUtils.asString;
+import static org.to2mbn.authlibinjector.util.JsonUtils.parseJson;
 import static org.to2mbn.authlibinjector.util.LoggingUtils.debug;
 import static org.to2mbn.authlibinjector.util.LoggingUtils.info;
 import java.io.ByteArrayInputStream;
@@ -16,9 +23,9 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.to2mbn.authlibinjector.YggdrasilConfiguration;
-import org.to2mbn.authlibinjector.internal.org.json.JSONArray;
-import org.to2mbn.authlibinjector.internal.org.json.JSONException;
-import org.to2mbn.authlibinjector.internal.org.json.JSONObject;
+import org.to2mbn.authlibinjector.internal.org.json.simple.JSONArray;
+import org.to2mbn.authlibinjector.internal.org.json.simple.JSONObject;
+import org.to2mbn.authlibinjector.util.JsonUtils;
 import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
 
@@ -53,7 +60,7 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 					.flatMap(uuid -> queryCharacterProperty(uuid, "textures"))
 					.map(encoded -> asString(Base64.getDecoder().decode(encoded)))
 					.flatMap(texturesPayload -> obtainTextureUrl(texturesPayload, "SKIN"));
-		} catch (UncheckedIOException | JSONException e) {
+		} catch (UncheckedIOException e) {
 			info("[httpd] unable to fetch skin for {0}: {1}", username, e);
 			return of(newFixedLengthResponse(Status.INTERNAL_ERROR, null, null));
 		}
@@ -77,29 +84,30 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 		}
 	}
 
-	private Optional<String> queryCharacterUUID(String username) throws UncheckedIOException, JSONException {
+	private Optional<String> queryCharacterUUID(String username) throws UncheckedIOException {
 		String responseText;
 		try {
 			responseText = asString(postURL(
 					configuration.getApiRoot() + "api/profiles/minecraft",
 					CONTENT_TYPE_JSON,
-					new JSONArray(new String[] { username })
-							.toString().getBytes(UTF_8)));
+					JSONArray.toJSONString(singleton(username)).getBytes(UTF_8)));
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 		debug("[httpd] query uuid of username {0}, response: {1}", username, responseText);
-		JSONArray response = new JSONArray(responseText);
-		if (response.length() == 0) {
+
+		JSONArray response = asArray(parseJson(responseText));
+		if (response.size() == 0) {
 			return empty();
-		} else if (response.length() == 1) {
-			return of(response.getJSONObject(0).getString("id"));
+		} else if (response.size() == 1) {
+			JSONObject profile = asObject(response.get(0));
+			return of(asString(profile.get("id")));
 		} else {
-			throw new JSONException("Unexpected response length");
+			throw newUncheckedIOException("Invalid JSON: Unexpected response length");
 		}
 	}
 
-	private Optional<String> queryCharacterProperty(String uuid, String property) throws UncheckedIOException, JSONException {
+	private Optional<String> queryCharacterProperty(String uuid, String propertyName) throws UncheckedIOException {
 		String responseText;
 		try {
 			responseText = asString(getURL(
@@ -112,23 +120,24 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 			return empty();
 		}
 		debug("[httpd] query profile of {0}, response: {1}", uuid, responseText);
-		JSONObject response = new JSONObject(responseText);
-		for (Object element_ : response.getJSONArray("properties")) {
-			JSONObject element = (JSONObject) element_;
-			if (property.equals(element.getString("name"))) {
-				return of(element.getString("value"));
-			}
-		}
-		return empty();
+
+		JSONObject response = asObject(parseJson(responseText));
+		return asArray(response.get("properties")).stream()
+				.map(JsonUtils::asObject)
+				.filter(property -> asString(property.get("name")).equals(propertyName))
+				.findFirst()
+				.map(property -> asString(property.get("value")));
 	}
 
-	private Optional<String> obtainTextureUrl(String texturesPayload, String textureType) throws JSONException {
-		JSONObject textures = new JSONObject(texturesPayload).getJSONObject("textures");
-		if (textures.has(textureType)) {
-			return of(textures.getJSONObject(textureType).getString("url"));
-		} else {
-			return empty();
-		}
+	private Optional<String> obtainTextureUrl(String texturesPayload, String textureType) throws UncheckedIOException {
+		JSONObject payload = asObject(parseJson(texturesPayload));
+		JSONObject textures = asObject(payload.get("textures"));
+
+		return ofNullable(textures.get(textureType))
+				.map(JsonUtils::asObject)
+				.map(it -> ofNullable(it.get("url"))
+						.map(JsonUtils::asString)
+						.orElseThrow(() -> newUncheckedIOException("Invalid JSON: missing texture url")));
 	}
 
 }

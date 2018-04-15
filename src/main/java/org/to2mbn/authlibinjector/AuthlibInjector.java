@@ -10,6 +10,7 @@ import static org.to2mbn.authlibinjector.util.LoggingUtils.debug;
 import static org.to2mbn.authlibinjector.util.LoggingUtils.info;
 import static org.to2mbn.authlibinjector.util.LoggingUtils.isDebugOn;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.util.Base64;
 import java.util.Optional;
@@ -81,7 +82,7 @@ public final class AuthlibInjector {
 		YggdrasilConfiguration configuration;
 		try {
 			configuration = YggdrasilConfiguration.parse(apiRoot, metadataResponse);
-		} catch (IOException e) {
+		} catch (UncheckedIOException e) {
 			info("unable to parse metadata: {0}\n"
 					+ "metadata to parse:\n"
 					+ "{1}",

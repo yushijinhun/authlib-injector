@@ -1,6 +1,8 @@
 package org.to2mbn.authlibinjector.util;
 
+import static org.to2mbn.authlibinjector.util.IOUtils.newUncheckedIOException;
 import static org.to2mbn.authlibinjector.util.IOUtils.removeNewLines;
+import java.io.UncheckedIOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PublicKey;
@@ -9,7 +11,7 @@ import java.util.Base64;
 
 public final class KeyUtils {
 
-	public static byte[] decodePublicKey(String pem) throws IllegalArgumentException {
+	public static byte[] decodePEMPublicKey(String pem) throws IllegalArgumentException {
 		pem = removeNewLines(pem);
 		final String header = "-----BEGIN PUBLIC KEY-----";
 		final String end = "-----END PUBLIC KEY-----";
@@ -21,8 +23,16 @@ public final class KeyUtils {
 		}
 	}
 
-	public static PublicKey loadX509PublicKey(byte[] encodedKey) throws GeneralSecurityException {
+	public static PublicKey parseX509PublicKey(byte[] encodedKey) throws GeneralSecurityException {
 		return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(encodedKey));
+	}
+
+	public static PublicKey parseSignaturePublicKey(String pem) throws UncheckedIOException {
+		try {
+			return parseX509PublicKey(decodePEMPublicKey(pem));
+		} catch (IllegalArgumentException | GeneralSecurityException e) {
+			throw newUncheckedIOException("Bad signature public key", e);
+		}
 	}
 
 	private KeyUtils() {}
