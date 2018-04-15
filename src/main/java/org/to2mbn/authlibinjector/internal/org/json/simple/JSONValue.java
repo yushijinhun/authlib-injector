@@ -109,10 +109,10 @@ public class JSONValue {
 	 * <p>
 	 * DO NOT call this method from writeJSONString(Writer) of a class that implements both JSONStreamAware and (Map or List) with
 	 * "this" as the first parameter, use JSONObject.writeJSONString(Map, Writer) or JSONArray.writeJSONString(List, Writer) instead.
-	 * 
+	 *
 	 * @see org.to2mbn.authlibinjector.internal.org.json.simple.JSONObject#writeJSONString(Map, Writer)
 	 * @see org.to2mbn.authlibinjector.internal.org.json.simple.JSONArray#writeJSONString(List, Writer)
-	 * 
+	 *
 	 * @param value
 	 * @param writer
 	 */
@@ -166,12 +166,12 @@ public class JSONValue {
 		}
 
 		if (value instanceof Map) {
-			JSONObject.writeJSONString((Map) value, out);
+			JSONObject.writeJSONString((Map<?, ?>) value, out);
 			return;
 		}
 
 		if (value instanceof Collection) {
-			JSONArray.writeJSONString((Collection) value, out);
+			JSONArray.writeJSONString((Collection<?>) value, out);
 			return;
 		}
 
@@ -251,7 +251,7 @@ public class JSONValue {
 
 	/**
 	 * Escape quotes, \, /, \r, \n, \b, \f, \t and other control characters (U+0000 through U+001F).
-	 * 
+	 *
 	 * @param s
 	 * @return
 	 */

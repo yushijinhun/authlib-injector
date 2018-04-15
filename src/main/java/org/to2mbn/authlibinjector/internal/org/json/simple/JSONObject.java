@@ -16,7 +16,7 @@ import java.util.Map;
  *
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAware {
+public class JSONObject extends HashMap<Object, Object> implements JSONAware, JSONStreamAware {
 
 	private static final long serialVersionUID = -503443796854799292L;
 
@@ -30,27 +30,27 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	 *
 	 * @param map
 	 */
-	public JSONObject(Map map) {
+	public JSONObject(Map<?, ?> map) {
 		super(map);
 	}
 
 	/**
 	 * Encode a map into JSON text and write it to out.
 	 * If this map is also a JSONAware or JSONStreamAware, JSONAware or JSONStreamAware specific behaviours will be ignored at this top level.
-	 * 
+	 *
 	 * @see org.to2mbn.authlibinjector.internal.org.json.simple.JSONValue#writeJSONString(Object, Writer)
-	 * 
+	 *
 	 * @param map
 	 * @param out
 	 */
-	public static void writeJSONString(Map map, Writer out) throws IOException {
+	public static void writeJSONString(Map<?, ?> map, Writer out) throws IOException {
 		if (map == null) {
 			out.write("null");
 			return;
 		}
 
 		boolean first = true;
-		Iterator iter = map.entrySet().iterator();
+		Iterator<? extends Map.Entry<?, ?>> iter = map.entrySet().iterator();
 
 		out.write('{');
 		while (iter.hasNext()) {
@@ -58,7 +58,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 				first = false;
 			else
 				out.write(',');
-			Map.Entry entry = (Map.Entry) iter.next();
+			Map.Entry<?, ?> entry = iter.next();
 			out.write('\"');
 			out.write(escape(String.valueOf(entry.getKey())));
 			out.write('\"');
@@ -82,7 +82,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	 * @param map
 	 * @return JSON text, or "null" if map is null.
 	 */
-	public static String toJSONString(Map map) {
+	public static String toJSONString(Map<?, ?> map) {
 		final StringWriter writer = new StringWriter();
 
 		try {
