@@ -166,7 +166,9 @@ public class JSONValue {
 		}
 
 		if (value instanceof Map) {
-			JSONObject.writeJSONString((Map<?, ?>) value, out);
+			@SuppressWarnings("unchecked")
+			Map<String, ?> objectValue = (Map<String, ?>) value;
+			JSONObject.writeJSONString(objectValue, out);
 			return;
 		}
 

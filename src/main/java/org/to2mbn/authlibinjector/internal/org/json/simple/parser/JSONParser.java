@@ -116,39 +116,44 @@ public class JSONParser {
 			do {
 				nextToken();
 				switch (status) {
-					case S_INIT:
+					case S_INIT: {
 						switch (token.type) {
-							case Yytoken.TYPE_VALUE:
+							case Yytoken.TYPE_VALUE: {
 								status = S_IN_FINISHED_VALUE;
 								statusStack.addFirst(new Integer(status));
 								valueStack.addFirst(token.value);
 								break;
-							case Yytoken.TYPE_LEFT_BRACE:
+							}
+							case Yytoken.TYPE_LEFT_BRACE: {
 								status = S_IN_OBJECT;
 								statusStack.addFirst(new Integer(status));
 								valueStack.addFirst(createObjectContainer(containerFactory));
 								break;
-							case Yytoken.TYPE_LEFT_SQUARE:
+							}
+							case Yytoken.TYPE_LEFT_SQUARE: {
 								status = S_IN_ARRAY;
 								statusStack.addFirst(new Integer(status));
 								valueStack.addFirst(createArrayContainer(containerFactory));
 								break;
+							}
 							default:
 								status = S_IN_ERROR;
 						}// inner switch
 						break;
+					}
 
-					case S_IN_FINISHED_VALUE:
+					case S_IN_FINISHED_VALUE: {
 						if (token.type == Yytoken.TYPE_EOF)
 							return valueStack.removeFirst();
 						else
 							throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+					}
 
-					case S_IN_OBJECT:
+					case S_IN_OBJECT: {
 						switch (token.type) {
 							case Yytoken.TYPE_COMMA:
 								break;
-							case Yytoken.TYPE_VALUE:
+							case Yytoken.TYPE_VALUE: {
 								if (token.value instanceof String) {
 									String key = (String) token.value;
 									valueStack.addFirst(key);
@@ -158,7 +163,8 @@ public class JSONParser {
 									status = S_IN_ERROR;
 								}
 								break;
-							case Yytoken.TYPE_RIGHT_BRACE:
+							}
+							case Yytoken.TYPE_RIGHT_BRACE: {
 								if (valueStack.size() > 1) {
 									statusStack.removeFirst();
 									valueStack.removeFirst();
@@ -167,57 +173,68 @@ public class JSONParser {
 									status = S_IN_FINISHED_VALUE;
 								}
 								break;
+							}
 							default:
 								status = S_IN_ERROR;
 								break;
 						}// inner switch
 						break;
+					}
 
-					case S_PASSED_PAIR_KEY:
+					case S_PASSED_PAIR_KEY: {
 						switch (token.type) {
 							case Yytoken.TYPE_COLON:
 								break;
-							case Yytoken.TYPE_VALUE:
+							case Yytoken.TYPE_VALUE: {
 								statusStack.removeFirst();
 								String key = (String) valueStack.removeFirst();
-								Map<Object, Object> parent = (Map<Object, Object>) valueStack.getFirst();
+								@SuppressWarnings("unchecked")
+								Map<String, Object> parent = (Map<String, Object>) valueStack.getFirst();
 								parent.put(key, token.value);
 								status = peekStatus(statusStack);
 								break;
-							case Yytoken.TYPE_LEFT_SQUARE:
+							}
+							case Yytoken.TYPE_LEFT_SQUARE: {
 								statusStack.removeFirst();
-								key = (String) valueStack.removeFirst();
-								parent = (Map<Object, Object>) valueStack.getFirst();
+								String key = (String) valueStack.removeFirst();
+								@SuppressWarnings("unchecked")
+								Map<String, Object> parent = (Map<String, Object>) valueStack.getFirst();
 								List<Object> newArray = createArrayContainer(containerFactory);
 								parent.put(key, newArray);
 								status = S_IN_ARRAY;
 								statusStack.addFirst(new Integer(status));
 								valueStack.addFirst(newArray);
 								break;
-							case Yytoken.TYPE_LEFT_BRACE:
+							}
+							case Yytoken.TYPE_LEFT_BRACE: {
 								statusStack.removeFirst();
-								key = (String) valueStack.removeFirst();
-								parent = (Map<Object, Object>) valueStack.getFirst();
-								Map<Object, Object> newObject = createObjectContainer(containerFactory);
+								String key = (String) valueStack.removeFirst();
+								@SuppressWarnings("unchecked")
+								Map<String, Object> parent = (Map<String, Object>) valueStack.getFirst();
+								Map<String, Object> newObject = createObjectContainer(containerFactory);
 								parent.put(key, newObject);
 								status = S_IN_OBJECT;
 								statusStack.addFirst(new Integer(status));
 								valueStack.addFirst(newObject);
 								break;
+							}
 							default:
 								status = S_IN_ERROR;
 						}
 						break;
+					}
 
-					case S_IN_ARRAY:
+					case S_IN_ARRAY: {
 						switch (token.type) {
 							case Yytoken.TYPE_COMMA:
 								break;
-							case Yytoken.TYPE_VALUE:
+							case Yytoken.TYPE_VALUE: {
+								@SuppressWarnings("unchecked")
 								List<Object> val = (List<Object>) valueStack.getFirst();
 								val.add(token.value);
 								break;
-							case Yytoken.TYPE_RIGHT_SQUARE:
+							}
+							case Yytoken.TYPE_RIGHT_SQUARE: {
 								if (valueStack.size() > 1) {
 									statusStack.removeFirst();
 									valueStack.removeFirst();
@@ -226,26 +243,32 @@ public class JSONParser {
 									status = S_IN_FINISHED_VALUE;
 								}
 								break;
-							case Yytoken.TYPE_LEFT_BRACE:
-								val = (List<Object>) valueStack.getFirst();
-								Map<Object, Object> newObject = createObjectContainer(containerFactory);
+							}
+							case Yytoken.TYPE_LEFT_BRACE: {
+								@SuppressWarnings("unchecked")
+								List<Object> val = (List<Object>) valueStack.getFirst();
+								Map<String, Object> newObject = createObjectContainer(containerFactory);
 								val.add(newObject);
 								status = S_IN_OBJECT;
 								statusStack.addFirst(new Integer(status));
 								valueStack.addFirst(newObject);
 								break;
-							case Yytoken.TYPE_LEFT_SQUARE:
-								val = (List<Object>) valueStack.getFirst();
+							}
+							case Yytoken.TYPE_LEFT_SQUARE: {
+								@SuppressWarnings("unchecked")
+								List<Object> val = (List<Object>) valueStack.getFirst();
 								List<Object> newArray = createArrayContainer(containerFactory);
 								val.add(newArray);
 								status = S_IN_ARRAY;
 								statusStack.addFirst(new Integer(status));
 								valueStack.addFirst(newArray);
 								break;
+							}
 							default:
 								status = S_IN_ERROR;
 						}// inner switch
 						break;
+					}
 					case S_IN_ERROR:
 						throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
 				}// switch
@@ -266,10 +289,10 @@ public class JSONParser {
 			token = new Yytoken(Yytoken.TYPE_EOF, null);
 	}
 
-	private Map<Object, Object> createObjectContainer(ContainerFactory containerFactory) {
+	private Map<String, Object> createObjectContainer(ContainerFactory containerFactory) {
 		if (containerFactory == null)
 			return new JSONObject();
-		Map<Object, Object> m = containerFactory.createObjectContainer();
+		Map<String, Object> m = containerFactory.createObjectContainer();
 
 		if (m == null)
 			return new JSONObject();
