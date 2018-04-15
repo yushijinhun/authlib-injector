@@ -42,7 +42,7 @@ public interface ContentHandler {
 	 *
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
-	 * 
+	 *
 	 * @see #startObject
 	 */
 	boolean endObject() throws ParseException, IOException;
@@ -55,7 +55,7 @@ public interface ContentHandler {
 	 *
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
-	 * 
+	 *
 	 * @see #endObjectEntry
 	 */
 	boolean startObjectEntry(String key) throws ParseException, IOException;
@@ -65,7 +65,7 @@ public interface ContentHandler {
 	 *
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
-	 * 
+	 *
 	 * @see #startObjectEntry
 	 */
 	boolean endObjectEntry() throws ParseException, IOException;
@@ -75,7 +75,7 @@ public interface ContentHandler {
 	 *
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
-	 * 
+	 *
 	 * @see #endArray
 	 */
 	boolean startArray() throws ParseException, IOException;
@@ -85,7 +85,7 @@ public interface ContentHandler {
 	 *
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
-	 * 
+	 *
 	 * @see #startArray
 	 */
 	boolean endArray() throws ParseException, IOException;
