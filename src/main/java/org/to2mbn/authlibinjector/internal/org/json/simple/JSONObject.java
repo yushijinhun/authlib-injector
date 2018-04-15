@@ -60,7 +60,7 @@ public class JSONObject extends HashMap<String, Object> implements JSONAware, JS
 				out.write(',');
 			Map.Entry<String, ?> entry = iter.next();
 			out.write('\"');
-			out.write(escape(entry.getKey()));
+			out.write(JSONValue.escape(entry.getKey()));
 			out.write('\"');
 			out.write(':');
 			JSONValue.writeJSONString(entry.getValue(), out);
@@ -116,18 +116,5 @@ public class JSONObject extends HashMap<String, Object> implements JSONAware, JS
 		sb.append(JSONValue.toJSONString(value));
 
 		return sb.toString();
-	}
-
-	/**
-	 * Escape quotes, \, /, \r, \n, \b, \f, \t and other control characters (U+0000 through U+001F).
-	 * It's the same as JSONValue.escape() only for compatibility here.
-	 *
-	 * @see org.to2mbn.authlibinjector.internal.org.json.simple.JSONValue#escape(String)
-	 *
-	 * @param s
-	 * @return
-	 */
-	public static String escape(String s) {
-		return JSONValue.escape(s);
 	}
 }

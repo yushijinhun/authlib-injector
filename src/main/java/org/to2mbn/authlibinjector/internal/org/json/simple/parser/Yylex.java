@@ -250,9 +250,6 @@ class Yylex {
 	 */
 	private int zzEndRead;
 
-	/** number of newlines encountered up to the start of the matched text */
-	private int yyline;
-
 	/** the number of characters up to the start of the matched text */
 	private int yychar;
 
@@ -313,7 +310,7 @@ class Yylex {
 	 * Refills the input buffer.
 	 *
 	 * @return <code>false</code>, iff there was new input.
-	 * 
+	 *
 	 * @exception java.io.IOException
 	 *                if any I/O-Error occurs
 	 */
@@ -390,7 +387,7 @@ class Yylex {
 		zzAtEOF = false;
 		zzEndRead = zzStartRead = 0;
 		zzCurrentPos = zzMarkedPos = 0;
-		yyline = yychar = 0;
+		yychar = 0;
 		zzLexicalState = YYINITIAL;
 	}
 
@@ -421,7 +418,7 @@ class Yylex {
 	/**
 	 * Returns the character at position <tt>pos</tt> from the
 	 * matched text.
-	 * 
+	 *
 	 * It is equivalent to yytext().charAt(pos), but faster
 	 *
 	 * @param pos

@@ -7,7 +7,7 @@ package org.to2mbn.authlibinjector.internal.org.json.simple.parser;
 /**
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-public class Yytoken {
+class Yytoken {
 	public static final int TYPE_VALUE = 0;// JSON primitive value: string,number,boolean,null
 	public static final int TYPE_LEFT_BRACE = 1;
 	public static final int TYPE_RIGHT_BRACE = 2;

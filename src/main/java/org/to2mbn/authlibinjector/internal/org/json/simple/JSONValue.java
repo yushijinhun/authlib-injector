@@ -6,7 +6,6 @@ package org.to2mbn.authlibinjector.internal.org.json.simple;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collection;
@@ -19,62 +18,6 @@ import org.to2mbn.authlibinjector.internal.org.json.simple.parser.ParseException
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
 public class JSONValue {
-	/**
-	 * Parse JSON text into java object from the input source.
-	 * Please use parseWithException() if you don't want to ignore the exception.
-	 *
-	 * @see org.to2mbn.authlibinjector.internal.org.json.simple.parser.JSONParser#parse(Reader)
-	 * @see #parseWithException(Reader)
-	 *
-	 * @param in
-	 * @return Instance of the following:
-	 *         org.json.simple.JSONObject,
-	 *         org.json.simple.JSONArray,
-	 *         java.lang.String,
-	 *         java.lang.Number,
-	 *         java.lang.Boolean,
-	 *         null
-	 *
-	 * @deprecated this method may throw an {@code Error} instead of returning
-	 *             {@code null}; please use {@link JSONValue#parseWithException(Reader)}
-	 *             instead
-	 */
-	@Deprecated
-	public static Object parse(Reader in) {
-		try {
-			JSONParser parser = new JSONParser();
-			return parser.parse(in);
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
-	/**
-	 * Parse JSON text into java object from the given string.
-	 * Please use parseWithException() if you don't want to ignore the exception.
-	 *
-	 * @see org.to2mbn.authlibinjector.internal.org.json.simple.parser.JSONParser#parse(Reader)
-	 * @see #parseWithException(Reader)
-	 *
-	 * @param s
-	 * @return Instance of the following:
-	 *         org.json.simple.JSONObject,
-	 *         org.json.simple.JSONArray,
-	 *         java.lang.String,
-	 *         java.lang.Number,
-	 *         java.lang.Boolean,
-	 *         null
-	 *
-	 * @deprecated this method may throw an {@code Error} instead of returning
-	 *             {@code null}; please use {@link JSONValue#parseWithException(String)}
-	 *             instead
-	 */
-	@Deprecated
-	public static Object parse(String s) {
-		StringReader in = new StringReader(s);
-		return parse(in);
-	}
-
 	/**
 	 * Parse JSON text into java object from the input source.
 	 *
@@ -92,14 +35,12 @@ public class JSONValue {
 	 * @throws IOException
 	 * @throws ParseException
 	 */
-	public static Object parseWithException(Reader in) throws IOException, ParseException {
-		JSONParser parser = new JSONParser();
-		return parser.parse(in);
+	public static Object parse(Reader in) throws IOException, ParseException {
+		return new JSONParser().parse(in);
 	}
 
-	public static Object parseWithException(String s) throws ParseException {
-		JSONParser parser = new JSONParser();
-		return parser.parse(s);
+	public static Object parse(String s) throws ParseException {
+		return new JSONParser().parse(s);
 	}
 
 	/**
