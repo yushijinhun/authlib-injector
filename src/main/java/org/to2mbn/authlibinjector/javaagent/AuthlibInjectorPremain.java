@@ -16,6 +16,8 @@ public class AuthlibInjectorPremain {
 		} catch (Throwable e) {
 			// prevent the exception being thrown to VM
 			e.printStackTrace();
+			info("an exception has been caught, exiting");
+			System.exit(1);
 		}
 	}
 

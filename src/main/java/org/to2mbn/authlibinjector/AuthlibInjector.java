@@ -62,7 +62,7 @@ public final class AuthlibInjector {
 				metadataResponse = asString(getURL(apiRoot));
 			} catch (IOException e) {
 				info("unable to fetch metadata: {0}", e);
-				return empty();
+				throw new UncheckedIOException(e);
 			}
 
 		} else {
@@ -73,7 +73,7 @@ public final class AuthlibInjector {
 				info("unable to decode metadata: {0}\n"
 						+ "metadata to decode:\n"
 						+ "{1}", e, prefetched);
-				return empty();
+				throw e;
 			}
 		}
 
@@ -87,7 +87,7 @@ public final class AuthlibInjector {
 					+ "metadata to parse:\n"
 					+ "{1}",
 					e, metadataResponse);
-			return empty();
+			throw e;
 		}
 		debug("parsed metadata: {0}", configuration);
 		return of(configuration);
