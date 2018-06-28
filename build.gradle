@@ -34,7 +34,8 @@ jar {
 			'Can-Retransform-Classes': true,
 			'Can-Redefine-Classes': true,
 			'Git-Commit': gitInfo.gitHashFull,
-			'Git-IsClean': gitInfo.isCleanTag
+			'Git-IsClean': gitInfo.isCleanTag,
+			'Build-Number': buildNumber?:'-1'
 		)
 	}
 }
