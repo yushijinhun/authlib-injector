@@ -40,6 +40,8 @@ public final class AuthlibInjector {
 			return;
 		}
 
+		info("version: " + getVersion());
+
 		Optional<YggdrasilConfiguration> optionalConfig = configure();
 		if (optionalConfig.isPresent()) {
 			transformerRegistry.accept(createTransformer(optionalConfig.get()));
@@ -111,6 +113,10 @@ public final class AuthlibInjector {
 				key -> transformer.units.add(new YggdrasilKeyTransformUnit(key.getEncoded())));
 
 		return transformer;
+	}
+
+	public static String getVersion() {
+		return AuthlibInjector.class.getPackage().getImplementationVersion();
 	}
 
 }
