@@ -1,6 +1,6 @@
 plugins {
-	id 'com.github.johnrengelman.shadow' version '2.0.3'
-	id 'com.palantir.git-version' version '0.10.1'
+	id 'com.github.johnrengelman.shadow' version '2.0.4'
+	id 'com.palantir.git-version' version '0.11.0'
 	id 'java'
 }
 
@@ -9,15 +9,16 @@ repositories {
 }
 
 dependencies {
-	compile 'org.ow2.asm:asm:6.1.1'
+	compile 'org.ow2.asm:asm:6.2'
 	compile 'org.nanohttpd:nanohttpd:2.3.1'
 	testCompile 'junit:junit:4.12'
 }
 
 sourceCompatibility = 8
 
+def buildNumber = System.getenv('AI_BUILD_NUMBER')
 def gitInfo = versionDetails()
-version = '1.1.' + (System.getenv('BUILD_NUMBER')?:'0-SNAPSHOT') + '-' + gitInfo.gitHashFull[0..6]
+version = '1.1.' + (buildNumber?:'0-SNAPSHOT') + '-' + gitInfo.gitHashFull[0..6]
 if (!gitInfo.isCleanTag) version += '.dirty'
 
 jar {
@@ -33,7 +34,8 @@ jar {
 			'Can-Retransform-Classes': true,
 			'Can-Redefine-Classes': true,
 			'Git-Commit': gitInfo.gitHashFull,
-			'Git-IsClean': gitInfo.isCleanTag
+			'Git-IsClean': gitInfo.isCleanTag,
+			'Build-Number': buildNumber?:'-1'
 		)
 	}
 }
