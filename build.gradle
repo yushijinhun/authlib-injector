@@ -16,8 +16,9 @@ dependencies {
 
 sourceCompatibility = 8
 
+def buildNumber = System.getenv('AI_BUILD_NUMBER')
 def gitInfo = versionDetails()
-version = '1.1.' + (System.getenv('BUILD_NUMBER')?:'0-SNAPSHOT') + '-' + gitInfo.gitHashFull[0..6]
+version = '1.1.' + (buildNumber?:'0-SNAPSHOT') + '-' + gitInfo.gitHashFull[0..6]
 if (!gitInfo.isCleanTag) version += '.dirty'
 
 jar {
