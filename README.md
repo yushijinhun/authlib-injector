@@ -1,4 +1,5 @@
 # authlib-injector
+[![circle ci](https://img.shields.io/circleci/project/github/yushijinhun/authlib-injector/master.svg?style=flat-square)](https://circleci.com/gh/yushijinhun/authlib-injector/tree/master)
 [![license](https://img.shields.io/github/license/yushijinhun/authlib-injector.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/master/LICENSE)
 ![language](https://img.shields.io/badge/language-java-yellow.svg?style=flat-square)
 ![require java 1.8+](https://img.shields.io/badge/require%20java-1.8%2B-orange.svg?style=flat-square)
