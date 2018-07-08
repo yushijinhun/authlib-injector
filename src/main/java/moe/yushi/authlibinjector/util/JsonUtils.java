@@ -17,15 +17,15 @@ public final class JsonUtils {
 		}
 	}
 
-	public static JSONObject asObject(Object json) throws UncheckedIOException {
+	public static JSONObject asJsonObject(Object json) throws UncheckedIOException {
 		return assertJson(json, JSONObject.class, "an object");
 	}
 
-	public static JSONArray asArray(Object json) throws UncheckedIOException {
+	public static JSONArray asJsonArray(Object json) throws UncheckedIOException {
 		return assertJson(json, JSONArray.class, "an array");
 	}
 
-	public static String asString(Object json) throws UncheckedIOException {
+	public static String asJsonString(Object json) throws UncheckedIOException {
 		return assertJson(json, String.class, "a string");
 	}
 

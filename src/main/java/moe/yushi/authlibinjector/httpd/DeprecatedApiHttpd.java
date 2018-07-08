@@ -9,9 +9,9 @@ import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.getURL;
 import static moe.yushi.authlibinjector.util.IOUtils.newUncheckedIOException;
 import static moe.yushi.authlibinjector.util.IOUtils.postURL;
-import static moe.yushi.authlibinjector.util.JsonUtils.asArray;
-import static moe.yushi.authlibinjector.util.JsonUtils.asObject;
-import static moe.yushi.authlibinjector.util.JsonUtils.asString;
+import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
+import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
+import static moe.yushi.authlibinjector.util.JsonUtils.asJsonString;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
 import static moe.yushi.authlibinjector.util.LoggingUtils.debug;
 import static moe.yushi.authlibinjector.util.LoggingUtils.info;
@@ -96,12 +96,12 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 		}
 		debug("[httpd] query uuid of username {0}, response: {1}", username, responseText);
 
-		JSONArray response = asArray(parseJson(responseText));
+		JSONArray response = asJsonArray(parseJson(responseText));
 		if (response.size() == 0) {
 			return empty();
 		} else if (response.size() == 1) {
-			JSONObject profile = asObject(response.get(0));
-			return of(asString(profile.get("id")));
+			JSONObject profile = asJsonObject(response.get(0));
+			return of(asJsonString(profile.get("id")));
 		} else {
 			throw newUncheckedIOException("Invalid JSON: Unexpected response length");
 		}
@@ -121,22 +121,22 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 		}
 		debug("[httpd] query profile of {0}, response: {1}", uuid, responseText);
 
-		JSONObject response = asObject(parseJson(responseText));
-		return asArray(response.get("properties")).stream()
-				.map(JsonUtils::asObject)
-				.filter(property -> asString(property.get("name")).equals(propertyName))
+		JSONObject response = asJsonObject(parseJson(responseText));
+		return asJsonArray(response.get("properties")).stream()
+				.map(JsonUtils::asJsonObject)
+				.filter(property -> asJsonString(property.get("name")).equals(propertyName))
 				.findFirst()
-				.map(property -> asString(property.get("value")));
+				.map(property -> asJsonString(property.get("value")));
 	}
 
 	private Optional<String> obtainTextureUrl(String texturesPayload, String textureType) throws UncheckedIOException {
-		JSONObject payload = asObject(parseJson(texturesPayload));
-		JSONObject textures = asObject(payload.get("textures"));
+		JSONObject payload = asJsonObject(parseJson(texturesPayload));
+		JSONObject textures = asJsonObject(payload.get("textures"));
 
 		return ofNullable(textures.get(textureType))
-				.map(JsonUtils::asObject)
+				.map(JsonUtils::asJsonObject)
 				.map(it -> ofNullable(it.get("url"))
-						.map(JsonUtils::asString)
+						.map(JsonUtils::asJsonString)
 						.orElseThrow(() -> newUncheckedIOException("Invalid JSON: missing texture url")));
 	}
 

@@ -8,8 +8,8 @@ import static java.util.Collections.unmodifiableMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static moe.yushi.authlibinjector.util.JsonUtils.asArray;
-import static moe.yushi.authlibinjector.util.JsonUtils.asObject;
+import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
+import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
 import java.io.UncheckedIOException;
 import java.security.PublicKey;
@@ -26,23 +26,23 @@ public class YggdrasilConfiguration {
 	public static YggdrasilConfiguration parse(String apiRoot, String metadataResponse) throws UncheckedIOException {
 		if (!apiRoot.endsWith("/")) apiRoot += "/";
 
-		JSONObject response = asObject(parseJson(metadataResponse));
+		JSONObject response = asJsonObject(parseJson(metadataResponse));
 
 		List<String> skinDomains =
 				ofNullable(response.get("skinDomains"))
-						.map(it -> asArray(it).stream()
-								.map(JsonUtils::asString)
+						.map(it -> asJsonArray(it).stream()
+								.map(JsonUtils::asJsonString)
 								.collect(toList()))
 						.orElse(emptyList());
 
 		Optional<PublicKey> decodedPublickey =
 				ofNullable(response.get("signaturePublickey"))
-						.map(JsonUtils::asString)
+						.map(JsonUtils::asJsonString)
 						.map(KeyUtils::parseSignaturePublicKey);
 
 		Map<String, Object> meta =
 				ofNullable(response.get("meta"))
-						.map(it -> (Map<String, Object>) new TreeMap<>(asObject(it)))
+						.map(it -> (Map<String, Object>) new TreeMap<>(asJsonObject(it)))
 						.orElse(emptyMap());
 
 		return new YggdrasilConfiguration(apiRoot, unmodifiableList(skinDomains), unmodifiableMap(meta), decodedPublickey);
