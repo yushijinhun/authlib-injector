@@ -61,7 +61,7 @@ public class UrlReplaceTest {
 			},
 			{
 				// from: [mcp940]/net.minecraft.client.entity.AbstractClientPlayer
-				// issue: to2mbn/authlib-injector#7 <https://github.com/to2mbn/authlib-injector/issues/7>
+				// issue: yushijinhun/authlib-injector#7 <https://github.com/yushijinhun/authlib-injector/issues/7>
 				"http://skins.minecraft.net/MinecraftSkins/%s.png",
 				"https://yggdrasil.example.com/skins/MinecraftSkins/%s.png"
 			},
@@ -74,7 +74,7 @@ public class UrlReplaceTest {
 			{
 				// from: [wiki.vg]/Mojang_API/Username -> UUID at time
 				// url: http://wiki.vg/Mojang_API#Username_-.3E_UUID_at_time
-				// issue: to2mbn/authlib-injector#6 <https://github.com/to2mbn/authlib-injector/issues/6>
+				// issue: yushijinhun/authlib-injector#6 <https://github.com/yushijinhun/authlib-injector/issues/6>
 				"https://api.mojang.com/users/profiles/minecraft/",
 				"https://yggdrasil.example.com/api/users/profiles/minecraft/"
 			}
