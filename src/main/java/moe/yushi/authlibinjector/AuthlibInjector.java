@@ -30,6 +30,35 @@ public final class AuthlibInjector {
 			"com.ibm.", "joptsimple.", "moe.yushi.authlibinjector.", "org.graalvm.", "org.GNOME.", "it.unimi.dsi.fastutil.",
 			"oshi." };
 
+	// ==== System Properties ===
+
+	/**
+	 * Stores the API root, should be set before {@link #bootstrap(Consumer)} is invoked.
+	 */
+	public static final String PROP_API_ROOT = "authlibinjector.yggdrasil";
+
+	/**
+	 * Stores the prefetched API root response, should be set by the launcher.
+	 */
+	public static final String PROP_PREFETCHED_DATA = "authlibinjector.yggdrasil.prefetched";
+
+	/**
+	 * @see #PROP_PREFETCHED_DATA
+	 */
+	public static final String PROP_PREFETCHED_DATA_OLD = "org.to2mbn.authlibinjector.config.prefetched";
+
+	/**
+	 * Whether to disable the local httpd server.
+	 */
+	public static final String PROP_DISABLE_HTTPD = "authlibinjector.httpd.disable";
+
+	/**
+	 * Whether to turn on debug logging.
+	 */
+	public static final String PROP_DEBUG = "authlibinjector.debug";
+
+	// ====
+
 	private AuthlibInjector() {}
 
 	private static AtomicBoolean booted = new AtomicBoolean(false);
@@ -50,15 +79,26 @@ public final class AuthlibInjector {
 		}
 	}
 
+	private static Optional<String> getPrefetchedResponse() {
+		String prefetched = System.getProperty(PROP_PREFETCHED_DATA);
+		if (prefetched == null) {
+			prefetched = System.getProperty(PROP_PREFETCHED_DATA_OLD);
+			if (prefetched != null) {
+				info("warning: org.to2mbn.authlibinjector.config.prefetched option is deprecated and will be removed in a future release.");
+			}
+		}
+		return Optional.ofNullable(prefetched);
+	}
+
 	private static Optional<YggdrasilConfiguration> configure() {
-		String apiRoot = System.getProperty("org.to2mbn.authlibinjector.config");
+		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
 		info("api root: {0}", apiRoot);
 
 		String metadataResponse;
 
-		String prefetched = System.getProperty("org.to2mbn.authlibinjector.config.prefetched");
-		if (prefetched == null) {
+		Optional<String> prefetched = getPrefetchedResponse();
+		if (!prefetched.isPresent()) {
 			info("fetching metadata");
 			try {
 				metadataResponse = asString(getURL(apiRoot));
@@ -70,11 +110,11 @@ public final class AuthlibInjector {
 		} else {
 			info("prefetched metadata detected");
 			try {
-				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched)), UTF_8);
+				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched.get())), UTF_8);
 			} catch (IllegalArgumentException e) {
 				info("unable to decode metadata: {0}\n"
 						+ "metadata to decode:\n"
-						+ "{1}", e, prefetched);
+						+ "{1}", e, prefetched.get());
 				throw e;
 			}
 		}
@@ -101,7 +141,7 @@ public final class AuthlibInjector {
 		for (String ignore : nonTransformablePackages)
 			transformer.ignores.add(ignore);
 
-		if (!"true".equals(System.getProperty("org.to2mbn.authlibinjector.httpd.disable"))) {
+		if (!"true".equals(System.getProperty(PROP_DISABLE_HTTPD))) {
 			transformer.units.add(DeprecatedApiHandle.createTransformUnit(config));
 		}
 

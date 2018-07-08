@@ -1,5 +1,6 @@
 package moe.yushi.authlibinjector.javaagent;
 
+import static moe.yushi.authlibinjector.AuthlibInjector.PROP_API_ROOT;
 import static moe.yushi.authlibinjector.AuthlibInjector.bootstrap;
 import static moe.yushi.authlibinjector.AuthlibInjector.nonTransformablePackages;
 import static moe.yushi.authlibinjector.util.LoggingUtils.debug;
@@ -50,7 +51,7 @@ public class AuthlibInjectorPremain {
 
 	private static void setupConfig(String arg) {
 		if (arg != null && !arg.isEmpty()) {
-			System.setProperty("org.to2mbn.authlibinjector.config", arg);
+			System.setProperty(PROP_API_ROOT, arg);
 		}
 	}
 
