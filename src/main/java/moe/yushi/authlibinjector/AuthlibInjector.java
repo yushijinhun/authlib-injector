@@ -51,7 +51,7 @@ public final class AuthlibInjector {
 	public static final String PROP_DISABLE_HTTPD = "authlibinjector.httpd.disable";
 
 	/**
-	 * Whether to turn on debug logging.
+	 * The name of loggers to have debug level turned on.
 	 */
 	public static final String PROP_DEBUG = "authlibinjector.debug";
 
