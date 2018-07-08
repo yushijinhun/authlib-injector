@@ -28,6 +28,7 @@ gradle
 ```
 
 ## 调试
+### 调试输出
 添加以下 JVM 参数：
 ```
 -Dauthlibinjector.debug={要打印的调试信息类型}
@@ -39,3 +40,10 @@ gradle
  * `httpd` 有关本地 HTTP 服务器的（其负责在本地处理掉部分请求，而不是发送到 Yggdrasil 服务端）
 
 可以指定多个类型，中间用 `,` 分隔。如果要打印以上所有调试信息，可以设置其为 `all`。
+
+### 保存修改过的类
+添加以下 JVM 参数：
+```
+-Dauthlibinjector.dumpClass=true
+```
+修改过的类文件会保存在当前目录下。
