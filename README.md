@@ -26,3 +26,16 @@ gradle
 ```
 -javaagent:{authlib-injector.jar 的路径}={Yggdrasil 服务端的 URL（API Root）}
 ```
+
+## 调试
+添加以下 JVM 参数：
+```
+-Dauthlibinjector.debug={要打印的调试信息类型}
+```
+调试信息类型有：
+ * `launch` 有关 authlib-injector 加载的
+ * `transform` 有关字节码修改的
+ * `config` 有关配置获取的
+ * `httpd` 有关本地 HTTP 服务器的（其负责在本地处理掉部分请求，而不是发送到 Yggdrasil 服务端）
+
+可以指定多个类型，中间用 `,` 分隔。如果要打印以上所有调试信息，可以设置其为 `all`。
