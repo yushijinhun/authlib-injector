@@ -1,7 +1,5 @@
 package moe.yushi.authlibinjector.transform;
 
-import static moe.yushi.authlibinjector.util.LoggingUtils.debug;
-import static moe.yushi.authlibinjector.util.LoggingUtils.info;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -14,9 +12,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import moe.yushi.authlibinjector.util.Logging;
 
 public class ClassTransformer implements ClassFileTransformer {
 
@@ -52,7 +52,7 @@ public class ClassTransformer implements ClassFileTransformer {
 				ClassReader reader = new ClassReader(classBuffer);
 				reader.accept(optionalVisitor.get(), 0);
 				if (currentModified) {
-					info("transform {0} using {1}", className, unit);
+					Logging.TRANSFORM.info("transform " + className + " using " + unit);
 					modified = true;
 					classBuffer = writer.toByteArray();
 				}
@@ -88,12 +88,11 @@ public class ClassTransformer implements ClassFileTransformer {
 					}
 					return classBuffer;
 				} else {
-					debug("no transform performed on {0}", className);
+					Logging.TRANSFORM.fine("no transform performed on " + className);
 					return null;
 				}
 			} catch (Throwable e) {
-				info("unable to transform {0}: {1}", internalClassName, e);
-				e.printStackTrace();
+				Logging.TRANSFORM.log(Level.WARNING, "unable to transform: " + internalClassName, e);
 			}
 		}
 		return null;
@@ -103,8 +102,7 @@ public class ClassTransformer implements ClassFileTransformer {
 		try {
 			Files.write(Paths.get(className + "_dump.class"), classBuffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (IOException e) {
-			info("unable to dump class {0}: {1}", className, e);
-			e.printStackTrace();
+			Logging.TRANSFORM.log(Level.WARNING, "unable to dump class " + className, e);
 		}
 	}
 

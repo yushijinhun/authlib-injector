@@ -13,13 +13,12 @@ import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonString;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
-import static moe.yushi.authlibinjector.util.LoggingUtils.debug;
-import static moe.yushi.authlibinjector.util.LoggingUtils.info;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import fi.iki.elonen.NanoHTTPD;
@@ -28,6 +27,7 @@ import moe.yushi.authlibinjector.YggdrasilConfiguration;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONArray;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
+import moe.yushi.authlibinjector.util.Logging;
 
 public class DeprecatedApiHttpd extends NanoHTTPD {
 
@@ -61,25 +61,25 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 					.map(encoded -> asString(Base64.getDecoder().decode(encoded)))
 					.flatMap(texturesPayload -> obtainTextureUrl(texturesPayload, "SKIN"));
 		} catch (UncheckedIOException e) {
-			info("[httpd] unable to fetch skin for {0}: {1}", username, e);
+			Logging.HTTPD.log(Level.WARNING, "unable to fetch skin for " + username, e);
 			return of(newFixedLengthResponse(Status.INTERNAL_ERROR, null, null));
 		}
 
 		if (skinUrl.isPresent()) {
 			String url = skinUrl.get();
-			debug("[httpd] retrieving skin for {0} from {1}", username, url);
+			Logging.HTTPD.fine("retrieving skin for " + username + " from " + url);
 			byte[] data;
 			try {
 				data = getURL(url);
 			} catch (IOException e) {
-				info("[httpd] unable to retrieve skin from {0}: {1}", url, e);
-				return of(newFixedLengthResponse(Status.NOT_FOUND, null, null));
+				Logging.HTTPD.log(Level.WARNING, "unable to retrieve skin from " + url, e);
+				return of(newFixedLengthResponse(Status.INTERNAL_ERROR, null, null));
 			}
-			info("[httpd] retrieved skin for {0} from {1}, {2} bytes", username, url, data.length);
+			Logging.HTTPD.info("retrieved skin for " + username + " from " + url + ", " + data.length + " bytes");
 			return of(newFixedLengthResponse(Status.OK, "image/png", new ByteArrayInputStream(data), data.length));
 
 		} else {
-			info("[httpd] no skin found for {0}", username);
+			Logging.HTTPD.info("no skin found for " + username);
 			return of(newFixedLengthResponse(Status.NOT_FOUND, null, null));
 		}
 	}
@@ -94,7 +94,7 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		debug("[httpd] query uuid of username {0}, response: {1}", username, responseText);
+		Logging.HTTPD.fine("query uuid of username " + username + ", response: " + responseText);
 
 		JSONArray response = asJsonArray(parseJson(responseText));
 		if (response.size() == 0) {
@@ -116,10 +116,10 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 			throw new UncheckedIOException(e);
 		}
 		if (responseText.isEmpty()) {
-			debug("[httpd] query profile of {0}, not found", uuid);
+			Logging.HTTPD.fine("query profile of " + uuid + ", not found");
 			return empty();
 		}
-		debug("[httpd] query profile of {0}, response: {1}", uuid, responseText);
+		Logging.HTTPD.fine("query profile of " + uuid + ", response: " + responseText);
 
 		JSONObject response = asJsonObject(parseJson(responseText));
 		return asJsonArray(response.get("properties")).stream()

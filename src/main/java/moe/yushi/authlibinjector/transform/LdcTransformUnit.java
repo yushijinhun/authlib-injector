@@ -1,11 +1,11 @@
 package moe.yushi.authlibinjector.transform;
 
-import static moe.yushi.authlibinjector.util.LoggingUtils.info;
 import static org.objectweb.asm.Opcodes.ASM6;
 import java.util.Optional;
 import java.util.function.Function;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+import moe.yushi.authlibinjector.util.Logging;
 
 public class LdcTransformUnit implements TransformUnit {
 
@@ -29,7 +29,7 @@ public class LdcTransformUnit implements TransformUnit {
 							Optional<String> transformed = ldcMapper.apply((String) cst);
 							if (transformed.isPresent() && !transformed.get().equals(cst)) {
 								modifiedCallback.run();
-								info("transform [{0}] to [{1}]", cst, transformed.get());
+								Logging.TRANSFORM.info("transform [" + cst + "] to [" + transformed.get() + "]");
 								super.visitLdcInsn(transformed.get());
 							} else {
 								super.visitLdcInsn(cst);

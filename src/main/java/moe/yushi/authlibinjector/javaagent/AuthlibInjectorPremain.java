@@ -3,32 +3,33 @@ package moe.yushi.authlibinjector.javaagent;
 import static moe.yushi.authlibinjector.AuthlibInjector.PROP_API_ROOT;
 import static moe.yushi.authlibinjector.AuthlibInjector.bootstrap;
 import static moe.yushi.authlibinjector.AuthlibInjector.nonTransformablePackages;
-import static moe.yushi.authlibinjector.util.LoggingUtils.debug;
-import static moe.yushi.authlibinjector.util.LoggingUtils.info;
 import java.lang.instrument.Instrumentation;
 import java.util.Arrays;
+import java.util.logging.Level;
+import moe.yushi.authlibinjector.util.Logging;
 
 public class AuthlibInjectorPremain {
 
+	static {
+		Logging.init();
+	}
+
 	public static void premain(String arg, Instrumentation instrumentation) {
 		try {
-			info("launched from premain");
+			Logging.ROOT.info("launched from premain");
 			initInjector(arg, instrumentation, false);
 		} catch (Throwable e) {
-			// prevent the exception being thrown to VM
-			e.printStackTrace();
-			info("an exception has been caught, exiting");
+			Logging.ROOT.log(Level.SEVERE, "an exception has been caught, exiting", e);
 			System.exit(1);
 		}
 	}
 
 	public static void agentmain(String arg, Instrumentation instrumentation) {
 		try {
-			info("launched from agentmain");
+			Logging.ROOT.info("launched from agentmain");
 			initInjector(arg, instrumentation, true);
 		} catch (Throwable e) {
-			// prevent the exception being thrown to VM
-			e.printStackTrace();
+			Logging.ROOT.log(Level.SEVERE, "an exception has been caught", e);
 		}
 	}
 
@@ -41,10 +42,10 @@ public class AuthlibInjectorPremain {
 
 		if (needsRetransform) {
 			if (retransformSupported) {
-				info("start retransforming");
+				Logging.TRANSFORM.info("start retransforming");
 				doRetransform(instrumentation);
 			} else {
-				info("retransforming is not supported");
+				Logging.TRANSFORM.warning("retransforming is not supported");
 			}
 		}
 	}
@@ -63,10 +64,9 @@ public class AuthlibInjectorPremain {
 				instrumentation.retransformClasses(classToRetransform);
 			}
 			long t1 = System.currentTimeMillis();
-			info("retransforming finished in {0}ms", t1 - t0);
+			Logging.TRANSFORM.info("retransforming finished in " + (t1 - t0) + "ms");
 		} catch (Throwable e) {
-			info("unable to retransform");
-			e.printStackTrace();
+			Logging.TRANSFORM.log(Level.SEVERE, "unable to retransform", e);
 		}
 	}
 
@@ -88,7 +88,7 @@ public class AuthlibInjectorPremain {
 				}
 			}
 		}
-		debug("loaded {0} classes, {1} to retransform", loadedClasses.length, idx);
+		Logging.TRANSFORM.fine("loaded " + loadedClasses.length + " classes, " + idx + " to retransform");
 		return Arrays.copyOf(dest, idx);
 	}
 

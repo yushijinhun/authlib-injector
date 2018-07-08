@@ -1,10 +1,10 @@
 package moe.yushi.authlibinjector.httpd;
 
-import static moe.yushi.authlibinjector.util.LoggingUtils.info;
 import java.io.IOException;
 import moe.yushi.authlibinjector.YggdrasilConfiguration;
 import moe.yushi.authlibinjector.transform.DeprecatedApiTransformUnit;
 import moe.yushi.authlibinjector.transform.TransformUnit;
+import moe.yushi.authlibinjector.util.Logging;
 
 public class DeprecatedApiHandle {
 
@@ -40,7 +40,7 @@ public class DeprecatedApiHandle {
 			} catch (IOException e) {
 				throw new IllegalStateException("httpd failed to start");
 			}
-			info("httpd is running on port {0,number,#}", getLocalApiPort());
+			Logging.HTTPD.info("httpd is running on port " + getLocalApiPort());
 			started = true;
 		}
 	}

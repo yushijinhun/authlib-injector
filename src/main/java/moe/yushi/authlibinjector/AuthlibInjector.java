@@ -6,9 +6,6 @@ import static java.util.Optional.of;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.getURL;
 import static moe.yushi.authlibinjector.util.IOUtils.removeNewLines;
-import static moe.yushi.authlibinjector.util.LoggingUtils.debug;
-import static moe.yushi.authlibinjector.util.LoggingUtils.info;
-import static moe.yushi.authlibinjector.util.LoggingUtils.isDebugOn;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.instrument.ClassFileTransformer;
@@ -21,6 +18,7 @@ import moe.yushi.authlibinjector.transform.ClassTransformer;
 import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.YggdrasilApiTransformUnit;
 import moe.yushi.authlibinjector.transform.YggdrasilKeyTransformUnit;
+import moe.yushi.authlibinjector.util.Logging;
 
 public final class AuthlibInjector {
 
@@ -65,17 +63,17 @@ public final class AuthlibInjector {
 
 	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
 		if (!booted.compareAndSet(false, true)) {
-			info("already booted, skipping");
+			Logging.ROOT.info("already booted, skipping");
 			return;
 		}
 
-		info("version: " + getVersion());
+		Logging.ROOT.info("version: " + getVersion());
 
 		Optional<YggdrasilConfiguration> optionalConfig = configure();
 		if (optionalConfig.isPresent()) {
 			transformerRegistry.accept(createTransformer(optionalConfig.get()));
 		} else {
-			info("no config available");
+			Logging.ROOT.warning("no config available");
 		}
 	}
 
@@ -84,7 +82,7 @@ public final class AuthlibInjector {
 		if (prefetched == null) {
 			prefetched = System.getProperty(PROP_PREFETCHED_DATA_OLD);
 			if (prefetched != null) {
-				info("warning: org.to2mbn.authlibinjector.config.prefetched option is deprecated and will be removed in a future release.");
+				Logging.ROOT.warning("org.to2mbn.authlibinjector.config.prefetched option is deprecated and will be removed in a future release.");
 			}
 		}
 		return Optional.ofNullable(prefetched);
@@ -93,51 +91,50 @@ public final class AuthlibInjector {
 	private static Optional<YggdrasilConfiguration> configure() {
 		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
-		info("api root: {0}", apiRoot);
+		Logging.ROOT.info("api root: " + apiRoot);
 
 		String metadataResponse;
 
 		Optional<String> prefetched = getPrefetchedResponse();
 		if (!prefetched.isPresent()) {
-			info("fetching metadata");
+			Logging.ROOT.info("fetching metadata");
 			try {
 				metadataResponse = asString(getURL(apiRoot));
 			} catch (IOException e) {
-				info("unable to fetch metadata: {0}", e);
+				Logging.ROOT.severe("unable to fetch metadata: " + e);
 				throw new UncheckedIOException(e);
 			}
 
 		} else {
-			info("prefetched metadata detected");
+			Logging.ROOT.info("prefetched metadata detected");
 			try {
 				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched.get())), UTF_8);
 			} catch (IllegalArgumentException e) {
-				info("unable to decode metadata: {0}\n"
+				Logging.ROOT.severe("unable to decode metadata: " + e + "\n"
 						+ "metadata to decode:\n"
-						+ "{1}", e, prefetched.get());
+						+ prefetched.get());
 				throw e;
 			}
 		}
 
-		debug("metadata: {0}", metadataResponse);
+		Logging.ROOT.fine("metadata: " + metadataResponse);
 
 		YggdrasilConfiguration configuration;
 		try {
 			configuration = YggdrasilConfiguration.parse(apiRoot, metadataResponse);
 		} catch (UncheckedIOException e) {
-			info("unable to parse metadata: {0}\n"
+			Logging.ROOT.severe("unable to parse metadata: " + e + "\n"
 					+ "metadata to parse:\n"
-					+ "{1}",
-					e, metadataResponse);
+					+ metadataResponse);
 			throw e;
 		}
-		debug("parsed metadata: {0}", configuration);
+		Logging.ROOT.fine("parsed metadata: " + configuration);
 		return of(configuration);
 	}
 
 	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
 		ClassTransformer transformer = new ClassTransformer();
-		transformer.debugSaveClass = isDebugOn();
+		transformer.debugSaveClass = false; // TODO: add an option?
 		for (String ignore : nonTransformablePackages)
 			transformer.ignores.add(ignore);
 
