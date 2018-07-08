@@ -16,20 +16,20 @@ public class AuthlibInjectorPremain {
 
 	public static void premain(String arg, Instrumentation instrumentation) {
 		try {
-			Logging.ROOT.info("launched from premain");
+			Logging.LAUNCH.info("launched from premain");
 			initInjector(arg, instrumentation, false);
 		} catch (Throwable e) {
-			Logging.ROOT.log(Level.SEVERE, "an exception has been caught, exiting", e);
+			Logging.LAUNCH.log(Level.SEVERE, "an exception has been caught, exiting", e);
 			System.exit(1);
 		}
 	}
 
 	public static void agentmain(String arg, Instrumentation instrumentation) {
 		try {
-			Logging.ROOT.info("launched from agentmain");
+			Logging.LAUNCH.info("launched from agentmain");
 			initInjector(arg, instrumentation, true);
 		} catch (Throwable e) {
-			Logging.ROOT.log(Level.SEVERE, "an exception has been caught", e);
+			Logging.LAUNCH.log(Level.SEVERE, "an exception has been caught", e);
 		}
 	}
 

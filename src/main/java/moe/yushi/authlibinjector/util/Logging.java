@@ -14,6 +14,8 @@ public final class Logging {
 	private Logging() {}
 
 	public static final Logger ROOT = Logger.getLogger("moe.yushi.authlibinjector");
+	public static final Logger LAUNCH = Logger.getLogger("moe.yushi.authlibinjector.launch");
+	public static final Logger CONFIG = Logger.getLogger("moe.yushi.authlibinjector.config");
 	public static final Logger TRANSFORM = Logger.getLogger("moe.yushi.authlibinjector.transform");
 	public static final Logger HTTPD = Logger.getLogger("moe.yushi.authlibinjector.httpd");
 
