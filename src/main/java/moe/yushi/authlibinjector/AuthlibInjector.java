@@ -55,6 +55,11 @@ public final class AuthlibInjector {
 	 */
 	public static final String PROP_DEBUG = "authlibinjector.debug";
 
+	/**
+	 * Whether to save modified classes for debugging.
+	 */
+	public static final String PROP_DUMP_CLASS = "authlibinjector.dumpClass";
+
 	// ====
 
 	private AuthlibInjector() {}
@@ -134,7 +139,7 @@ public final class AuthlibInjector {
 
 	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
 		ClassTransformer transformer = new ClassTransformer();
-		transformer.debugSaveClass = false; // TODO: add an option?
+		transformer.debugSaveClass = "true".equals(System.getProperty(PROP_DUMP_CLASS));
 		for (String ignore : nonTransformablePackages)
 			transformer.ignores.add(ignore);
 
