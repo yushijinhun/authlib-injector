@@ -21,7 +21,7 @@ gradle
 构建输出位于 `build/libs` 下。
 
 ## 部署
-需要服务端实现本规范中的[扩展 API](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83#%E6%89%A9%E5%B1%95api)。
+需要服务端实现本规范中的[扩展 API](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83#%E6%89%A9%E5%B1%95-api)。
 通过添加以下 JVM 参数来配置：
 ```
 -javaagent:{authlib-injector.jar 的路径}={Yggdrasil 服务端的 URL（API Root）}
