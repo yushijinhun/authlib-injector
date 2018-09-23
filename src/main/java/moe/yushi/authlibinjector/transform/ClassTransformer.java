@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.ProtectionDomain;
@@ -99,8 +100,10 @@ public class ClassTransformer implements ClassFileTransformer {
 	}
 
 	private void saveClassFile(String className, byte[] classBuffer) {
+		Path dumpFile = Paths.get(className + "_dump.class");
 		try {
-			Files.write(Paths.get(className + "_dump.class"), classBuffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+			Files.write(dumpFile, classBuffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+			Logging.TRANSFORM.info("Transformed class is dumped to [" + dumpFile + "]");
 		} catch (IOException e) {
 			Logging.TRANSFORM.log(Level.WARNING, "Failed to dump class [" + className + "]", e);
 		}
