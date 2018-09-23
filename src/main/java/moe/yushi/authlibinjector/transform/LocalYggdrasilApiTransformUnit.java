@@ -4,6 +4,7 @@ import java.util.Map;
 
 import moe.yushi.authlibinjector.YggdrasilConfiguration;
 import moe.yushi.authlibinjector.httpd.LocalYggdrasilHandle;
+import moe.yushi.authlibinjector.util.Logging;
 
 public class LocalYggdrasilApiTransformUnit extends DomainBasedTransformUnit {
 
@@ -13,7 +14,11 @@ public class LocalYggdrasilApiTransformUnit extends DomainBasedTransformUnit {
 		handle = new LocalYggdrasilHandle(config);
 
 		Map<String, String> mapping = getDomainMapping();
-		mapping.put("skins.minecraft.net", "skins");
+		if (Boolean.TRUE.equals(config.getMeta().get("feature.legacy_skin_api"))) {
+			Logging.CONFIG.info("Disabled local redirect for legacy skin API, as the remote Yggdrasil server supports it");
+		} else {
+			mapping.put("skins.minecraft.net", "skins");
+		}
 	}
 
 	@Override
