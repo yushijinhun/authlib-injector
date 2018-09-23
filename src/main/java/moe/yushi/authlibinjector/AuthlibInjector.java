@@ -102,7 +102,6 @@ public final class AuthlibInjector {
 
 		Optional<String> prefetched = getPrefetchedResponse();
 		if (!prefetched.isPresent()) {
-			Logging.CONFIG.info("Fetching metadata");
 			try {
 				metadataResponse = asString(getURL(apiRoot));
 			} catch (IOException e) {
