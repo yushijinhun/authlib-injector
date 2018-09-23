@@ -89,7 +89,7 @@ public class ClassTransformer implements ClassFileTransformer {
 					}
 					return classBuffer;
 				} else {
-					Logging.TRANSFORM.fine("No transformation is applied to [" + className + "]");
+					Logging.TRANSFORM_SKIPPED.fine("No transformation is applied to [" + className + "]");
 					return null;
 				}
 			} catch (Throwable e) {
