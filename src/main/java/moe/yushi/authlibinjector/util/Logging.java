@@ -32,7 +32,7 @@ public final class Logging {
 	private static void initRootLogger() {
 		ROOT.setLevel(Level.ALL);
 		ROOT.setUseParentHandlers(false);
-		StreamHandler handler = new StreamHandler(System.err, new Formatter() {
+		StreamHandler handler = new StreamHandler(System.out, new Formatter() {
 			private String convertLoggerName(String loggerName) {
 				if (loggerName.startsWith(PREFIX)) {
 					return "authlib-injector" + loggerName.substring(PREFIX.length());
