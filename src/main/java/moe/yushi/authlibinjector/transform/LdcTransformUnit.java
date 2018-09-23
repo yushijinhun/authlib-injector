@@ -29,7 +29,7 @@ public class LdcTransformUnit implements TransformUnit {
 							Optional<String> transformed = ldcMapper.apply((String) cst);
 							if (transformed.isPresent() && !transformed.get().equals(cst)) {
 								modifiedCallback.run();
-								Logging.TRANSFORM.info("transform [" + cst + "] to [" + transformed.get() + "]");
+								Logging.TRANSFORM.info("Transformed string [" + cst + "] to [" + transformed.get() + "]");
 								super.visitLdcInsn(transformed.get());
 							} else {
 								super.visitLdcInsn(cst);

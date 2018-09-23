@@ -61,25 +61,25 @@ public class LocalYggdrasilHttpd extends NanoHTTPD {
 					.map(encoded -> asString(Base64.getDecoder().decode(encoded)))
 					.flatMap(texturesPayload -> obtainTextureUrl(texturesPayload, "SKIN"));
 		} catch (UncheckedIOException e) {
-			Logging.HTTPD.log(Level.WARNING, "unable to fetch skin for " + username, e);
+			Logging.HTTPD.log(Level.WARNING, "Failed to fetch skin for " + username, e);
 			return of(newFixedLengthResponse(Status.INTERNAL_ERROR, null, null));
 		}
 
 		if (skinUrl.isPresent()) {
 			String url = skinUrl.get();
-			Logging.HTTPD.fine("retrieving skin for " + username + " from " + url);
+			Logging.HTTPD.fine("Retrieving skin for " + username + " from " + url);
 			byte[] data;
 			try {
 				data = getURL(url);
 			} catch (IOException e) {
-				Logging.HTTPD.log(Level.WARNING, "unable to retrieve skin from " + url, e);
+				Logging.HTTPD.log(Level.WARNING, "Failed to retrieve skin from " + url, e);
 				return of(newFixedLengthResponse(Status.INTERNAL_ERROR, null, null));
 			}
-			Logging.HTTPD.info("retrieved skin for " + username + " from " + url + ", " + data.length + " bytes");
+			Logging.HTTPD.info("Retrieved skin for " + username + " from " + url + ", " + data.length + " bytes");
 			return of(newFixedLengthResponse(Status.OK, "image/png", new ByteArrayInputStream(data), data.length));
 
 		} else {
-			Logging.HTTPD.info("no skin found for " + username);
+			Logging.HTTPD.info("No skin is found for " + username);
 			return of(newFixedLengthResponse(Status.NOT_FOUND, null, null));
 		}
 	}
@@ -94,7 +94,7 @@ public class LocalYggdrasilHttpd extends NanoHTTPD {
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		Logging.HTTPD.fine("query uuid of username " + username + ", response: " + responseText);
+		Logging.HTTPD.fine("Query UUID of username " + username + ", response: " + responseText);
 
 		JSONArray response = asJsonArray(parseJson(responseText));
 		if (response.size() == 0) {
@@ -116,10 +116,10 @@ public class LocalYggdrasilHttpd extends NanoHTTPD {
 			throw new UncheckedIOException(e);
 		}
 		if (responseText.isEmpty()) {
-			Logging.HTTPD.fine("query profile of " + uuid + ", not found");
+			Logging.HTTPD.fine("Query profile of " + uuid + ", not found");
 			return empty();
 		}
-		Logging.HTTPD.fine("query profile of " + uuid + ", response: " + responseText);
+		Logging.HTTPD.fine("Query profile of " + uuid + ", response: " + responseText);
 
 		JSONObject response = asJsonObject(parseJson(responseText));
 		return asJsonArray(response.get("properties")).stream()
@@ -137,7 +137,7 @@ public class LocalYggdrasilHttpd extends NanoHTTPD {
 				.map(JsonUtils::asJsonObject)
 				.map(it -> ofNullable(it.get("url"))
 						.map(JsonUtils::asJsonString)
-						.orElseThrow(() -> newUncheckedIOException("Invalid JSON: missing texture url")));
+						.orElseThrow(() -> newUncheckedIOException("Invalid JSON: Missing texture url")));
 	}
 
 }

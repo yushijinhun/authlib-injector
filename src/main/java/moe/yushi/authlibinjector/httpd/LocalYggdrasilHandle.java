@@ -33,14 +33,14 @@ public class LocalYggdrasilHandle {
 			if (started)
 				return;
 			if (configuration == null)
-				throw new IllegalStateException("configuration hasn't been set yet");
+				throw new IllegalStateException("Configuration hasn't been set yet");
 			httpd = new LocalYggdrasilHttpd(0, configuration);
 			try {
 				httpd.start();
 			} catch (IOException e) {
-				throw new IllegalStateException("httpd failed to start");
+				throw new IllegalStateException("Httpd failed to start");
 			}
-			Logging.HTTPD.info("httpd is running on port " + getLocalApiPort());
+			Logging.HTTPD.info("Httpd is running on port " + getLocalApiPort());
 			started = true;
 		}
 	}

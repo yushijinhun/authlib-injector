@@ -16,20 +16,20 @@ public class AuthlibInjectorPremain {
 
 	public static void premain(String arg, Instrumentation instrumentation) {
 		try {
-			Logging.LAUNCH.info("launched from premain");
+			Logging.LAUNCH.info("Launched from premain");
 			initInjector(arg, instrumentation, false);
 		} catch (Throwable e) {
-			Logging.LAUNCH.log(Level.SEVERE, "an exception has been caught, exiting", e);
+			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred, exiting", e);
 			System.exit(1);
 		}
 	}
 
 	public static void agentmain(String arg, Instrumentation instrumentation) {
 		try {
-			Logging.LAUNCH.info("launched from agentmain");
+			Logging.LAUNCH.info("Launched from agentmain");
 			initInjector(arg, instrumentation, true);
 		} catch (Throwable e) {
-			Logging.LAUNCH.log(Level.SEVERE, "an exception has been caught", e);
+			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred", e);
 		}
 	}
 
@@ -42,10 +42,10 @@ public class AuthlibInjectorPremain {
 
 		if (needsRetransform) {
 			if (retransformSupported) {
-				Logging.TRANSFORM.info("start retransforming");
+				Logging.TRANSFORM.info("Start retransforming");
 				doRetransform(instrumentation);
 			} else {
-				Logging.TRANSFORM.warning("retransforming is not supported");
+				Logging.TRANSFORM.warning("Retransform is not supported");
 			}
 		}
 	}
@@ -64,9 +64,9 @@ public class AuthlibInjectorPremain {
 				instrumentation.retransformClasses(classToRetransform);
 			}
 			long t1 = System.currentTimeMillis();
-			Logging.TRANSFORM.info("retransforming finished in " + (t1 - t0) + "ms");
+			Logging.TRANSFORM.info("Retransform finished in " + (t1 - t0) + "ms");
 		} catch (Throwable e) {
-			Logging.TRANSFORM.log(Level.SEVERE, "unable to retransform", e);
+			Logging.TRANSFORM.log(Level.SEVERE, "Failed to retransform", e);
 		}
 	}
 
@@ -88,7 +88,7 @@ public class AuthlibInjectorPremain {
 				}
 			}
 		}
-		Logging.TRANSFORM.fine("loaded " + loadedClasses.length + " classes, " + idx + " to retransform");
+		Logging.TRANSFORM.fine("Loaded " + loadedClasses.length + " classes, " + idx + " to retransform");
 		return Arrays.copyOf(dest, idx);
 	}
 

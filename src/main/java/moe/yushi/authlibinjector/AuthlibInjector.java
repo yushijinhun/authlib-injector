@@ -68,17 +68,17 @@ public final class AuthlibInjector {
 
 	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
 		if (!booted.compareAndSet(false, true)) {
-			Logging.LAUNCH.info("already booted, skipping");
+			Logging.LAUNCH.info("Already started, skipping");
 			return;
 		}
 
-		Logging.LAUNCH.info("version: " + getVersion());
+		Logging.LAUNCH.info("Version: " + getVersion());
 
 		Optional<YggdrasilConfiguration> optionalConfig = configure();
 		if (optionalConfig.isPresent()) {
 			transformerRegistry.accept(createTransformer(optionalConfig.get()));
 		} else {
-			Logging.LAUNCH.warning("no config available");
+			Logging.LAUNCH.warning("No config available");
 		}
 	}
 
@@ -87,7 +87,7 @@ public final class AuthlibInjector {
 		if (prefetched == null) {
 			prefetched = System.getProperty(PROP_PREFETCHED_DATA_OLD);
 			if (prefetched != null) {
-				Logging.LAUNCH.warning("org.to2mbn.authlibinjector.config.prefetched option is deprecated and will be removed in a future release.");
+				Logging.LAUNCH.warning(PROP_PREFETCHED_DATA_OLD + " option is deprecated, please use " + PROP_PREFETCHED_DATA + " instead");
 			}
 		}
 		return Optional.ofNullable(prefetched);
@@ -96,44 +96,44 @@ public final class AuthlibInjector {
 	private static Optional<YggdrasilConfiguration> configure() {
 		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
-		Logging.CONFIG.info("api root: " + apiRoot);
+		Logging.CONFIG.info("API root: " + apiRoot);
 
 		String metadataResponse;
 
 		Optional<String> prefetched = getPrefetchedResponse();
 		if (!prefetched.isPresent()) {
-			Logging.CONFIG.info("fetching metadata");
+			Logging.CONFIG.info("Fetching metadata");
 			try {
 				metadataResponse = asString(getURL(apiRoot));
 			} catch (IOException e) {
-				Logging.CONFIG.severe("unable to fetch metadata: " + e);
+				Logging.CONFIG.severe("Failed to fetch metadata: " + e);
 				throw new UncheckedIOException(e);
 			}
 
 		} else {
-			Logging.CONFIG.info("prefetched metadata detected");
+			Logging.CONFIG.info("Prefetched metadata detected");
 			try {
 				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched.get())), UTF_8);
 			} catch (IllegalArgumentException e) {
-				Logging.CONFIG.severe("unable to decode metadata: " + e + "\n"
-						+ "metadata to decode:\n"
+				Logging.CONFIG.severe("Unable to decode metadata: " + e + "\n"
+						+ "Encoded metadata:\n"
 						+ prefetched.get());
 				throw e;
 			}
 		}
 
-		Logging.CONFIG.fine("metadata: " + metadataResponse);
+		Logging.CONFIG.fine("Metadata: " + metadataResponse);
 
 		YggdrasilConfiguration configuration;
 		try {
 			configuration = YggdrasilConfiguration.parse(apiRoot, metadataResponse);
 		} catch (UncheckedIOException e) {
-			Logging.CONFIG.severe("unable to parse metadata: " + e + "\n"
-					+ "metadata to parse:\n"
+			Logging.CONFIG.severe("Unable to parse metadata: " + e + "\n"
+					+ "Raw metadata:\n"
 					+ metadataResponse);
 			throw e;
 		}
-		Logging.CONFIG.fine("parsed metadata: " + configuration);
+		Logging.CONFIG.fine("Parsed metadata: " + configuration);
 		return of(configuration);
 	}
 

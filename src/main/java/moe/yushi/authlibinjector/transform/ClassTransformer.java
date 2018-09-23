@@ -52,7 +52,7 @@ public class ClassTransformer implements ClassFileTransformer {
 				ClassReader reader = new ClassReader(classBuffer);
 				reader.accept(optionalVisitor.get(), 0);
 				if (currentModified) {
-					Logging.TRANSFORM.info("transform " + className + " using " + unit);
+					Logging.TRANSFORM.info("Transformed " + className + " with " + unit);
 					modified = true;
 					classBuffer = writer.toByteArray();
 				}
@@ -88,11 +88,11 @@ public class ClassTransformer implements ClassFileTransformer {
 					}
 					return classBuffer;
 				} else {
-					Logging.TRANSFORM.fine("no transform performed on " + className);
+					Logging.TRANSFORM.fine("No transformation is applied to " + className);
 					return null;
 				}
 			} catch (Throwable e) {
-				Logging.TRANSFORM.log(Level.WARNING, "unable to transform: " + internalClassName, e);
+				Logging.TRANSFORM.log(Level.WARNING, "Failed to transform " + internalClassName, e);
 			}
 		}
 		return null;
@@ -102,7 +102,7 @@ public class ClassTransformer implements ClassFileTransformer {
 		try {
 			Files.write(Paths.get(className + "_dump.class"), classBuffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (IOException e) {
-			Logging.TRANSFORM.log(Level.WARNING, "unable to dump class " + className, e);
+			Logging.TRANSFORM.log(Level.WARNING, "Failed to dump class " + className, e);
 		}
 	}
 
