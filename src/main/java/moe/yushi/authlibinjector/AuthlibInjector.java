@@ -13,10 +13,10 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import moe.yushi.authlibinjector.httpd.LocalYggdrasilHandle;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
 import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
-import moe.yushi.authlibinjector.transform.YggdrasilApiTransformUnit;
+import moe.yushi.authlibinjector.transform.LocalYggdrasilApiTransformUnit;
+import moe.yushi.authlibinjector.transform.RemoteYggdrasilTransformUnit;
 import moe.yushi.authlibinjector.transform.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
 
@@ -143,10 +143,10 @@ public final class AuthlibInjector {
 			transformer.ignores.add(ignore);
 
 		if (!"true".equals(System.getProperty(PROP_DISABLE_HTTPD))) {
-			transformer.units.add(LocalYggdrasilHandle.createTransformUnit(config));
+			transformer.units.add(new LocalYggdrasilApiTransformUnit(config));
 		}
 
-		transformer.units.add(new YggdrasilApiTransformUnit(config.getApiRoot()));
+		transformer.units.add(new RemoteYggdrasilTransformUnit(config.getApiRoot()));
 
 		transformer.units.add(new SkinWhitelistTransformUnit(config.getSkinDomains().toArray(new String[0])));
 

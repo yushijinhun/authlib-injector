@@ -2,18 +2,11 @@ package moe.yushi.authlibinjector.transform;
 
 import static org.objectweb.asm.Opcodes.ASM6;
 import java.util.Optional;
-import java.util.function.Function;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import moe.yushi.authlibinjector.util.Logging;
 
-public class LdcTransformUnit implements TransformUnit {
-
-	private Function<String, Optional<String>> ldcMapper;
-
-	public LdcTransformUnit(Function<String, Optional<String>> ldcMapper) {
-		this.ldcMapper = ldcMapper;
-	}
+public abstract class LdcTransformUnit implements TransformUnit {
 
 	@Override
 	public Optional<ClassVisitor> transform(String className, ClassVisitor writer, Runnable modifiedCallback) {
@@ -26,7 +19,7 @@ public class LdcTransformUnit implements TransformUnit {
 					@Override
 					public void visitLdcInsn(Object cst) {
 						if (cst instanceof String) {
-							Optional<String> transformed = ldcMapper.apply((String) cst);
+							Optional<String> transformed = transformLdc((String) cst);
 							if (transformed.isPresent() && !transformed.get().equals(cst)) {
 								modifiedCallback.run();
 								Logging.TRANSFORM.fine("Transformed string [" + cst + "] to [" + transformed.get() + "]");
@@ -42,4 +35,6 @@ public class LdcTransformUnit implements TransformUnit {
 			}
 		});
 	}
+
+	protected abstract Optional<String> transformLdc(String input);
 }

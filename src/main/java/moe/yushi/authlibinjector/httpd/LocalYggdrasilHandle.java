@@ -2,19 +2,9 @@ package moe.yushi.authlibinjector.httpd;
 
 import java.io.IOException;
 import moe.yushi.authlibinjector.YggdrasilConfiguration;
-import moe.yushi.authlibinjector.transform.LocalYggdrasilApiTransformUnit;
-import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class LocalYggdrasilHandle {
-
-	public static TransformUnit createTransformUnit(YggdrasilConfiguration configuration) {
-		LocalYggdrasilHandle handle = new LocalYggdrasilHandle(configuration);
-		return new LocalYggdrasilApiTransformUnit(() -> {
-			handle.ensureStarted();
-			return "http://127.0.0.1:" + handle.getLocalApiPort();
-		});
-	}
 
 	private boolean started = false;
 	private YggdrasilConfiguration configuration;

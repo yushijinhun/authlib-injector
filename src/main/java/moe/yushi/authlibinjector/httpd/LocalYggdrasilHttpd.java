@@ -33,8 +33,7 @@ public class LocalYggdrasilHttpd extends NanoHTTPD {
 
 	public static final String CONTENT_TYPE_JSON = "application/json; charset=utf-8";
 
-	// ^/MinecraftSkins/([^/]+)\.png$
-	private static final Pattern URL_SKINS = Pattern.compile("^/MinecraftSkins/(?<username>[^/]+)\\.png$");
+	private static final Pattern URL_SKINS = Pattern.compile("^/skins/MinecraftSkins/(?<username>[^/]+)\\.png$");
 
 	private YggdrasilConfiguration configuration;
 

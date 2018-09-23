@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-import moe.yushi.authlibinjector.transform.YggdrasilApiTransformUnit;
+import moe.yushi.authlibinjector.transform.RemoteYggdrasilTransformUnit;
 
 @RunWith(Parameterized.class)
 public class UrlReplaceTest {
@@ -90,9 +90,8 @@ public class UrlReplaceTest {
 
 	@Test
 	public void test() {
-		assertEquals(output,
-				YggdrasilApiTransformUnit.REGEX.matcher(input).replaceAll(
-						YggdrasilApiTransformUnit.REPLACEMENT.apply(apiRoot)));
+		RemoteYggdrasilTransformUnit transformer = new RemoteYggdrasilTransformUnit(apiRoot);
+		assertEquals(output, transformer.transformLdc(input).get());
 	}
 
 }
