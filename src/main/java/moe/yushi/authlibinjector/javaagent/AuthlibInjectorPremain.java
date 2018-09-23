@@ -16,7 +16,6 @@ public class AuthlibInjectorPremain {
 
 	public static void premain(String arg, Instrumentation instrumentation) {
 		try {
-			Logging.LAUNCH.info("Launched from premain");
 			initInjector(arg, instrumentation, false);
 		} catch (Throwable e) {
 			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred, exiting", e);
