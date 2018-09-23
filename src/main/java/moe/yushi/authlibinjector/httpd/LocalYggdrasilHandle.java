@@ -6,10 +6,10 @@ import moe.yushi.authlibinjector.transform.DeprecatedApiTransformUnit;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
 
-public class DeprecatedApiHandle {
+public class LocalYggdrasilHandle {
 
 	public static TransformUnit createTransformUnit(YggdrasilConfiguration configuration) {
-		DeprecatedApiHandle handle = new DeprecatedApiHandle(configuration);
+		LocalYggdrasilHandle handle = new LocalYggdrasilHandle(configuration);
 		return new DeprecatedApiTransformUnit(() -> {
 			handle.ensureStarted();
 			return "http://127.0.0.1:" + handle.getLocalApiPort();
@@ -18,11 +18,11 @@ public class DeprecatedApiHandle {
 
 	private boolean started = false;
 	private YggdrasilConfiguration configuration;
-	private DeprecatedApiHttpd httpd;
+	private LocalYggdrasilHttpd httpd;
 
 	private final Object _lock = new Object();
 
-	public DeprecatedApiHandle(YggdrasilConfiguration configuration) {
+	public LocalYggdrasilHandle(YggdrasilConfiguration configuration) {
 		this.configuration = configuration;
 	}
 
@@ -34,7 +34,7 @@ public class DeprecatedApiHandle {
 				return;
 			if (configuration == null)
 				throw new IllegalStateException("configuration hasn't been set yet");
-			httpd = new DeprecatedApiHttpd(0, configuration);
+			httpd = new LocalYggdrasilHttpd(0, configuration);
 			try {
 				httpd.start();
 			} catch (IOException e) {

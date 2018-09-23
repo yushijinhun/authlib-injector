@@ -29,7 +29,7 @@ import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
 import moe.yushi.authlibinjector.util.Logging;
 
-public class DeprecatedApiHttpd extends NanoHTTPD {
+public class LocalYggdrasilHttpd extends NanoHTTPD {
 
 	public static final String CONTENT_TYPE_JSON = "application/json; charset=utf-8";
 
@@ -38,7 +38,7 @@ public class DeprecatedApiHttpd extends NanoHTTPD {
 
 	private YggdrasilConfiguration configuration;
 
-	public DeprecatedApiHttpd(int port, YggdrasilConfiguration configuration) {
+	public LocalYggdrasilHttpd(int port, YggdrasilConfiguration configuration) {
 		super("127.0.0.1", port);
 		this.configuration = configuration;
 	}

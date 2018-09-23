@@ -13,7 +13,7 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import moe.yushi.authlibinjector.httpd.DeprecatedApiHandle;
+import moe.yushi.authlibinjector.httpd.LocalYggdrasilHandle;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
 import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.YggdrasilApiTransformUnit;
@@ -144,7 +144,7 @@ public final class AuthlibInjector {
 			transformer.ignores.add(ignore);
 
 		if (!"true".equals(System.getProperty(PROP_DISABLE_HTTPD))) {
-			transformer.units.add(DeprecatedApiHandle.createTransformUnit(config));
+			transformer.units.add(LocalYggdrasilHandle.createTransformUnit(config));
 		}
 
 		transformer.units.add(new YggdrasilApiTransformUnit(config.getApiRoot()));
