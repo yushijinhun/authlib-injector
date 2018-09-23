@@ -22,6 +22,6 @@ public class YggdrasilApiTransformUnit extends RegexTransformUnit {
 
 	@Override
 	public String toString() {
-		return "yggdrasil-api-transform";
+		return "Yggdrasil API Transformer";
 	}
 }

@@ -81,7 +81,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 	@Override
 	public String toString() {
-		return "yggdrasil-publickey-transform";
+		return "Yggdrasil Public Key Transformer";
 	}
 
 }

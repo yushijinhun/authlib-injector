@@ -102,6 +102,6 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 
 	@Override
 	public String toString() {
-		return "skin-whitelist-transform";
+		return "Texture Whitelist Transformer";
 	}
 }

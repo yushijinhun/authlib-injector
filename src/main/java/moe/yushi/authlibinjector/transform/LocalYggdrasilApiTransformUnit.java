@@ -25,6 +25,6 @@ public class LocalYggdrasilApiTransformUnit extends LdcTransformUnit {
 
 	@Override
 	public String toString() {
-		return "deprecated-api-transform";
+		return "Local Yggdrasil API Transformer";
 	}
 }
