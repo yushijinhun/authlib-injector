@@ -26,7 +26,8 @@ public final class AuthlibInjector {
 			"com.oracle.", "jdk.", "sun.", "org.apache.", "com.google.", "oracle.", "com.oracle.", "com.paulscode.",
 			"io.netty.", "org.lwjgl.", "net.java.", "org.w3c.", "javassist.", "org.xml.", "org.jcp.", "paulscode.",
 			"com.ibm.", "joptsimple.", "moe.yushi.authlibinjector.", "org.graalvm.", "org.GNOME.", "it.unimi.dsi.fastutil.",
-			"oshi." };
+			"oshi.", "com.jcraft.jogg.", "com.jcraft.jorbis.", "org.objectweb.asm.", "org.yaml.snakeyaml.", "gnu.trove.",
+			"jline.", "org.json." };
 
 	// ==== System Properties ===
 
