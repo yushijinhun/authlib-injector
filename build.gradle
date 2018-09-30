@@ -1,5 +1,5 @@
 plugins {
-	id 'com.github.johnrengelman.shadow' version '2.0.4'
+	id 'com.github.johnrengelman.shadow' version '4.0.0'
 	id 'com.palantir.git-version' version '0.11.0'
 	id 'java'
 }
@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-	compile 'org.ow2.asm:asm:6.2'
+	compile 'org.ow2.asm:asm:6.2.1'
 	compile 'org.nanohttpd:nanohttpd:2.3.1'
 	testCompile 'junit:junit:4.12'
 }
@@ -26,11 +26,11 @@ jar {
 		attributes (
 			'Implementation-Title': project.name,
 			'Implementation-Version': version,
-			'Implementation-Vendor': 'to2mbn',
+			'Implementation-Vendor': 'yushijinhun',
 			'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-			'Automatic-Module-Name': 'org.to2mbn.authlibinjector',
-			'Premain-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain',
-			'Agent-Class': 'org.to2mbn.authlibinjector.javaagent.AuthlibInjectorPremain',
+			'Automatic-Module-Name': 'moe.yushi.authlibinjector',
+			'Premain-Class': 'moe.yushi.authlibinjector.javaagent.AuthlibInjectorPremain',
+			'Agent-Class': 'moe.yushi.authlibinjector.javaagent.AuthlibInjectorPremain',
 			'Can-Retransform-Classes': true,
 			'Can-Redefine-Classes': true,
 			'Git-Commit': gitInfo.gitHashFull,
@@ -58,8 +58,8 @@ shadowJar {
 	exclude 'fi/iki/elonen/util/**'
 	exclude 'META-INF/nanohttpd/mimetypes.properties'
 
-	relocate 'org.objectweb.asm', 'org.to2mbn.authlibinjector.internal.org.objectweb.asm'
-	relocate 'fi.iki.elonen', 'org.to2mbn.authlibinjector.internal.fi.iki.elonen'
+	relocate 'org.objectweb.asm', 'moe.yushi.authlibinjector.internal.org.objectweb.asm'
+	relocate 'fi.iki.elonen', 'moe.yushi.authlibinjector.internal.fi.iki.elonen'
 }
 
 defaultTasks 'clean', 'shadowJar'
