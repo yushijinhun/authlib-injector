@@ -67,7 +67,7 @@ public final class AuthlibInjector {
 
 	private static AtomicBoolean booted = new AtomicBoolean(false);
 
-	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
+	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) throws InjectorInitializationException {
 		if (!booted.compareAndSet(false, true)) {
 			Logging.LAUNCH.info("Already started, skipping");
 			return;
@@ -79,7 +79,8 @@ public final class AuthlibInjector {
 		if (optionalConfig.isPresent()) {
 			transformerRegistry.accept(createTransformer(optionalConfig.get()));
 		} else {
-			Logging.LAUNCH.warning("No config available");
+			Logging.LAUNCH.severe("No config available");
+			throw new InjectorInitializationException();
 		}
 	}
 
@@ -107,7 +108,7 @@ public final class AuthlibInjector {
 				metadataResponse = asString(getURL(apiRoot));
 			} catch (IOException e) {
 				Logging.CONFIG.severe("Failed to fetch metadata: " + e);
-				throw new UncheckedIOException(e);
+				throw new InjectorInitializationException(e);
 			}
 
 		} else {
@@ -118,7 +119,7 @@ public final class AuthlibInjector {
 				Logging.CONFIG.severe("Unable to decode metadata: " + e + "\n"
 						+ "Encoded metadata:\n"
 						+ prefetched.get());
-				throw e;
+				throw new InjectorInitializationException(e);
 			}
 		}
 
@@ -128,10 +129,10 @@ public final class AuthlibInjector {
 		try {
 			configuration = YggdrasilConfiguration.parse(apiRoot, metadataResponse);
 		} catch (UncheckedIOException e) {
-			Logging.CONFIG.severe("Unable to parse metadata: " + e + "\n"
+			Logging.CONFIG.severe("Unable to parse metadata: " + e.getCause() + "\n"
 					+ "Raw metadata:\n"
 					+ metadataResponse);
-			throw e;
+			throw new InjectorInitializationException(e);
 		}
 		Logging.CONFIG.fine("Parsed metadata: " + configuration);
 		return of(configuration);
