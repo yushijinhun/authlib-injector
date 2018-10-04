@@ -20,6 +20,7 @@ public class AuthlibInjectorPremain {
 		try {
 			initInjector(arg, instrumentation, false);
 		} catch (InjectorInitializationException e) {
+			Logging.LAUNCH.log(Level.FINE, "A known exception has occurred", e);
 			System.exit(1);
 		} catch (Throwable e) {
 			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred, exiting", e);
@@ -32,7 +33,7 @@ public class AuthlibInjectorPremain {
 			Logging.LAUNCH.info("Launched from agentmain");
 			initInjector(arg, instrumentation, true);
 		} catch (InjectorInitializationException e) {
-			;
+			Logging.LAUNCH.log(Level.FINE, "A known exception has occurred", e);
 		} catch (Throwable e) {
 			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred", e);
 		}
