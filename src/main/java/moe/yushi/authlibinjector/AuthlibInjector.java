@@ -61,6 +61,12 @@ public final class AuthlibInjector {
 	 */
 	public static final String PROP_DUMP_CLASS = "authlibinjector.dumpClass";
 
+	/**
+	 * The side that authlib-injector runs on.
+	 * Possible values: client, server.
+	 */
+	public static final String PROP_SIDE = "authlibinjector.side";
+
 	// ====
 
 	private AuthlibInjector() {}
@@ -98,6 +104,10 @@ public final class AuthlibInjector {
 	private static Optional<YggdrasilConfiguration> configure() {
 		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
+
+		// for further use
+		ExecutionEnvironment side = detectSide();
+		Logging.LAUNCH.fine("Detected side: " + side);
 
 		apiRoot = appendSuffixSlash(apiRoot);
 		Logging.CONFIG.info("API root: " + apiRoot);
@@ -152,6 +162,29 @@ public final class AuthlibInjector {
 			return url + "/";
 		} else {
 			return url;
+		}
+	}
+
+	private static ExecutionEnvironment detectSide() {
+		String specifiedSide = System.getProperty(PROP_SIDE);
+		if (specifiedSide != null) {
+			switch (specifiedSide) {
+				case "client":
+					return ExecutionEnvironment.CLIENT;
+				case "server":
+					return ExecutionEnvironment.SERVER;
+				default:
+					Logging.LAUNCH.warning("Invalid value [" + specifiedSide + "] for parameter " + PROP_SIDE + ", ignoring.");
+					break;
+			}
+		}
+
+		// fallback
+		if (System.getProperty(PROP_PREFETCHED_DATA) != null || System.getProperty(PROP_PREFETCHED_DATA_OLD) != null) {
+			Logging.LAUNCH.warning("Prefetched configuration must be used along with parameter " + PROP_SIDE);
+			return ExecutionEnvironment.CLIENT;
+		} else {
+			return ExecutionEnvironment.SERVER;
 		}
 	}
 
