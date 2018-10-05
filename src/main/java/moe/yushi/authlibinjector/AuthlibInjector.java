@@ -3,12 +3,16 @@ package moe.yushi.authlibinjector;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
-import static moe.yushi.authlibinjector.util.IOUtils.getURL;
 import static moe.yushi.authlibinjector.util.IOUtils.removeNewLines;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.instrument.ClassFileTransformer;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,7 +71,11 @@ public final class AuthlibInjector {
 	 */
 	public static final String PROP_SIDE = "authlibinjector.side";
 
+	public static final String PROP_ALI_REDIRECT_LIMIT = "authlibinjector.ali.redirectLimit";
+
 	// ====
+
+	private static final int REDIRECT_LIMIT = Integer.getInteger(PROP_ALI_REDIRECT_LIMIT, 5);
 
 	private AuthlibInjector() {}
 
@@ -105,7 +113,6 @@ public final class AuthlibInjector {
 		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
 
-		// for further use
 		ExecutionEnvironment side = detectSide();
 		Logging.LAUNCH.fine("Detected side: " + side);
 
@@ -117,8 +124,40 @@ public final class AuthlibInjector {
 
 		Optional<String> prefetched = getPrefetchedResponse();
 		if (!prefetched.isPresent()) {
+
 			try {
-				metadataResponse = asString(getURL(apiRoot));
+				HttpURLConnection connection;
+				boolean redirectAllowed = side == ExecutionEnvironment.SERVER;
+				int redirectCount = 0;
+				for (;;) {
+					connection = (HttpURLConnection) new URL(apiRoot).openConnection();
+					Optional<String> ali = getApiLocationIndication(connection);
+					if (ali.isPresent()) {
+						if (!redirectAllowed) {
+							Logging.CONFIG.warning("Redirect is not allowed, ignoring ALI: " + ali.get());
+							break;
+						}
+
+						connection.disconnect();
+
+						apiRoot = ali.get();
+						if (redirectCount >= REDIRECT_LIMIT) {
+							Logging.CONFIG.severe("Exceeded maximum number of redirects (" + REDIRECT_LIMIT + "), refusing to redirect to: " + apiRoot);
+							throw new InjectorInitializationException();
+						}
+						redirectCount++;
+						Logging.CONFIG.info("Redirect to: " + apiRoot);
+						warnIfHttp(apiRoot);
+					} else {
+						break;
+					}
+				}
+
+				try {
+					metadataResponse = asString(asBytes(connection.getInputStream()));
+				} finally {
+					connection.disconnect();
+				}
 			} catch (IOException e) {
 				Logging.CONFIG.severe("Failed to fetch metadata: " + e);
 				throw new InjectorInitializationException(e);
@@ -173,6 +212,27 @@ public final class AuthlibInjector {
 
 		url = appendSuffixSlash(url);
 		return url;
+	}
+
+	private static Optional<String> getApiLocationIndication(URLConnection conn) {
+		return Optional.ofNullable(conn.getHeaderFields().get("X-Authlib-Injector-API-Location"))
+				.flatMap(list -> list.isEmpty() ? Optional.empty() : Optional.of(list.get(0)))
+				.flatMap(indication -> {
+					String currentUrl = appendSuffixSlash(conn.getURL().toString());
+					String newUrl;
+					try {
+						newUrl = appendSuffixSlash(new URL(conn.getURL(), indication).toString());
+					} catch (MalformedURLException e) {
+						Logging.CONFIG.warning("Failed to resolve absolute ALI, the header is [" + indication + "]. Ignore it.");
+						return Optional.empty();
+					}
+
+					if (newUrl.equals(currentUrl)) {
+						return Optional.empty();
+					} else {
+						return Optional.of(newUrl);
+					}
+				});
 	}
 
 	private static ExecutionEnvironment detectSide() {
