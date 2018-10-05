@@ -99,6 +99,7 @@ public final class AuthlibInjector {
 		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
 		Logging.CONFIG.info("API root: " + apiRoot);
+		warnIfHttp(apiRoot);
 
 		String metadataResponse;
 
@@ -136,6 +137,12 @@ public final class AuthlibInjector {
 		}
 		Logging.CONFIG.fine("Parsed metadata: " + configuration);
 		return of(configuration);
+	}
+
+	private static void warnIfHttp(String url) {
+		if (url.toLowerCase().startsWith("http://")) {
+			Logging.CONFIG.warning("You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.");
+		}
 	}
 
 	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
