@@ -109,7 +109,7 @@ public final class AuthlibInjector {
 		ExecutionEnvironment side = detectSide();
 		Logging.LAUNCH.fine("Detected side: " + side);
 
-		apiRoot = appendSuffixSlash(apiRoot);
+		apiRoot = parseInputUrl(apiRoot);
 		Logging.CONFIG.info("API root: " + apiRoot);
 		warnIfHttp(apiRoot);
 
@@ -163,6 +163,16 @@ public final class AuthlibInjector {
 		} else {
 			return url;
 		}
+	}
+
+	private static String parseInputUrl(String url) {
+		String lowercased = url.toLowerCase();
+		if (!lowercased.startsWith("http://") && !lowercased.startsWith("https://")) {
+			url = "https://" + url;
+		}
+
+		url = appendSuffixSlash(url);
+		return url;
 	}
 
 	private static ExecutionEnvironment detectSide() {
