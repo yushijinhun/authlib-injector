@@ -98,6 +98,8 @@ public final class AuthlibInjector {
 	private static Optional<YggdrasilConfiguration> configure() {
 		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
+
+		apiRoot = appendSuffixSlash(apiRoot);
 		Logging.CONFIG.info("API root: " + apiRoot);
 		warnIfHttp(apiRoot);
 
@@ -142,6 +144,14 @@ public final class AuthlibInjector {
 	private static void warnIfHttp(String url) {
 		if (url.toLowerCase().startsWith("http://")) {
 			Logging.CONFIG.warning("You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.");
+		}
+	}
+
+	private static String appendSuffixSlash(String url) {
+		if (!url.endsWith("/")) {
+			return url + "/";
+		} else {
+			return url;
 		}
 	}
 
