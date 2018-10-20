@@ -24,8 +24,6 @@ import moe.yushi.authlibinjector.util.KeyUtils;
 public class YggdrasilConfiguration {
 
 	public static YggdrasilConfiguration parse(String apiRoot, String metadataResponse) throws UncheckedIOException {
-		if (!apiRoot.endsWith("/")) apiRoot += "/";
-
 		JSONObject response = asJsonObject(parseJson(metadataResponse));
 
 		List<String> skinDomains =

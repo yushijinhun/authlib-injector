@@ -6,6 +6,8 @@ import static moe.yushi.authlibinjector.AuthlibInjector.nonTransformablePackages
 import java.lang.instrument.Instrumentation;
 import java.util.Arrays;
 import java.util.logging.Level;
+
+import moe.yushi.authlibinjector.InjectorInitializationException;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class AuthlibInjectorPremain {
@@ -17,6 +19,9 @@ public class AuthlibInjectorPremain {
 	public static void premain(String arg, Instrumentation instrumentation) {
 		try {
 			initInjector(arg, instrumentation, false);
+		} catch (InjectorInitializationException e) {
+			Logging.LAUNCH.log(Level.FINE, "A known exception has occurred", e);
+			System.exit(1);
 		} catch (Throwable e) {
 			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred, exiting", e);
 			System.exit(1);
@@ -27,6 +32,8 @@ public class AuthlibInjectorPremain {
 		try {
 			Logging.LAUNCH.info("Launched from agentmain");
 			initInjector(arg, instrumentation, true);
+		} catch (InjectorInitializationException e) {
+			Logging.LAUNCH.log(Level.FINE, "A known exception has occurred", e);
 		} catch (Throwable e) {
 			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred", e);
 		}
