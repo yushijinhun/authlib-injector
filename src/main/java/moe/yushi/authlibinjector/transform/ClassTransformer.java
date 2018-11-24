@@ -2,13 +2,8 @@ package moe.yushi.authlibinjector.transform;
 
 import static java.util.Collections.emptyList;
 
-import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +22,6 @@ public class ClassTransformer implements ClassFileTransformer {
 	public List<TransformUnit> units = new ArrayList<>();
 	public List<ClassLoadingListener> listeners = new ArrayList<>();
 	public Set<String> ignores = new HashSet<>();
-	public boolean debugSaveClass;
 
 	private static class TransformHandle {
 
@@ -102,31 +96,15 @@ public class ClassTransformer implements ClassFileTransformer {
 				units.forEach(handle::accept);
 				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 
-				if (handle.getTransformResult().isPresent()) {
-					byte[] classBuffer = handle.getTransformResult().get();
-					if (debugSaveClass) {
-						saveClassFile(className, classBuffer);
-					}
-					return classBuffer;
-				} else {
+				Optional<byte[]> transformResult = handle.getTransformResult();
+				if (!transformResult.isPresent()) {
 					Logging.TRANSFORM_SKIPPED.fine("No transformation is applied to [" + className + "]");
-					return null;
 				}
+				return transformResult.orElse(null);
 			} catch (Throwable e) {
 				Logging.TRANSFORM.log(Level.WARNING, "Failed to transform [" + internalClassName + "]", e);
 			}
 		}
 		return null;
 	}
-
-	private void saveClassFile(String className, byte[] classBuffer) {
-		Path dumpFile = Paths.get(className + "_dump.class");
-		try {
-			Files.write(dumpFile, classBuffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-			Logging.TRANSFORM.info("Transformed class is dumped to [" + dumpFile + "]");
-		} catch (IOException e) {
-			Logging.TRANSFORM.log(Level.WARNING, "Failed to dump class [" + className + "]", e);
-		}
-	}
-
 }
