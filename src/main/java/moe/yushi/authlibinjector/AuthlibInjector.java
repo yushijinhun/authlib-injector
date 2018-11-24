@@ -13,11 +13,15 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import moe.yushi.authlibinjector.transform.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
+import moe.yushi.authlibinjector.transform.DumpClassListener;
 import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.LocalYggdrasilApiTransformUnit;
 import moe.yushi.authlibinjector.transform.RemoteYggdrasilTransformUnit;
@@ -260,9 +264,18 @@ public final class AuthlibInjector {
 
 	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
 		ClassTransformer transformer = new ClassTransformer();
-		transformer.debugSaveClass = "true".equals(System.getProperty(PROP_DUMP_CLASS));
-		for (String ignore : nonTransformablePackages)
+
+		for (String ignore : nonTransformablePackages) {
 			transformer.ignores.add(ignore);
+		}
+
+		if ("true".equals(System.getProperty(PROP_DUMP_CLASS))) {
+			transformer.listeners.add(new DumpClassListener(Paths.get("").toAbsolutePath()));
+		}
+
+		if (Logging.isDebugOnFor(Logging.PREFIX + ".authlib")) {
+			transformer.units.add(new AuthlibLogInterceptor());
+		}
 
 		if (!"true".equals(System.getProperty(PROP_DISABLE_HTTPD))) {
 			transformer.units.add(new LocalYggdrasilApiTransformUnit(config));

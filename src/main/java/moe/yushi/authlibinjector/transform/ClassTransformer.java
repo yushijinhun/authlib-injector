@@ -1,14 +1,12 @@
 package moe.yushi.authlibinjector.transform;
 
-import java.io.IOException;
+import static java.util.Collections.emptyList;
+
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -22,12 +20,12 @@ import moe.yushi.authlibinjector.util.Logging;
 public class ClassTransformer implements ClassFileTransformer {
 
 	public List<TransformUnit> units = new ArrayList<>();
+	public List<ClassLoadingListener> listeners = new ArrayList<>();
 	public Set<String> ignores = new HashSet<>();
-	public boolean debugSaveClass;
 
 	private static class TransformHandle {
 
-		private boolean modified = false;
+		private List<TransformUnit> appliedTransformers;
 		private boolean currentModified;
 		private String className;
 		private byte[] classBuffer;
@@ -54,7 +52,10 @@ public class ClassTransformer implements ClassFileTransformer {
 				reader.accept(optionalVisitor.get(), 0);
 				if (currentModified) {
 					Logging.TRANSFORM.info("Transformed [" + className + "] with [" + unit + "]");
-					modified = true;
+					if (appliedTransformers == null) {
+						appliedTransformers = new ArrayList<>();
+					}
+					appliedTransformers.add(unit);
 					classBuffer = writer.toByteArray();
 				}
 			} else {
@@ -62,14 +63,21 @@ public class ClassTransformer implements ClassFileTransformer {
 			}
 		}
 
-		public Optional<byte[]> getResult() {
-			if (modified) {
-				return Optional.of(classBuffer);
-			} else {
+		public Optional<byte[]> getTransformResult() {
+			if (appliedTransformers == null || appliedTransformers.isEmpty()) {
 				return Optional.empty();
+			} else {
+				return Optional.of(classBuffer);
 			}
 		}
 
+		public List<TransformUnit> getAppliedTransformers() {
+			return appliedTransformers == null ? emptyList() : appliedTransformers;
+		}
+
+		public byte[] getFinalResult() {
+			return classBuffer;
+		}
 	}
 
 	@Override
@@ -77,36 +85,26 @@ public class ClassTransformer implements ClassFileTransformer {
 		if (internalClassName != null && classfileBuffer != null) {
 			try {
 				String className = internalClassName.replace('/', '.');
-				for (String prefix : ignores)
-					if (className.startsWith(prefix)) return null;
+				for (String prefix : ignores) {
+					if (className.startsWith(prefix)) {
+						listeners.forEach(it -> it.onClassLoading(loader, className, classfileBuffer, Collections.emptyList()));
+						return null;
+					}
+				}
 
 				TransformHandle handle = new TransformHandle(className, classfileBuffer);
 				units.forEach(handle::accept);
-				if (handle.getResult().isPresent()) {
-					byte[] classBuffer = handle.getResult().get();
-					if (debugSaveClass) {
-						saveClassFile(className, classBuffer);
-					}
-					return classBuffer;
-				} else {
+				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
+
+				Optional<byte[]> transformResult = handle.getTransformResult();
+				if (!transformResult.isPresent()) {
 					Logging.TRANSFORM_SKIPPED.fine("No transformation is applied to [" + className + "]");
-					return null;
 				}
+				return transformResult.orElse(null);
 			} catch (Throwable e) {
 				Logging.TRANSFORM.log(Level.WARNING, "Failed to transform [" + internalClassName + "]", e);
 			}
 		}
 		return null;
 	}
-
-	private void saveClassFile(String className, byte[] classBuffer) {
-		Path dumpFile = Paths.get(className + "_dump.class");
-		try {
-			Files.write(dumpFile, classBuffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-			Logging.TRANSFORM.info("Transformed class is dumped to [" + dumpFile + "]");
-		} catch (IOException e) {
-			Logging.TRANSFORM.log(Level.WARNING, "Failed to dump class [" + className + "]", e);
-		}
-	}
-
 }

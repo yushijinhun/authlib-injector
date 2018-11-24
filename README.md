@@ -6,7 +6,7 @@
 
 通过运行时修改 authlib 实现游戏外登录，并为 Yggdrasil 服务端的实现提供规范。
 
-关于该项目的详细介绍见 [wiki](https://github.com/yushijinhun/authlib-injector/wiki)。
+**关于该项目的详细介绍见 [wiki](https://github.com/yushijinhun/authlib-injector/wiki)。**
 
 ## 获取
 您可以从[这里](https://authlib-injector.yushi.moe/~download/)获取最新的 authlib-injector。
@@ -39,6 +39,7 @@ gradle
  * `transform.skipped` 分析了却未执行字节码修改的类（用于性能分析）
  * `config` 有关配置获取的
  * `httpd` 有关本地 HTTP 服务器的（其负责在本地处理掉部分请求，而不是发送到 Yggdrasil 服务端）
+ * `authlib` 打印从 authlib 处获取的日志（其记录了网络调用的详细信息）
 
 可以指定多个类型，中间用 `,` 分隔。如果要打印以上所有调试信息，可以设置其为 `all`。
 
@@ -48,3 +49,6 @@ gradle
 -Dauthlibinjector.dumpClass=true
 ```
 修改过的类文件会保存在当前目录下。
+
+## 捐助
+BMCLAPI 为 authlib-injector 提供了[下载镜像站](https://github.com/yushijinhun/authlib-injector/wiki/%E8%8E%B7%E5%8F%96-authlib-injector#bmclapi-%E9%95%9C%E5%83%8F)。如果您想要支持 authlib-injector 的开发，您可以[捐助 BMCLAPI](https://bmclapidoc.bangbang93.com/)。
