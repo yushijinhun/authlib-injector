@@ -18,6 +18,8 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import moe.yushi.authlibinjector.transform.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
 import moe.yushi.authlibinjector.transform.DumpClassListener;
 import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
@@ -269,6 +271,10 @@ public final class AuthlibInjector {
 
 		if ("true".equals(System.getProperty(PROP_DUMP_CLASS))) {
 			transformer.listeners.add(new DumpClassListener(Paths.get("").toAbsolutePath()));
+		}
+
+		if (Logging.isDebugOnFor(Logging.PREFIX + ".authlib")) {
+			transformer.units.add(new AuthlibLogInterceptor());
 		}
 
 		if (!"true".equals(System.getProperty(PROP_DISABLE_HTTPD))) {

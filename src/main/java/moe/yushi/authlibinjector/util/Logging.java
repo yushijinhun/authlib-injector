@@ -17,7 +17,7 @@ import java.util.logging.StreamHandler;
 public final class Logging {
 	private Logging() {}
 
-	private static final String PREFIX = "moe.yushi.authlibinjector";
+	public static final String PREFIX = "moe.yushi.authlibinjector";
 
 	public static final Logger ROOT = Logger.getLogger(PREFIX);
 	public static final Logger LAUNCH = Logger.getLogger(PREFIX + ".launch");
@@ -26,7 +26,11 @@ public final class Logging {
 	public static final Logger TRANSFORM_SKIPPED = Logger.getLogger(PREFIX + ".transform.skipped");
 	public static final Logger HTTPD = Logger.getLogger(PREFIX + ".httpd");
 
+	private static Predicate<String> debugLoggerNamePredicate;
+
 	public static void init() {
+		debugLoggerNamePredicate = createDebugLoggerNamePredicate();
+
 		initRootLogger();
 	}
 
@@ -90,8 +94,10 @@ public final class Logging {
 	}
 
 	private static Filter createFilter() {
-		Predicate<String> namePredicate = createDebugLoggerNamePredicate();
-		return log -> log.getLevel().intValue() >= Level.INFO.intValue() || namePredicate.test(log.getLoggerName());
+		return log -> log.getLevel().intValue() >= Level.INFO.intValue() || isDebugOnFor(log.getLoggerName());
 	}
 
+	public static boolean isDebugOnFor(String loggerName) {
+		return debugLoggerNamePredicate.test(loggerName);
+	}
 }
