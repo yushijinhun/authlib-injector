@@ -290,8 +290,8 @@ public final class AuthlibInjector {
 
 		transformer.units.add(new SkinWhitelistTransformUnit(config.getSkinDomains().toArray(new String[0])));
 
-		config.getDecodedPublickey().ifPresent(
-				key -> transformer.units.add(new YggdrasilKeyTransformUnit(key.getEncoded())));
+		transformer.units.add(new YggdrasilKeyTransformUnit());
+		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.getPublicKeys()::add);
 
 		return transformer;
 	}
