@@ -36,7 +36,6 @@ gradle
 调试信息类型有：
  * `launch` 有关 authlib-injector 加载的
  * `transform` 有关字节码修改的
- * `transform.skipped` 分析了却未执行字节码修改的类（用于性能分析）
  * `config` 有关配置获取的
  * `httpd` 有关本地 HTTP 服务器的（其负责在本地处理掉部分请求，而不是发送到 Yggdrasil 服务端）
  * `authlib` 打印从 authlib 处获取的日志（其记录了网络调用的详细信息）

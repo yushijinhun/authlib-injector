@@ -70,6 +70,11 @@ public final class AuthlibInjector {
 	public static final String PROP_DUMP_CLASS = "authlibinjector.dumpClass";
 
 	/**
+	 * Whether to print the classes that are bytecode-analyzed but not transformed.
+	 */
+	public static final String PROP_PRINT_UNTRANSFORMED_CLASSES = "authlibinjector.printUntransformed";
+
+	/**
 	 * The side that authlib-injector runs on.
 	 * Possible values: client, server.
 	 */

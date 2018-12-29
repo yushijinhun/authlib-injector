@@ -15,9 +15,13 @@ import java.util.logging.Level;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+
+import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class ClassTransformer implements ClassFileTransformer {
+
+	private static final boolean PRINT_UNTRANSFORMED_CLASSES = Boolean.getBoolean(AuthlibInjector.PROP_PRINT_UNTRANSFORMED_CLASSES);
 
 	public List<TransformUnit> units = new ArrayList<>();
 	public List<ClassLoadingListener> listeners = new ArrayList<>();
@@ -97,8 +101,8 @@ public class ClassTransformer implements ClassFileTransformer {
 				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 
 				Optional<byte[]> transformResult = handle.getTransformResult();
-				if (!transformResult.isPresent()) {
-					Logging.TRANSFORM_SKIPPED.fine("No transformation is applied to [" + className + "]");
+				if (PRINT_UNTRANSFORMED_CLASSES && !transformResult.isPresent()) {
+					Logging.TRANSFORM.fine("No transformation is applied to [" + className + "]");
 				}
 				return transformResult.orElse(null);
 			} catch (Throwable e) {
