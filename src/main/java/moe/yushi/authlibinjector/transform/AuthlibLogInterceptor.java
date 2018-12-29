@@ -113,7 +113,7 @@ public class AuthlibLogInterceptor implements TransformUnit {
 		Object loggerConfig;
 		{
 			Map<String, Object> values = new HashMap<>();
-			values.put("additivity", true);
+			values.put("additivity", false);
 			values.put("level", classLevel.getDeclaredField("ALL").get(null));
 			values.put("name", loggerName);
 			values.put("includeLocation", authlibPackageName);
