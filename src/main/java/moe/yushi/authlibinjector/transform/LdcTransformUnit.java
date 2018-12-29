@@ -9,7 +9,7 @@ import moe.yushi.authlibinjector.util.Logging;
 public abstract class LdcTransformUnit implements TransformUnit {
 
 	@Override
-	public Optional<ClassVisitor> transform(String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
 		return Optional.of(new ClassVisitor(ASM6, writer) {
 
 			@Override

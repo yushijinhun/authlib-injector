@@ -34,10 +34,12 @@ public class ClassTransformer implements ClassFileTransformer {
 		private String className;
 		private byte[] classBuffer;
 		private ClassWriter pooledClassWriter;
+		private ClassLoader classLoader;
 
-		public TransformHandle(String className, byte[] classBuffer) {
+		public TransformHandle(ClassLoader classLoader, String className, byte[] classBuffer) {
 			this.className = className;
 			this.classBuffer = classBuffer;
+			this.classLoader = classLoader;
 		}
 
 		public void accept(TransformUnit unit) {
@@ -49,7 +51,7 @@ public class ClassTransformer implements ClassFileTransformer {
 				pooledClassWriter = null;
 			}
 
-			Optional<ClassVisitor> optionalVisitor = unit.transform(className, writer, () -> currentModified = true);
+			Optional<ClassVisitor> optionalVisitor = unit.transform(classLoader, className, writer, () -> currentModified = true);
 			if (optionalVisitor.isPresent()) {
 				currentModified = false;
 				ClassReader reader = new ClassReader(classBuffer);
@@ -96,7 +98,7 @@ public class ClassTransformer implements ClassFileTransformer {
 					}
 				}
 
-				TransformHandle handle = new TransformHandle(className, classfileBuffer);
+				TransformHandle handle = new TransformHandle(loader, className, classfileBuffer);
 				units.forEach(handle::accept);
 				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 

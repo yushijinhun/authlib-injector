@@ -196,18 +196,23 @@ public class AuthlibLogInterceptor implements TransformUnit {
 	}
 
 	@Override
-	public Optional<ClassVisitor> transform(String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
 		if (className.startsWith("com.mojang.authlib.")) {
+			synchronized (interceptedClassloaders) {
+				if (interceptedClassloaders.contains(classLoader)) {
+					return Optional.empty();
+				}
+			}
 			return Optional.of(new ClassVisitor(ASM6, writer) {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 					MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 					if ("<clinit>".equals(name)) {
-						modifiedCallback.run();
 						mv.visitLdcInsn(Type.getType("L" + className.replace('.', '/') + ";"));
 						mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
 						mv.visitMethodInsn(INVOKESTATIC, AuthlibLogInterceptor.class.getName().replace('.', '/'), "onClassLoading", "(Ljava/lang/ClassLoader;)V", false);
+						modifiedCallback.run();
 					}
 					return mv;
 				}

@@ -21,7 +21,7 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 	}
 
 	@Override
-	public Optional<ClassVisitor> transform(String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM6, writer) {
 
