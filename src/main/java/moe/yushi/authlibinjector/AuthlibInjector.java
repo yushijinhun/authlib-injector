@@ -31,6 +31,7 @@ import moe.yushi.authlibinjector.transform.ConstantURLTransformUnit;
 import moe.yushi.authlibinjector.transform.DumpClassListener;
 import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.YggdrasilKeyTransformUnit;
+import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
 import moe.yushi.authlibinjector.util.Logging;
 
 public final class AuthlibInjector {
@@ -296,6 +297,7 @@ public final class AuthlibInjector {
 		}
 
 		transformer.units.add(new ConstantURLTransformUnit(urlProcessor));
+		transformer.units.add(new CitizensTransformer());
 
 		transformer.units.add(new SkinWhitelistTransformUnit(config.getSkinDomains().toArray(new String[0])));
 
