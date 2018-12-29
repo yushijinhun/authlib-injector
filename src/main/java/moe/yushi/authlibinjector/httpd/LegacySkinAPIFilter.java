@@ -1,10 +1,12 @@
 package moe.yushi.authlibinjector.httpd;
 
+import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_JSON;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.getURL;
 import static moe.yushi.authlibinjector.util.IOUtils.newUncheckedIOException;
@@ -13,6 +15,7 @@ import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonString;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -21,7 +24,9 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import fi.iki.elonen.NanoHTTPD;
+
+import fi.iki.elonen.NanoHTTPD.IHTTPSession;
+import fi.iki.elonen.NanoHTTPD.Response;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
 import moe.yushi.authlibinjector.YggdrasilConfiguration;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONArray;
@@ -29,28 +34,28 @@ import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
 import moe.yushi.authlibinjector.util.Logging;
 
-public class LocalYggdrasilHttpd extends NanoHTTPD {
+public class LegacySkinAPIFilter implements URLFilter {
 
-	public static final String CONTENT_TYPE_JSON = "application/json; charset=utf-8";
-
-	private static final Pattern URL_SKINS = Pattern.compile("^/skins/MinecraftSkins/(?<username>[^/]+)\\.png$");
+	private static final Pattern PATH_SKINS = Pattern.compile("^/MinecraftSkins/(?<username>[^/]+)\\.png$");
 
 	private YggdrasilConfiguration configuration;
 
-	public LocalYggdrasilHttpd(int port, YggdrasilConfiguration configuration) {
-		super("127.0.0.1", port);
+	public LegacySkinAPIFilter(YggdrasilConfiguration configuration) {
 		this.configuration = configuration;
 	}
 
 	@Override
-	public Response serve(IHTTPSession session) {
-		return processAsSkin(session)
-				.orElseGet(() -> super.serve(session));
+	public boolean canHandle(String domain, String path) {
+		return domain.equals("skins.minecraft.net");
 	}
 
-	private Optional<Response> processAsSkin(IHTTPSession session) {
-		Matcher matcher = URL_SKINS.matcher(session.getUri());
-		if (!matcher.find()) return empty();
+	@Override
+	public Optional<Response> handle(String domain, String path, IHTTPSession session) {
+		if (!domain.equals("skins.minecraft.net"))
+			return empty();
+		Matcher matcher = PATH_SKINS.matcher(path);
+		if (!matcher.find())
+			return empty();
 		String username = matcher.group("username");
 
 		Optional<String> skinUrl;
@@ -138,5 +143,4 @@ public class LocalYggdrasilHttpd extends NanoHTTPD {
 						.map(JsonUtils::asJsonString)
 						.orElseThrow(() -> newUncheckedIOException("Invalid JSON: Missing texture url")));
 	}
-
 }

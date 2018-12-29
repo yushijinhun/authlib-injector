@@ -11,6 +11,8 @@ import java.net.URL;
 
 public final class IOUtils {
 
+	public static final String CONTENT_TYPE_JSON = "application/json; charset=utf-8";
+
 	public static byte[] getURL(String url) throws IOException {
 		try (InputStream in = new URL(url).openStream()) {
 			return asBytes(in);
