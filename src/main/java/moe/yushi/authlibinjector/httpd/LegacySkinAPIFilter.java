@@ -1,9 +1,9 @@
 package moe.yushi.authlibinjector.httpd;
 
-import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.getURL;
 import static moe.yushi.authlibinjector.util.IOUtils.newUncheckedIOException;
@@ -18,10 +18,10 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import fi.iki.elonen.NanoHTTPD.IHTTPSession;
-import fi.iki.elonen.NanoHTTPD.Response;
-import fi.iki.elonen.NanoHTTPD.Response.Status;
 import moe.yushi.authlibinjector.YggdrasilConfiguration;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.IHTTPSession;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.Response;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.Response.Status;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
 import moe.yushi.authlibinjector.util.Logging;

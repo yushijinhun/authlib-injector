@@ -1,7 +1,8 @@
 package moe.yushi.authlibinjector.httpd;
 
-import static fi.iki.elonen.NanoHTTPD.Response.Status.INTERNAL_ERROR;
-import static fi.iki.elonen.NanoHTTPD.Response.Status.NOT_FOUND;
+import static moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.Response.Status.INTERNAL_ERROR;
+import static moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.Response.Status.NOT_FOUND;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +10,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import fi.iki.elonen.NanoHTTPD;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class URLProcessor {
