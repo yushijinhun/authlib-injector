@@ -15,7 +15,7 @@ public interface IHTTPSession {
 
 	Map<String, String> getHeaders();
 
-	InputStream getInputStream();
+	InputStream getInputStream() throws IOException;
 
 	String getMethod();
 

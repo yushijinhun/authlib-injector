@@ -1,5 +1,7 @@
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
+
 /*
  * #%L
  * NanoHttpd-Core
@@ -200,6 +202,8 @@ public abstract class NanoHTTPD {
 
 		private final BufferedInputStream inputStream;
 
+		private InputStream parsedInputStream;
+
 		private int splitbyte;
 
 		private int rlen;
@@ -219,6 +223,11 @@ public abstract class NanoHTTPD {
 		private String remoteHostname;
 
 		private String protocolVersion;
+
+		private boolean expect100Continue;
+		private boolean continueSent;
+		private boolean isServing;
+		private final Object servingLock = new Object();
 
 		public HTTPSession(InputStream inputStream, OutputStream outputStream) {
 			this.inputStream = new BufferedInputStream(inputStream, HTTPSession.BUFSIZE);
@@ -392,14 +401,52 @@ public abstract class NanoHTTPD {
 				String connection = this.headers.get("connection");
 				boolean keepAlive = "HTTP/1.1".equals(protocolVersion) && (connection == null || !connection.matches("(?i).*close.*"));
 
-				// Ok, now do the serve()
+				String transferEncoding = this.headers.get("transfer-encoding");
+				String contentLengthStr = this.headers.get("content-length");
+				if (transferEncoding != null && contentLengthStr == null) {
+					if ("chunked".equals(transferEncoding)) {
+						parsedInputStream = new ChunkedInputStream(inputStream);
+					} else {
+						throw new ResponseException(Status.NOT_IMPLEMENTED, "Unsupported Transfer-Encoding");
+					}
 
-				// TODO: long body_size = getBodySize();
-				// TODO: long pos_before_serve = this.inputStream.totalRead()
-				// (requires implementation for totalRead())
-				r = serve(this);
-				// TODO: this.inputStream.skip(body_size -
-				// (this.inputStream.totalRead() - pos_before_serve))
+				} else if (transferEncoding == null && contentLengthStr != null) {
+					int contentLength = -1;
+					try {
+						contentLength = Integer.parseInt(contentLengthStr);
+					} catch (NumberFormatException e) {
+					}
+					if (contentLength < 0) {
+						throw new ResponseException(Status.BAD_REQUEST, "The request has an invalid Content-Length header.");
+					}
+					parsedInputStream = new FixedLengthInputStream(inputStream, contentLength);
+
+				} else if (transferEncoding != null && contentLengthStr != null) {
+					throw new ResponseException(Status.BAD_REQUEST, "Content-Length and Transfer-Encoding cannot exist at the same time.");
+
+				} else /* if both are null */ {
+					// no request payload
+				}
+
+				expect100Continue = "HTTP/1.1".equals(protocolVersion)
+						&& "100-continue".equals(this.headers.get("expect"))
+						&& parsedInputStream != null;
+
+				// Ok, now do the serve()
+				this.isServing = true;
+				try {
+					r = serve(this);
+				} finally {
+					synchronized (servingLock) {
+						this.isServing = false;
+					}
+				}
+
+				if (!(parsedInputStream == null || (expect100Continue && !continueSent))) {
+					// consume the input
+					while (parsedInputStream.read() != -1)
+						;
+				}
 
 				if (r == null) {
 					throw new ResponseException(Status.INTERNAL_ERROR, "SERVER INTERNAL ERROR: Serve() returned a null response.");
@@ -460,8 +507,17 @@ public abstract class NanoHTTPD {
 		}
 
 		@Override
-		public final InputStream getInputStream() {
-			return this.inputStream;
+		public final InputStream getInputStream() throws IOException {
+			synchronized (servingLock) {
+				if (!isServing) {
+					throw new IllegalStateException();
+				}
+				if (expect100Continue && !continueSent) {
+					continueSent = true;
+					this.outputStream.write("HTTP/1.1 100 Continue\r\n\r\n".getBytes(US_ASCII));
+				}
+			}
+			return this.parsedInputStream;
 		}
 
 		@Override
