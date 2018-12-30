@@ -17,14 +17,12 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import moe.yushi.authlibinjector.YggdrasilConfiguration;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Status;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
 import moe.yushi.authlibinjector.util.Logging;
-import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public class LegacySkinAPIFilter implements URLFilter {
@@ -33,8 +31,8 @@ public class LegacySkinAPIFilter implements URLFilter {
 
 	private YggdrasilClient upstream;
 
-	public LegacySkinAPIFilter(YggdrasilConfiguration configuration) {
-		this.upstream = new YggdrasilClient(new CustomYggdrasilAPIProvider(configuration));
+	public LegacySkinAPIFilter(YggdrasilClient upstream) {
+		this.upstream = upstream;
 	}
 
 	@Override

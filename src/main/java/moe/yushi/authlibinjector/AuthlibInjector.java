@@ -23,6 +23,8 @@ import java.util.function.Consumer;
 
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
+import moe.yushi.authlibinjector.httpd.QueryProfileFilter;
+import moe.yushi.authlibinjector.httpd.QueryUUIDsFilter;
 import moe.yushi.authlibinjector.httpd.URLFilter;
 import moe.yushi.authlibinjector.httpd.URLProcessor;
 import moe.yushi.authlibinjector.transform.AuthlibLogInterceptor;
@@ -33,6 +35,9 @@ import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
 import moe.yushi.authlibinjector.util.Logging;
+import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
+import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
+import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public final class AuthlibInjector {
 
@@ -271,11 +276,17 @@ public final class AuthlibInjector {
 	private static URLProcessor createURLProcessor(YggdrasilConfiguration config) {
 		List<URLFilter> filters = new ArrayList<>();
 
+		YggdrasilClient customClient = new YggdrasilClient(new CustomYggdrasilAPIProvider(config));
+		YggdrasilClient mojangClient = new YggdrasilClient(new MojangYggdrasilAPIProvider());
+
 		if (Boolean.TRUE.equals(config.getMeta().get("feature.legacy_skin_api"))) {
 			Logging.CONFIG.info("Disabled local redirect for legacy skin API, as the remote Yggdrasil server supports it");
 		} else {
-			filters.add(new LegacySkinAPIFilter(config));
+			filters.add(new LegacySkinAPIFilter(customClient));
 		}
+
+		filters.add(new QueryUUIDsFilter(mojangClient, customClient));
+		filters.add(new QueryProfileFilter(mojangClient, customClient));
 
 		return new URLProcessor(filters, new DefaultURLRedirector(config));
 	}
