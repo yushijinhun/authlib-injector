@@ -2,8 +2,8 @@ package moe.yushi.authlibinjector.httpd;
 
 import java.util.Optional;
 
-import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.IHTTPSession;
-import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.Response;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
 
 public interface URLFilter {
 

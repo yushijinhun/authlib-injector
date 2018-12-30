@@ -1,8 +1,5 @@
 package moe.yushi.authlibinjector.httpd;
 
-import static moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.Response.Status.INTERNAL_ERROR;
-import static moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD.Response.Status.NOT_FOUND;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +7,10 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.Status;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class URLProcessor {
@@ -90,7 +90,7 @@ public class URLProcessor {
 								result = filter.handle(domain, path, session);
 							} catch (Throwable e) {
 								Logging.HTTPD.log(Level.WARNING, "An error occurred while processing request [" + session.getUri() + "]", e);
-								return newFixedLengthResponse(INTERNAL_ERROR, null, null);
+								return Response.newFixedLength(Status.INTERNAL_ERROR, null, null);
 							}
 
 							if (result.isPresent()) {
@@ -102,7 +102,7 @@ public class URLProcessor {
 				}
 
 				Logging.HTTPD.fine("No handler is found for [" + session.getUri() + "]");
-				return newFixedLengthResponse(NOT_FOUND, MIME_PLAINTEXT, "Not Found");
+				return Response.newFixedLength(Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found");
 			}
 		};
 	}
