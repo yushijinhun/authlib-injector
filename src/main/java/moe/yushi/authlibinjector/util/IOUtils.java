@@ -40,12 +40,16 @@ public final class IOUtils {
 
 	public static byte[] asBytes(InputStream in) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		transfer(in, out);
+		return out.toByteArray();
+	}
+
+	public static void transfer(InputStream from, OutputStream to) throws IOException {
 		byte[] buf = new byte[8192];
 		int read;
-		while ((read = in.read(buf)) != -1) {
-			out.write(buf, 0, read);
+		while ((read = from.read(buf)) != -1) {
+			to.write(buf, 0, read);
 		}
-		return out.toByteArray();
 	}
 
 	public static String asString(byte[] bytes) {
