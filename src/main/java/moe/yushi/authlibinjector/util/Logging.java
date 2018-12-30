@@ -50,6 +50,7 @@ public final class Logging {
 				String exception = "";
 				if (record.getThrown() != null) {
 					StringWriter sw = new StringWriter();
+					@SuppressWarnings("resource")
 					PrintWriter pw = new PrintWriter(sw);
 					pw.println();
 					record.getThrown().printStackTrace(pw);
