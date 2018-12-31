@@ -1,5 +1,7 @@
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
+
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,12 +34,12 @@ class ChunkedOutputStream extends FilterOutputStream {
 	public void write(byte[] b, int off, int len) throws IOException {
 		if (len == 0)
 			return;
-		out.write(String.format("%x\r\n", len).getBytes());
+		out.write(String.format("%x\r\n", len).getBytes(US_ASCII));
 		out.write(b, off, len);
-		out.write("\r\n".getBytes());
+		out.write("\r\n".getBytes(US_ASCII));
 	}
 
 	public void finish() throws IOException {
-		out.write("0\r\n\r\n".getBytes());
+		out.write("0\r\n\r\n".getBytes(US_ASCII));
 	}
 }

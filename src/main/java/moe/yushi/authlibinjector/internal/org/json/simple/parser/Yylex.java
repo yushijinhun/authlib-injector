@@ -3,8 +3,6 @@
 package moe.yushi.authlibinjector.internal.org.json.simple.parser;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 
 class Yylex {
@@ -277,17 +275,6 @@ class Yylex {
 	 */
 	Yylex(Reader in) {
 		zzReader = in;
-	}
-
-	/**
-	 * Creates a new scanner.
-	 * There is also Reader version of this constructor.
-	 *
-	 * @param in
-	 *            the Inputstream to read input from.
-	 */
-	Yylex(InputStream in) {
-		this(new InputStreamReader(in));
 	}
 
 	/**

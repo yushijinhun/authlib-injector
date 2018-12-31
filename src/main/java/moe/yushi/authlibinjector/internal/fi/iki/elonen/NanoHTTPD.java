@@ -237,8 +237,8 @@ public abstract class NanoHTTPD {
 		public HTTPSession(InputStream inputStream, OutputStream outputStream, InetAddress inetAddress) {
 			this.inputStream = new BufferedInputStream(inputStream, HTTPSession.BUFSIZE);
 			this.outputStream = outputStream;
-			this.remoteIp = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "127.0.0.1" : inetAddress.getHostAddress().toString();
-			this.remoteHostname = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "localhost" : inetAddress.getHostName().toString();
+			this.remoteIp = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "127.0.0.1" : inetAddress.getHostAddress();
+			this.remoteHostname = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "localhost" : inetAddress.getHostName();
 			this.headers = new HashMap<>();
 		}
 
@@ -388,7 +388,7 @@ public abstract class NanoHTTPD {
 				}
 
 				// Create a BufferedReader for parsing the header.
-				BufferedReader hin = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, this.rlen)));
+				BufferedReader hin = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, this.rlen), US_ASCII));
 
 				// Decode the header into parms and header java properties
 				Map<String, String> pre = new HashMap<>();

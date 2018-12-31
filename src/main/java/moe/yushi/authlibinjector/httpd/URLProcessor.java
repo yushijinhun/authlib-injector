@@ -130,7 +130,7 @@ public class URLProcessor {
 					try {
 						return reverseProxy(session, target);
 					} catch (IOException e) {
-						Logging.HTTPD.log(Level.WARNING, "Reserve proxy error", e);
+						Logging.HTTPD.log(Level.WARNING, "Reverse proxy error", e);
 						return Response.newFixedLength(Status.BAD_GATEWAY, MIME_PLAINTEXT, "Bad Gateway");
 					}
 				} else {
@@ -154,7 +154,7 @@ public class URLProcessor {
 
 		InputStream clientIn = session.getInputStream();
 
-		Logging.HTTPD.fine(() -> "Reserve proxy: > " + method + " " + url + ", headers: " + requestHeaders);
+		Logging.HTTPD.fine(() -> "Reverse proxy: > " + method + " " + url + ", headers: " + requestHeaders);
 
 		HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
 		conn.setRequestMethod(method);
@@ -182,7 +182,7 @@ public class URLProcessor {
 		} catch (IOException e) {
 			upstreamIn = conn.getErrorStream();
 		}
-		Logging.HTTPD.fine(() -> "Reserve proxy: < " + responseCode + " " + reponseMessage + " , headers: " + responseHeaders);
+		Logging.HTTPD.fine(() -> "Reverse proxy: < " + responseCode + " " + reponseMessage + " , headers: " + responseHeaders);
 
 		IStatus status = new IStatus() {
 			@Override
