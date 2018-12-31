@@ -1,6 +1,6 @@
 package moe.yushi.authlibinjector.transform;
 
-import static org.objectweb.asm.Opcodes.ASM6;
+import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
@@ -203,7 +203,7 @@ public class AuthlibLogInterceptor implements TransformUnit {
 					return Optional.empty();
 				}
 			}
-			return Optional.of(new ClassVisitor(ASM6, writer) {
+			return Optional.of(new ClassVisitor(ASM7, writer) {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {

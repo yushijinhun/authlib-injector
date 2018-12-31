@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-	compile 'org.ow2.asm:asm:6.2.1'
+	compile 'org.ow2.asm:asm:7.0'
 	testCompile 'junit:junit:4.12'
 }
 

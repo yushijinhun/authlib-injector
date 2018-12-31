@@ -4,7 +4,7 @@ import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
 import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ASM6;
+import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.F_APPEND;
@@ -40,7 +40,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
-			return Optional.of(new ClassVisitor(ASM6, writer) {
+			return Optional.of(new ClassVisitor(ASM7, writer) {
 
 				@Override
 				public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -94,7 +94,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					return new MethodVisitor(ASM6, super.visitMethod(access, name, desc, signature, exceptions)) {
+					return new MethodVisitor(ASM7, super.visitMethod(access, name, desc, signature, exceptions)) {
 						@Override
 						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
 							if (opcode == INVOKEVIRTUAL

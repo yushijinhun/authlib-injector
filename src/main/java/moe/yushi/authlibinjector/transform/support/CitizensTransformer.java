@@ -1,7 +1,7 @@
 package moe.yushi.authlibinjector.transform.support;
 
 import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ASM6;
+import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.F_SAME;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.IFEQ;
@@ -28,12 +28,12 @@ public class CitizensTransformer implements TransformUnit {
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
 		if ("net.citizensnpcs.Settings$Setting".equals(className)) {
-			return Optional.of(new ClassVisitor(ASM6, writer) {
+			return Optional.of(new ClassVisitor(ASM7, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 					if (("loadFromKey".equals(name) || "setAtKey".equals(name))
 							&& "(Lnet/citizensnpcs/api/util/DataKey;)V".equals(descriptor)) {
-						return new MethodVisitor(ASM6, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
 							@Override
 							public void visitCode() {
 								super.visitCode();
