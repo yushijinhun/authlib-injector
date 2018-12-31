@@ -1,6 +1,7 @@
 package moe.yushi.authlibinjector;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
@@ -85,6 +86,8 @@ public final class AuthlibInjector {
 	 * Possible values: client, server.
 	 */
 	public static final String PROP_SIDE = "authlibinjector.side";
+
+	public static final String PROP_DISABLE_HTTPD = "authlibinjector.httpd.disable";
 
 	public static final String PROP_ALI_REDIRECT_LIMIT = "authlibinjector.ali.redirectLimit";
 
@@ -273,7 +276,11 @@ public final class AuthlibInjector {
 		}
 	}
 
-	private static URLProcessor createURLProcessor(YggdrasilConfiguration config) {
+	private static List<URLFilter> createFilters(YggdrasilConfiguration config) {
+		if (Boolean.getBoolean(PROP_DISABLE_HTTPD)) {
+			return emptyList();
+		}
+
 		List<URLFilter> filters = new ArrayList<>();
 
 		YggdrasilClient customClient = new YggdrasilClient(new CustomYggdrasilAPIProvider(config));
@@ -288,11 +295,11 @@ public final class AuthlibInjector {
 		filters.add(new QueryUUIDsFilter(mojangClient, customClient));
 		filters.add(new QueryProfileFilter(mojangClient, customClient));
 
-		return new URLProcessor(filters, new DefaultURLRedirector(config));
+		return filters;
 	}
 
 	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
-		URLProcessor urlProcessor = createURLProcessor(config);
+		URLProcessor urlProcessor = new URLProcessor(createFilters(config), new DefaultURLRedirector(config));
 
 		ClassTransformer transformer = new ClassTransformer();
 		for (String ignore : nonTransformablePackages) {
