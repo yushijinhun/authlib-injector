@@ -39,6 +39,16 @@ public class URLProcessor {
 		this.redirector = redirector;
 	}
 
+	/**
+	 * Transforms the input URL(which is grabbed from the bytecode).
+	 *
+	 * If any filter is interested in the URL, the URL will be redirected to the local HTTP server.
+	 * Otherwise, the URLRedirector will be invoked to determine whether the URL should be modified
+	 * and pointed to the customized authentication server.
+	 * If none of above happens, empty is returned.
+	 *
+	 * @return the transformed URL, or empty if it doesn't need to be transformed
+	 */
 	public Optional<String> transformURL(String inputUrl) {
 		Matcher matcher = URL_REGEX.matcher(inputUrl);
 		if (!matcher.find()) {
