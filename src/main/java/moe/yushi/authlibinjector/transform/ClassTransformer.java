@@ -15,9 +15,13 @@ import java.util.logging.Level;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+
+import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class ClassTransformer implements ClassFileTransformer {
+
+	private static final boolean PRINT_UNTRANSFORMED_CLASSES = Boolean.getBoolean(AuthlibInjector.PROP_PRINT_UNTRANSFORMED_CLASSES);
 
 	public List<TransformUnit> units = new ArrayList<>();
 	public List<ClassLoadingListener> listeners = new ArrayList<>();
@@ -30,10 +34,12 @@ public class ClassTransformer implements ClassFileTransformer {
 		private String className;
 		private byte[] classBuffer;
 		private ClassWriter pooledClassWriter;
+		private ClassLoader classLoader;
 
-		public TransformHandle(String className, byte[] classBuffer) {
+		public TransformHandle(ClassLoader classLoader, String className, byte[] classBuffer) {
 			this.className = className;
 			this.classBuffer = classBuffer;
+			this.classLoader = classLoader;
 		}
 
 		public void accept(TransformUnit unit) {
@@ -45,7 +51,7 @@ public class ClassTransformer implements ClassFileTransformer {
 				pooledClassWriter = null;
 			}
 
-			Optional<ClassVisitor> optionalVisitor = unit.transform(className, writer, () -> currentModified = true);
+			Optional<ClassVisitor> optionalVisitor = unit.transform(classLoader, className, writer, () -> currentModified = true);
 			if (optionalVisitor.isPresent()) {
 				currentModified = false;
 				ClassReader reader = new ClassReader(classBuffer);
@@ -92,13 +98,13 @@ public class ClassTransformer implements ClassFileTransformer {
 					}
 				}
 
-				TransformHandle handle = new TransformHandle(className, classfileBuffer);
+				TransformHandle handle = new TransformHandle(loader, className, classfileBuffer);
 				units.forEach(handle::accept);
 				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 
 				Optional<byte[]> transformResult = handle.getTransformResult();
-				if (!transformResult.isPresent()) {
-					Logging.TRANSFORM_SKIPPED.fine("No transformation is applied to [" + className + "]");
+				if (PRINT_UNTRANSFORMED_CLASSES && !transformResult.isPresent()) {
+					Logging.TRANSFORM.fine("No transformation is applied to [" + className + "]");
 				}
 				return transformResult.orElse(null);
 			} catch (Throwable e) {

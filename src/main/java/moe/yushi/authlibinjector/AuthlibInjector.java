@@ -1,6 +1,7 @@
 package moe.yushi.authlibinjector;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
@@ -14,19 +15,30 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
+import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
+import moe.yushi.authlibinjector.httpd.QueryProfileFilter;
+import moe.yushi.authlibinjector.httpd.QueryUUIDsFilter;
+import moe.yushi.authlibinjector.httpd.URLFilter;
+import moe.yushi.authlibinjector.httpd.URLProcessor;
 import moe.yushi.authlibinjector.transform.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
+import moe.yushi.authlibinjector.transform.ConstantURLTransformUnit;
 import moe.yushi.authlibinjector.transform.DumpClassListener;
 import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
-import moe.yushi.authlibinjector.transform.LocalYggdrasilApiTransformUnit;
-import moe.yushi.authlibinjector.transform.RemoteYggdrasilTransformUnit;
 import moe.yushi.authlibinjector.transform.YggdrasilKeyTransformUnit;
+import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
 import moe.yushi.authlibinjector.util.Logging;
+import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
+import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
+import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public final class AuthlibInjector {
 
@@ -55,11 +67,6 @@ public final class AuthlibInjector {
 	public static final String PROP_PREFETCHED_DATA_OLD = "org.to2mbn.authlibinjector.config.prefetched";
 
 	/**
-	 * Whether to disable the local httpd server.
-	 */
-	public static final String PROP_DISABLE_HTTPD = "authlibinjector.httpd.disable";
-
-	/**
 	 * The name of loggers to have debug level turned on.
 	 */
 	public static final String PROP_DEBUG = "authlibinjector.debug";
@@ -70,10 +77,17 @@ public final class AuthlibInjector {
 	public static final String PROP_DUMP_CLASS = "authlibinjector.dumpClass";
 
 	/**
+	 * Whether to print the classes that are bytecode-analyzed but not transformed.
+	 */
+	public static final String PROP_PRINT_UNTRANSFORMED_CLASSES = "authlibinjector.printUntransformed";
+
+	/**
 	 * The side that authlib-injector runs on.
 	 * Possible values: client, server.
 	 */
 	public static final String PROP_SIDE = "authlibinjector.side";
+
+	public static final String PROP_DISABLE_HTTPD = "authlibinjector.httpd.disable";
 
 	public static final String PROP_ALI_REDIRECT_LIMIT = "authlibinjector.ali.redirectLimit";
 
@@ -262,9 +276,32 @@ public final class AuthlibInjector {
 		}
 	}
 
-	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
-		ClassTransformer transformer = new ClassTransformer();
+	private static List<URLFilter> createFilters(YggdrasilConfiguration config) {
+		if (Boolean.getBoolean(PROP_DISABLE_HTTPD)) {
+			return emptyList();
+		}
 
+		List<URLFilter> filters = new ArrayList<>();
+
+		YggdrasilClient customClient = new YggdrasilClient(new CustomYggdrasilAPIProvider(config));
+		YggdrasilClient mojangClient = new YggdrasilClient(new MojangYggdrasilAPIProvider());
+
+		if (Boolean.TRUE.equals(config.getMeta().get("feature.legacy_skin_api"))) {
+			Logging.CONFIG.info("Disabled local redirect for legacy skin API, as the remote Yggdrasil server supports it");
+		} else {
+			filters.add(new LegacySkinAPIFilter(customClient));
+		}
+
+		filters.add(new QueryUUIDsFilter(mojangClient, customClient));
+		filters.add(new QueryProfileFilter(mojangClient, customClient));
+
+		return filters;
+	}
+
+	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
+		URLProcessor urlProcessor = new URLProcessor(createFilters(config), new DefaultURLRedirector(config));
+
+		ClassTransformer transformer = new ClassTransformer();
 		for (String ignore : nonTransformablePackages) {
 			transformer.ignores.add(ignore);
 		}
@@ -277,16 +314,13 @@ public final class AuthlibInjector {
 			transformer.units.add(new AuthlibLogInterceptor());
 		}
 
-		if (!"true".equals(System.getProperty(PROP_DISABLE_HTTPD))) {
-			transformer.units.add(new LocalYggdrasilApiTransformUnit(config));
-		}
-
-		transformer.units.add(new RemoteYggdrasilTransformUnit(config.getApiRoot()));
+		transformer.units.add(new ConstantURLTransformUnit(urlProcessor));
+		transformer.units.add(new CitizensTransformer());
 
 		transformer.units.add(new SkinWhitelistTransformUnit(config.getSkinDomains().toArray(new String[0])));
 
-		config.getDecodedPublickey().ifPresent(
-				key -> transformer.units.add(new YggdrasilKeyTransformUnit(key.getEncoded())));
+		transformer.units.add(new YggdrasilKeyTransformUnit());
+		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.getPublicKeys()::add);
 
 		return transformer;
 	}

@@ -23,7 +23,6 @@ public final class Logging {
 	public static final Logger LAUNCH = Logger.getLogger(PREFIX + ".launch");
 	public static final Logger CONFIG = Logger.getLogger(PREFIX + ".config");
 	public static final Logger TRANSFORM = Logger.getLogger(PREFIX + ".transform");
-	public static final Logger TRANSFORM_SKIPPED = Logger.getLogger(PREFIX + ".transform.skipped");
 	public static final Logger HTTPD = Logger.getLogger(PREFIX + ".httpd");
 
 	private static Predicate<String> debugLoggerNamePredicate;
@@ -51,6 +50,7 @@ public final class Logging {
 				String exception = "";
 				if (record.getThrown() != null) {
 					StringWriter sw = new StringWriter();
+					@SuppressWarnings("resource")
 					PrintWriter pw = new PrintWriter(sw);
 					pw.println();
 					record.getThrown().printStackTrace(pw);

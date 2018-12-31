@@ -5,6 +5,6 @@ import org.objectweb.asm.ClassVisitor;
 
 public interface TransformUnit {
 
-	Optional<ClassVisitor> transform(String className, ClassVisitor writer, Runnable modifiedCallback);
+	Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback);
 
 }

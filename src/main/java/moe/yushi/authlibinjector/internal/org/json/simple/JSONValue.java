@@ -9,7 +9,6 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collection;
-// import java.util.List;
 import java.util.Map;
 import moe.yushi.authlibinjector.internal.org.json.simple.parser.JSONParser;
 import moe.yushi.authlibinjector.internal.org.json.simple.parser.ParseException;
