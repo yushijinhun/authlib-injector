@@ -4,7 +4,6 @@ import static org.objectweb.asm.Opcodes.ASM6;
 import java.util.Optional;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import moe.yushi.authlibinjector.util.Logging;
 
 public abstract class LdcTransformUnit implements TransformUnit {
 
@@ -22,7 +21,6 @@ public abstract class LdcTransformUnit implements TransformUnit {
 							Optional<String> transformed = transformLdc((String) cst);
 							if (transformed.isPresent() && !transformed.get().equals(cst)) {
 								modifiedCallback.run();
-								Logging.TRANSFORM.fine("Transformed string [" + cst + "] to [" + transformed.get() + "]");
 								super.visitLdcInsn(transformed.get());
 							} else {
 								super.visitLdcInsn(cst);

@@ -11,6 +11,8 @@ import java.net.URL;
 
 public final class IOUtils {
 
+	public static final String CONTENT_TYPE_JSON = "application/json; charset=utf-8";
+
 	public static byte[] getURL(String url) throws IOException {
 		try (InputStream in = new URL(url).openStream()) {
 			return asBytes(in);
@@ -23,27 +25,26 @@ public final class IOUtils {
 		conn.setRequestProperty("Content-Type", contentType);
 		conn.setRequestProperty("Content-Length", String.valueOf(payload.length));
 		conn.setDoOutput(true);
-		try {
-			conn.connect();
-			try (OutputStream out = conn.getOutputStream()) {
-				out.write(payload);
-			}
-			try (InputStream in = conn.getInputStream()) {
-				return asBytes(in);
-			}
-		} finally {
-			conn.disconnect();
+		try (OutputStream out = conn.getOutputStream()) {
+			out.write(payload);
+		}
+		try (InputStream in = conn.getInputStream()) {
+			return asBytes(in);
 		}
 	}
 
 	public static byte[] asBytes(InputStream in) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		transfer(in, out);
+		return out.toByteArray();
+	}
+
+	public static void transfer(InputStream from, OutputStream to) throws IOException {
 		byte[] buf = new byte[8192];
 		int read;
-		while ((read = in.read(buf)) != -1) {
-			out.write(buf, 0, read);
+		while ((read = from.read(buf)) != -1) {
+			to.write(buf, 0, read);
 		}
-		return out.toByteArray();
 	}
 
 	public static String asString(byte[] bytes) {
