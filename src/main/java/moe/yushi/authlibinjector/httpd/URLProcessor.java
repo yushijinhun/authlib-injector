@@ -160,7 +160,6 @@ public class URLProcessor {
 		conn.setRequestMethod(method);
 		conn.setDoOutput(clientIn != null);
 		requestHeaders.forEach(conn::setRequestProperty);
-		conn.connect();
 
 		if (clientIn != null) {
 			try (OutputStream upstreamOut = conn.getOutputStream()) {

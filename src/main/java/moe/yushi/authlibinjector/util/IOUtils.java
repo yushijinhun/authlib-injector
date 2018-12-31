@@ -25,16 +25,11 @@ public final class IOUtils {
 		conn.setRequestProperty("Content-Type", contentType);
 		conn.setRequestProperty("Content-Length", String.valueOf(payload.length));
 		conn.setDoOutput(true);
-		try {
-			conn.connect();
-			try (OutputStream out = conn.getOutputStream()) {
-				out.write(payload);
-			}
-			try (InputStream in = conn.getInputStream()) {
-				return asBytes(in);
-			}
-		} finally {
-			conn.disconnect();
+		try (OutputStream out = conn.getOutputStream()) {
+			out.write(payload);
+		}
+		try (InputStream in = conn.getInputStream()) {
+			return asBytes(in);
 		}
 	}
 
