@@ -40,6 +40,9 @@ public class QueryProfileFilter implements URLFilter {
 	private YggdrasilClient mojangClient;
 	private YggdrasilClient customClient;
 
+	// see <https://github.com/yushijinhun/authlib-injector/issues/30>
+	private boolean mc52974WorkaroundEnabled;
+
 	public QueryProfileFilter(YggdrasilClient mojangClient, YggdrasilClient customClient) {
 		this.mojangClient = mojangClient;
 		this.customClient = customClient;
@@ -71,6 +74,10 @@ public class QueryProfileFilter implements URLFilter {
 			withSignature = true;
 		}
 
+		if (mc52974WorkaroundEnabled) {
+			withSignature = true;
+		}
+
 		Optional<GameProfile> response;
 		if (QueryUUIDsFilter.isMaskedUUID(uuid)) {
 			response = mojangClient.queryProfile(QueryUUIDsFilter.unmaskUUID(uuid), withSignature);
@@ -89,4 +96,11 @@ public class QueryProfileFilter implements URLFilter {
 		}
 	}
 
+	public boolean isMc52974WorkaroundEnabled() {
+		return mc52974WorkaroundEnabled;
+	}
+
+	public void setMc52974WorkaroundEnabled(boolean mc52974WorkaroundEnabled) {
+		this.mc52974WorkaroundEnabled = mc52974WorkaroundEnabled;
+	}
 }
