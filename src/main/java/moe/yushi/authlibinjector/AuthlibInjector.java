@@ -23,6 +23,7 @@ import static java.util.Optional.of;
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.removeNewLines;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.instrument.ClassFileTransformer;
@@ -48,10 +49,12 @@ import moe.yushi.authlibinjector.transform.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
 import moe.yushi.authlibinjector.transform.ConstantURLTransformUnit;
 import moe.yushi.authlibinjector.transform.DumpClassListener;
+import moe.yushi.authlibinjector.transform.MainArgumentsTransformer;
 import moe.yushi.authlibinjector.transform.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
 import moe.yushi.authlibinjector.transform.support.LaunchWrapperTransformer;
+import moe.yushi.authlibinjector.transform.support.MC52974Workaround;
 import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
@@ -310,7 +313,15 @@ public final class AuthlibInjector {
 		}
 
 		filters.add(new QueryUUIDsFilter(mojangClient, customClient));
-		filters.add(new QueryProfileFilter(mojangClient, customClient));
+		QueryProfileFilter queryProfileFilter = new QueryProfileFilter(mojangClient, customClient);
+		filters.add(queryProfileFilter);
+
+		MC52974Workaround mc52974 = new MC52974Workaround();
+		MainArgumentsTransformer.getListeners().add(args -> {
+			mc52974.acceptMainArguments(args);
+			return args;
+		});
+		queryProfileFilter.setMc52974Workaround(mc52974);
 
 		return filters;
 	}
@@ -331,6 +342,7 @@ public final class AuthlibInjector {
 			transformer.units.add(new AuthlibLogInterceptor());
 		}
 
+		transformer.units.add(new MainArgumentsTransformer());
 		transformer.units.add(new ConstantURLTransformUnit(urlProcessor));
 		transformer.units.add(new CitizensTransformer());
 		transformer.units.add(new LaunchWrapperTransformer());
