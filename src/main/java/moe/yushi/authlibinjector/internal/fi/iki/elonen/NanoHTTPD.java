@@ -1,13 +1,24 @@
-package moe.yushi.authlibinjector.internal.fi.iki.elonen;
-
-import static java.nio.charset.StandardCharsets.US_ASCII;
-
 /*
- * #%L
+ * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/*
  * NanoHttpd-Core
- * %%
+ *
  * Copyright (C) 2012 - 2015 nanohttpd
- * %%
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
@@ -32,8 +43,10 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * #L%
  */
+package moe.yushi.authlibinjector.internal.fi.iki.elonen;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
