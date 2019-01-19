@@ -313,15 +313,12 @@ public final class AuthlibInjector {
 		}
 
 		filters.add(new QueryUUIDsFilter(mojangClient, customClient));
-		QueryProfileFilter queryProfileFilter = new QueryProfileFilter(mojangClient, customClient);
-		filters.add(queryProfileFilter);
+		filters.add(new QueryProfileFilter(mojangClient, customClient));
 
-		MC52974Workaround mc52974 = new MC52974Workaround();
 		MainArgumentsTransformer.getListeners().add(args -> {
-			mc52974.acceptMainArguments(args);
+			MC52974Workaround.acceptMainArguments(args);
 			return args;
 		});
-		queryProfileFilter.setMc52974Workaround(mc52974);
 
 		return filters;
 	}
@@ -345,6 +342,7 @@ public final class AuthlibInjector {
 		transformer.units.add(new MainArgumentsTransformer());
 		transformer.units.add(new ConstantURLTransformUnit(urlProcessor));
 		transformer.units.add(new CitizensTransformer());
+		transformer.units.add(new MC52974Workaround());
 		transformer.units.add(new LaunchWrapperTransformer());
 
 		transformer.units.add(new SkinWhitelistTransformUnit(config.getSkinDomains().toArray(new String[0])));

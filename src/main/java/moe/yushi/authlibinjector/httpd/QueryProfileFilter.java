@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Status;
-import moe.yushi.authlibinjector.transform.support.MC52974Workaround;
 import moe.yushi.authlibinjector.yggdrasil.GameProfile;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilResponseBuilder;
@@ -40,8 +39,6 @@ public class QueryProfileFilter implements URLFilter {
 
 	private YggdrasilClient mojangClient;
 	private YggdrasilClient customClient;
-
-	private MC52974Workaround mc52974Workaround;
 
 	public QueryProfileFilter(YggdrasilClient mojangClient, YggdrasilClient customClient) {
 		this.mojangClient = mojangClient;
@@ -74,10 +71,6 @@ public class QueryProfileFilter implements URLFilter {
 			withSignature = true;
 		}
 
-		if (mc52974Workaround != null && mc52974Workaround.needsWorkaround()) {
-			withSignature = true;
-		}
-
 		Optional<GameProfile> response;
 		if (QueryUUIDsFilter.isMaskedUUID(uuid)) {
 			response = mojangClient.queryProfile(QueryUUIDsFilter.unmaskUUID(uuid), withSignature);
@@ -96,7 +89,4 @@ public class QueryProfileFilter implements URLFilter {
 		}
 	}
 
-	public void setMc52974Workaround(MC52974Workaround mc52974Workaround) {
-		this.mc52974Workaround = mc52974Workaround;
-	}
 }
