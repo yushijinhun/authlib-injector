@@ -88,21 +88,9 @@ import java.util.logging.Logger;
 public abstract class NanoHTTPD {
 
 	/**
-	 * Pluggable strategy for asynchronously executing requests.
-	 */
-	public interface AsyncRunner {
-
-		void closeAll();
-
-		void closed(ClientHandler clientHandler);
-
-		void exec(ClientHandler code);
-	}
-
-	/**
 	 * The runnable that will be used for every new client connection.
 	 */
-	public class ClientHandler implements Runnable {
+	private class ClientHandler implements Runnable {
 
 		private final InputStream inputStream;
 
@@ -156,20 +144,12 @@ public abstract class NanoHTTPD {
 	 * number. The name is useful when profiling the application.
 	 * </p>
 	 */
-	public static class DefaultAsyncRunner implements AsyncRunner {
+	private static class AsyncRunner {
 
 		private long requestCount;
 
 		private final List<ClientHandler> running = Collections.synchronizedList(new ArrayList<NanoHTTPD.ClientHandler>());
 
-		/**
-		 * @return a list with currently running clients.
-		 */
-		public List<ClientHandler> getRunning() {
-			return running;
-		}
-
-		@Override
 		public void closeAll() {
 			// copy of the list for concurrency
 			for (ClientHandler clientHandler : new ArrayList<>(this.running)) {
@@ -177,12 +157,10 @@ public abstract class NanoHTTPD {
 			}
 		}
 
-		@Override
 		public void closed(ClientHandler clientHandler) {
 			this.running.remove(clientHandler);
 		}
 
-		@Override
 		public void exec(ClientHandler clientHandler) {
 			++this.requestCount;
 			Thread t = new Thread(clientHandler);
@@ -193,23 +171,9 @@ public abstract class NanoHTTPD {
 		}
 	}
 
-	/**
-	 * Creates a normal ServerSocket for TCP connections
-	 */
-	public static class DefaultServerSocketFactory implements ServerSocketFactory {
-
-		@Override
-		public ServerSocket create() throws IOException {
-			return new ServerSocket();
-		}
-
-	}
-
-	protected class HTTPSession implements IHTTPSession {
+	private class HTTPSession implements IHTTPSession {
 
 		public static final int BUFSIZE = 8192;
-
-		public static final int MAX_HEADER_SIZE = 1024;
 
 		private final OutputStream outputStream;
 
@@ -241,11 +205,6 @@ public abstract class NanoHTTPD {
 		private boolean continueSent;
 		private boolean isServing;
 		private final Object servingLock = new Object();
-
-		public HTTPSession(InputStream inputStream, OutputStream outputStream) {
-			this.inputStream = new BufferedInputStream(inputStream, HTTPSession.BUFSIZE);
-			this.outputStream = outputStream;
-		}
 
 		public HTTPSession(InputStream inputStream, OutputStream outputStream, InetAddress inetAddress) {
 			this.inputStream = new BufferedInputStream(inputStream, HTTPSession.BUFSIZE);
@@ -553,19 +512,6 @@ public abstract class NanoHTTPD {
 			return this.uri;
 		}
 
-		/**
-		 * Deduce body length in bytes. Either from "content-length" header or
-		 * read bytes.
-		 */
-		public long getBodySize() {
-			if (this.headers.containsKey("content-length")) {
-				return Long.parseLong(this.headers.get("content-length"));
-			} else if (this.splitbyte < this.rlen) {
-				return this.rlen - this.splitbyte;
-			}
-			return 0;
-		}
-
 		@Override
 		public String getRemoteIpAddress() {
 			return this.remoteIp;
@@ -580,7 +526,7 @@ public abstract class NanoHTTPD {
 	/**
 	 * The runnable that will be used for the main listening thread.
 	 */
-	public class ServerRunnable implements Runnable {
+	private class ServerRunnable implements Runnable {
 
 		private final int timeout;
 
@@ -610,21 +556,12 @@ public abstract class NanoHTTPD {
 					}
 					@SuppressWarnings("resource")
 					final InputStream inputStream = finalAccept.getInputStream();
-					NanoHTTPD.this.asyncRunner.exec(createClientHandler(finalAccept, inputStream));
+					NanoHTTPD.this.asyncRunner.exec(new ClientHandler(inputStream, finalAccept));
 				} catch (IOException e) {
 					NanoHTTPD.LOG.log(Level.FINE, "Communication with the client broken", e);
 				}
 			} while (!NanoHTTPD.this.myServerSocket.isClosed());
 		}
-	}
-
-	/**
-	 * Factory to create ServerSocketFactories.
-	 */
-	public interface ServerSocketFactory {
-
-		public ServerSocket create() throws IOException;
-
 	}
 
 	/**
@@ -673,14 +610,9 @@ public abstract class NanoHTTPD {
 
 	private volatile ServerSocket myServerSocket;
 
-	private ServerSocketFactory serverSocketFactory = new DefaultServerSocketFactory();
-
 	private Thread myThread;
 
-	/**
-	 * Pluggable strategy for asynchronously executing requests.
-	 */
-	protected AsyncRunner asyncRunner;
+	private AsyncRunner asyncRunner = new AsyncRunner();
 
 	/**
 	 * Constructs an HTTP server on given port.
@@ -703,7 +635,6 @@ public abstract class NanoHTTPD {
 	public NanoHTTPD(String hostname, int port) {
 		this.hostname = hostname;
 		this.myPort = port;
-		setAsyncRunner(new DefaultAsyncRunner());
 	}
 
 	/**
@@ -711,32 +642,6 @@ public abstract class NanoHTTPD {
 	 */
 	public synchronized void closeAllConnections() {
 		stop();
-	}
-
-	/**
-	 * create a instance of the client handler, subclasses can return a subclass
-	 * of the ClientHandler.
-	 *
-	 * @param finalAccept
-	 *                    the socket the cleint is connected to
-	 * @param inputStream
-	 *                    the input stream
-	 * @return the client handler
-	 */
-	protected ClientHandler createClientHandler(final Socket finalAccept, final InputStream inputStream) {
-		return new ClientHandler(inputStream, finalAccept);
-	}
-
-	/**
-	 * Instantiate the server runnable, can be overwritten by subclasses to
-	 * provide a subclass of the ServerRunnable.
-	 *
-	 * @param timeout
-	 *                the socet timeout to use.
-	 * @return the server runnable.
-	 */
-	protected ServerRunnable createServerRunnable(final int timeout) {
-		return new ServerRunnable(timeout);
 	}
 
 	/**
@@ -765,14 +670,6 @@ public abstract class NanoHTTPD {
 		return wasStarted() && !this.myServerSocket.isClosed() && this.myThread.isAlive();
 	}
 
-	public ServerSocketFactory getServerSocketFactory() {
-		return serverSocketFactory;
-	}
-
-	public void setServerSocketFactory(ServerSocketFactory serverSocketFactory) {
-		this.serverSocketFactory = serverSocketFactory;
-	}
-
 	public String getHostname() {
 		return hostname;
 	}
@@ -789,16 +686,6 @@ public abstract class NanoHTTPD {
 	 */
 	public Response serve(IHTTPSession session) {
 		return Response.newFixedLength(Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT, "Not Found");
-	}
-
-	/**
-	 * Pluggable strategy for asynchronously executing requests.
-	 *
-	 * @param asyncRunner
-	 *                    new strategy for handling threads.
-	 */
-	public void setAsyncRunner(AsyncRunner asyncRunner) {
-		this.asyncRunner = asyncRunner;
 	}
 
 	/**
@@ -829,10 +716,10 @@ public abstract class NanoHTTPD {
 	 *                     if the socket is in use.
 	 */
 	public void start(final int timeout, boolean daemon) throws IOException {
-		this.myServerSocket = this.getServerSocketFactory().create();
+		this.myServerSocket = new ServerSocket();
 		this.myServerSocket.setReuseAddress(true);
 
-		ServerRunnable serverRunnable = createServerRunnable(timeout);
+		ServerRunnable serverRunnable = new ServerRunnable(timeout);
 		this.myThread = new Thread(serverRunnable);
 		this.myThread.setDaemon(daemon);
 		this.myThread.setName("NanoHttpd Main Listener");
