@@ -377,7 +377,7 @@ public final class AuthlibInjector {
 		Set<String> classNamesSet = new HashSet<>(Arrays.asList(classNames));
 		Class<?>[] classes = Stream.of(instrumentation.getAllLoadedClasses())
 				.filter(clazz -> classNamesSet.contains(clazz.getName()))
-				.filter(instrumentation::isModifiableClass)
+				.filter(AuthlibInjector::canRetransformClass)
 				.toArray(Class[]::new);
 		if (classes.length > 0) {
 			Logging.TRANSFORM.info("Attempt to retransform classes: " + Arrays.toString(classes));
@@ -387,6 +387,42 @@ public final class AuthlibInjector {
 				Logging.TRANSFORM.log(Level.WARNING, "Failed to retransform", e);
 			}
 		}
+	}
+
+	public static void retransformAllClasses() {
+		if (!retransformSupported) {
+			return;
+		}
+		Logging.TRANSFORM.info("Attempt to retransform all classes");
+		long t0 = System.currentTimeMillis();
+
+		Class<?>[] classes = Stream.of(instrumentation.getAllLoadedClasses())
+				.filter(AuthlibInjector::canRetransformClass)
+				.toArray(Class[]::new);
+		if (classes.length > 0) {
+			try {
+				instrumentation.retransformClasses(classes);
+			} catch (Throwable e) {
+				Logging.TRANSFORM.log(Level.WARNING, "Failed to retransform", e);
+				return;
+			}
+		}
+
+		long t1 = System.currentTimeMillis();
+		Logging.TRANSFORM.info("Retransformed " + classes.length + " classes in " + (t1 - t0) + "ms");
+	}
+
+	private static boolean canRetransformClass(Class<?> clazz) {
+		if (!instrumentation.isModifiableClass(clazz)) {
+			return false;
+		}
+		String name = clazz.getName();
+		for (String prefix : nonTransformablePackages) {
+			if (name.startsWith(prefix)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static ClassTransformer getClassTransformer() {

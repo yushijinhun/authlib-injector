@@ -16,21 +16,14 @@
  */
 package moe.yushi.authlibinjector.javaagent;
 
-import static moe.yushi.authlibinjector.AuthlibInjector.PROP_API_ROOT;
-import static moe.yushi.authlibinjector.AuthlibInjector.bootstrap;
-import static moe.yushi.authlibinjector.AuthlibInjector.nonTransformablePackages;
 import java.lang.instrument.Instrumentation;
-import java.util.Arrays;
 import java.util.logging.Level;
 
+import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.InjectorInitializationException;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class AuthlibInjectorPremain {
-
-	static {
-		Logging.init();
-	}
 
 	public static void premain(String arg, Instrumentation instrumentation) {
 		try {
@@ -55,63 +48,18 @@ public class AuthlibInjectorPremain {
 		}
 	}
 
-	public static void initInjector(String arg, Instrumentation instrumentation, boolean needsRetransform) {
+	public static void initInjector(String arg, Instrumentation instrumentation, boolean retransform) {
 		setupConfig(arg);
+		AuthlibInjector.bootstrap(instrumentation);
 
-		boolean retransformSupported = instrumentation.isRetransformClassesSupported();
-		boolean retransformEnabled = retransformSupported && needsRetransform;
-		bootstrap(instrumentation);
-
-		if (needsRetransform) {
-			if (retransformSupported) {
-				Logging.TRANSFORM.info("Start retransforming");
-				doRetransform(instrumentation);
-			} else {
-				Logging.TRANSFORM.warning("Retransform is not supported");
-			}
+		if (retransform) {
+			AuthlibInjector.retransformAllClasses();
 		}
 	}
 
 	private static void setupConfig(String arg) {
 		if (arg != null && !arg.isEmpty()) {
-			System.setProperty(PROP_API_ROOT, arg);
+			System.setProperty(AuthlibInjector.PROP_API_ROOT, arg);
 		}
 	}
-
-	private static void doRetransform(Instrumentation instrumentation) {
-		try {
-			long t0 = System.currentTimeMillis();
-			Class<?>[] classToRetransform = getClassesToRetransform(instrumentation);
-			if (classToRetransform.length > 0) {
-				instrumentation.retransformClasses(classToRetransform);
-			}
-			long t1 = System.currentTimeMillis();
-			Logging.TRANSFORM.info("Retransform finished in " + (t1 - t0) + "ms");
-		} catch (Throwable e) {
-			Logging.TRANSFORM.log(Level.SEVERE, "Failed to retransform", e);
-		}
-	}
-
-	private static Class<?>[] getClassesToRetransform(Instrumentation instrumentation) {
-		Class<?>[] loadedClasses = instrumentation.getAllLoadedClasses();
-		Class<?>[] dest = new Class[loadedClasses.length];
-		int idx = 0;
-		for (Class<?> clazz : loadedClasses) {
-			if (instrumentation.isModifiableClass(clazz)) {
-				boolean toRetransform = true;
-				for (String nonTransformablePackage : nonTransformablePackages) {
-					if (clazz.getName().startsWith(nonTransformablePackage)) {
-						toRetransform = false;
-						break;
-					}
-				}
-				if (toRetransform) {
-					dest[idx++] = clazz;
-				}
-			}
-		}
-		Logging.TRANSFORM.fine("Loaded " + loadedClasses.length + " classes, " + idx + " to retransform");
-		return Arrays.copyOf(dest, idx);
-	}
-
 }
