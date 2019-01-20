@@ -26,18 +26,22 @@ import static moe.yushi.authlibinjector.util.IOUtils.removeNewLines;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.Instrumentation;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
@@ -55,6 +59,7 @@ import moe.yushi.authlibinjector.transform.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
 import moe.yushi.authlibinjector.transform.support.LaunchWrapperTransformer;
 import moe.yushi.authlibinjector.transform.support.MC52974Workaround;
+import moe.yushi.authlibinjector.transform.support.MC52974_1710Workaround;
 import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
@@ -117,19 +122,33 @@ public final class AuthlibInjector {
 
 	private AuthlibInjector() {}
 
-	private static AtomicBoolean booted = new AtomicBoolean(false);
+	private static boolean booted = false;
+	private static Instrumentation instrumentation;
+	private static boolean retransformSupported;
+	private static ClassTransformer classTransformer;
 
-	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) throws InjectorInitializationException {
-		if (!booted.compareAndSet(false, true)) {
+	public static synchronized void bootstrap(Instrumentation instrumentation) throws InjectorInitializationException {
+		if (booted) {
 			Logging.LAUNCH.info("Already started, skipping");
 			return;
+		}
+		booted = true;
+		AuthlibInjector.instrumentation = instrumentation;
+
+		retransformSupported = instrumentation.isRetransformClassesSupported();
+		if (!retransformSupported) {
+			Logging.LAUNCH.warning("Retransform is not supported");
 		}
 
 		Logging.LAUNCH.info("Version: " + getVersion());
 
 		Optional<YggdrasilConfiguration> optionalConfig = configure();
 		if (optionalConfig.isPresent()) {
-			transformerRegistry.accept(createTransformer(optionalConfig.get()));
+			classTransformer = createTransformer(optionalConfig.get());
+			instrumentation.addTransformer(classTransformer, retransformSupported);
+
+			MC52974Workaround.init();
+			MC52974_1710Workaround.init();
 		} else {
 			Logging.LAUNCH.severe("No config available");
 			throw new InjectorInitializationException();
@@ -315,11 +334,6 @@ public final class AuthlibInjector {
 		filters.add(new QueryUUIDsFilter(mojangClient, customClient));
 		filters.add(new QueryProfileFilter(mojangClient, customClient));
 
-		MainArgumentsTransformer.getListeners().add(args -> {
-			MC52974Workaround.acceptMainArguments(args);
-			return args;
-		});
-
 		return filters;
 	}
 
@@ -342,7 +356,6 @@ public final class AuthlibInjector {
 		transformer.units.add(new MainArgumentsTransformer());
 		transformer.units.add(new ConstantURLTransformUnit(urlProcessor));
 		transformer.units.add(new CitizensTransformer());
-		transformer.units.add(new MC52974Workaround());
 		transformer.units.add(new LaunchWrapperTransformer());
 
 		transformer.units.add(new SkinWhitelistTransformUnit(config.getSkinDomains().toArray(new String[0])));
@@ -357,4 +370,62 @@ public final class AuthlibInjector {
 		return AuthlibInjector.class.getPackage().getImplementationVersion();
 	}
 
+	public static void retransformClasses(String... classNames) {
+		if (!retransformSupported) {
+			return;
+		}
+		Set<String> classNamesSet = new HashSet<>(Arrays.asList(classNames));
+		Class<?>[] classes = Stream.of(instrumentation.getAllLoadedClasses())
+				.filter(clazz -> classNamesSet.contains(clazz.getName()))
+				.filter(AuthlibInjector::canRetransformClass)
+				.toArray(Class[]::new);
+		if (classes.length > 0) {
+			Logging.TRANSFORM.info("Attempt to retransform classes: " + Arrays.toString(classes));
+			try {
+				instrumentation.retransformClasses(classes);
+			} catch (Throwable e) {
+				Logging.TRANSFORM.log(Level.WARNING, "Failed to retransform", e);
+			}
+		}
+	}
+
+	public static void retransformAllClasses() {
+		if (!retransformSupported) {
+			return;
+		}
+		Logging.TRANSFORM.info("Attempt to retransform all classes");
+		long t0 = System.currentTimeMillis();
+
+		Class<?>[] classes = Stream.of(instrumentation.getAllLoadedClasses())
+				.filter(AuthlibInjector::canRetransformClass)
+				.toArray(Class[]::new);
+		if (classes.length > 0) {
+			try {
+				instrumentation.retransformClasses(classes);
+			} catch (Throwable e) {
+				Logging.TRANSFORM.log(Level.WARNING, "Failed to retransform", e);
+				return;
+			}
+		}
+
+		long t1 = System.currentTimeMillis();
+		Logging.TRANSFORM.info("Retransformed " + classes.length + " classes in " + (t1 - t0) + "ms");
+	}
+
+	private static boolean canRetransformClass(Class<?> clazz) {
+		if (!instrumentation.isModifiableClass(clazz)) {
+			return false;
+		}
+		String name = clazz.getName();
+		for (String prefix : nonTransformablePackages) {
+			if (name.startsWith(prefix)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static ClassTransformer getClassTransformer() {
+		return classTransformer;
+	}
 }

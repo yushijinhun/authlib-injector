@@ -1,13 +1,13 @@
 package moe.yushi.authlibinjector.test;
 
-import static moe.yushi.authlibinjector.transform.support.MC52974Workaround.inferVersionSeries;
+import static moe.yushi.authlibinjector.transform.MainArgumentsTransformer.inferVersionSeries;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Optional;
 
 import org.junit.Test;
 
-public class MC52974WorkaroundTest {
+public class VersionSeriesDetectTest {
 
 	@Test
 	public void testNone() {
