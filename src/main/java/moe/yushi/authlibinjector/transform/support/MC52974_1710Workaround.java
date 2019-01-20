@@ -16,11 +16,25 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+import moe.yushi.authlibinjector.AuthlibInjector;
+import moe.yushi.authlibinjector.transform.MainArgumentsTransformer;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.util.WeakIdentityHashMap;
 
 public class MC52974_1710Workaround implements TransformUnit {
+	private MC52974_1710Workaround() {
+	}
+
+	public static void init() {
+		MainArgumentsTransformer.getVersionSeriesListeners().add(version -> {
+			if ("1.7.10".equals(version)) {
+				Logging.TRANSFORM.info("Enable MC-52974 Workaround for 1.7.10");
+				AuthlibInjector.getClassTransformer().units.add(new MC52974_1710Workaround());
+				AuthlibInjector.retransformClasses("bbs", "gb");
+			}
+		});
+	}
 
 	// Empty GameProfile -> Filled GameProfile?
 	private static final Map<Object, Optional<Object>> markedGameProfiles = new WeakIdentityHashMap<>();

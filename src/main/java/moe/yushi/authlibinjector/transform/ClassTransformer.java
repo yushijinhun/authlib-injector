@@ -23,10 +23,11 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -39,9 +40,9 @@ public class ClassTransformer implements ClassFileTransformer {
 
 	private static final boolean PRINT_UNTRANSFORMED_CLASSES = Boolean.getBoolean(AuthlibInjector.PROP_PRINT_UNTRANSFORMED_CLASSES);
 
-	public List<TransformUnit> units = new ArrayList<>();
-	public List<ClassLoadingListener> listeners = new ArrayList<>();
-	public Set<String> ignores = new HashSet<>();
+	public final List<TransformUnit> units = new CopyOnWriteArrayList<>();
+	public final List<ClassLoadingListener> listeners = new CopyOnWriteArrayList<>();
+	public final Set<String> ignores = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	private static class TransformHandle {
 

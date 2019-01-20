@@ -60,7 +60,7 @@ public class AuthlibInjectorPremain {
 
 		boolean retransformSupported = instrumentation.isRetransformClassesSupported();
 		boolean retransformEnabled = retransformSupported && needsRetransform;
-		bootstrap(x -> instrumentation.addTransformer(x, retransformEnabled));
+		bootstrap(instrumentation);
 
 		if (needsRetransform) {
 			if (retransformSupported) {
