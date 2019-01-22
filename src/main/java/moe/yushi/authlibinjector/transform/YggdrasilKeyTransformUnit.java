@@ -43,12 +43,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 	private static final List<PublicKey> PUBLIC_KEYS = new CopyOnWriteArrayList<>();
 
+	@CallbackMethod
 	public static List<PublicKey> getPublicKeys() {
 		return PUBLIC_KEYS;
 	}
@@ -76,7 +76,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 					mv.visitInsn(IRETURN);
 					mv.visitLabel(l0);
 					mv.visitFrame(F_SAME, 0, null, 0, null);
-					mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(YggdrasilKeyTransformUnit.class), "getPublicKeys", "()Ljava/util/List;", false);
+					CallbackInvocation.push(mv, YggdrasilKeyTransformUnit.class, "getPublicKeys").invoke();
 					mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;", true);
 					mv.visitVarInsn(ASTORE, 2);
 					Label l1 = new Label();

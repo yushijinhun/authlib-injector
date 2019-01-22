@@ -17,7 +17,6 @@
 package moe.yushi.authlibinjector.transform;
 
 import static org.objectweb.asm.Opcodes.ASM7;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
 import java.lang.annotation.Annotation;
@@ -44,6 +43,7 @@ public class AuthlibLogInterceptor implements TransformUnit {
 
 	private static Set<ClassLoader> interceptedClassloaders = Collections.newSetFromMap(new WeakHashMap<>());
 
+	@CallbackMethod
 	public static void onClassLoading(ClassLoader classLoader) {
 		Class<?> classLogManager;
 		try {
@@ -223,14 +223,21 @@ public class AuthlibLogInterceptor implements TransformUnit {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-					MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 					if ("<clinit>".equals(name)) {
-						mv.visitLdcInsn(Type.getType("L" + className.replace('.', '/') + ";"));
-						mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
-						mv.visitMethodInsn(INVOKESTATIC, AuthlibLogInterceptor.class.getName().replace('.', '/'), "onClassLoading", "(Ljava/lang/ClassLoader;)V", false);
-						modifiedCallback.run();
+						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+							@Override
+							public void visitCode() {
+								super.visitCode();
+								CallbackInvocation callback = CallbackInvocation.push(mv, AuthlibLogInterceptor.class, "onClassLoading");
+								super.visitLdcInsn(Type.getType("L" + className.replace('.', '/') + ";"));
+								super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
+								callback.invoke();
+								modifiedCallback.run();
+							}
+						};
+					} else {
+						return super.visitMethod(access, name, descriptor, signature, exceptions);
 					}
-					return mv;
 				}
 			});
 		}

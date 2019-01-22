@@ -20,7 +20,6 @@ import static java.util.stream.Collectors.joining;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.ASTORE;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +30,6 @@ import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
 import moe.yushi.authlibinjector.util.Logging;
 
@@ -50,8 +48,9 @@ public class MainArgumentsTransformer implements TransformUnit {
 								super.visitCode();
 								modifiedCallback.run();
 
+								CallbackInvocation callback = CallbackInvocation.push(mv, MainArgumentsTransformer.class, "processMainArguments");
 								super.visitVarInsn(ALOAD, 0);
-								super.visitMethodInsn(INVOKESTATIC, Type.getInternalName(MainArgumentsTransformer.class), "processMainArguments", "([Ljava/lang/String;)[Ljava/lang/String;", false);
+								callback.invoke();
 								super.visitVarInsn(ASTORE, 0);
 							}
 						};
@@ -73,6 +72,7 @@ public class MainArgumentsTransformer implements TransformUnit {
 	// ==== Main arguments processing ====
 	private static final List<Function<String[], String[]>> ARGUMENTS_LISTENERS = new CopyOnWriteArrayList<>();
 
+	@CallbackMethod
 	public static String[] processMainArguments(String[] args) {
 		Logging.TRANSFORM.fine(() -> "Main arguments: " + Stream.of(args).collect(joining(" ")));
 
