@@ -20,11 +20,11 @@ import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
 public class CallbackInvocation {
 
@@ -41,12 +41,7 @@ public class CallbackInvocation {
 	}
 
 	public static CallbackInvocation push(MethodVisitor mv, Class<?> owner, String methodName) {
-		String descriptor;
-		try {
-			descriptor = MethodHandles.publicLookup().unreflect(findCallbackMethod(owner, methodName)).type().toMethodDescriptorString();
-		} catch (IllegalAccessException e) {
-			throw new IllegalArgumentException(e);
-		}
+		String descriptor = Type.getMethodDescriptor(findCallbackMethod(owner, methodName));
 
 		mv.visitMethodInsn(INVOKESTATIC, "java/lang/invoke/MethodHandles", "publicLookup", "()Ljava/lang/invoke/MethodHandles$Lookup;", false);
 		mv.visitMethodInsn(INVOKESTATIC, "java/lang/ClassLoader", "getSystemClassLoader", "()Ljava/lang/ClassLoader;", false);
