@@ -48,9 +48,8 @@ public class MainArgumentsTransformer implements TransformUnit {
 								super.visitCode();
 								ctx.markModified();
 
-								CallbackInvocation callback = CallbackInvocation.push(ctx, mv, MainArgumentsTransformer.class, "processMainArguments");
 								super.visitVarInsn(ALOAD, 0);
-								callback.invoke();
+								CallbackSupport.invoke(ctx, mv, MainArgumentsTransformer.class, "processMainArguments");
 								super.visitVarInsn(ASTORE, 0);
 							}
 						};

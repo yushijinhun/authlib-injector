@@ -228,10 +228,9 @@ public class AuthlibLogInterceptor implements TransformUnit {
 							@Override
 							public void visitCode() {
 								super.visitCode();
-								CallbackInvocation callback = CallbackInvocation.push(ctx, mv, AuthlibLogInterceptor.class, "onClassLoading");
 								super.visitLdcInsn(Type.getType("L" + className.replace('.', '/') + ";"));
 								super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
-								callback.invoke();
+								CallbackSupport.invoke(ctx, mv, AuthlibLogInterceptor.class, "onClassLoading");
 								ctx.markModified();
 							}
 						};

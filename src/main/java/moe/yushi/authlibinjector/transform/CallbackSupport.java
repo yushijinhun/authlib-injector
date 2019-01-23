@@ -16,18 +16,18 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import moe.yushi.authlibinjector.transform.TransformUnit.TransformContext;
 
-public class CallbackInvocation {
+public class CallbackSupport {
 
 	private static Method findCallbackMethod(Class<?> owner, String methodName) {
 		for (Method method : owner.getDeclaredMethods()) {
@@ -41,32 +41,18 @@ public class CallbackInvocation {
 		throw new IllegalArgumentException("No such method: " + methodName);
 	}
 
-	public static CallbackInvocation push(TransformContext ctx, MethodVisitor mv, Class<?> owner, String methodName) {
+	private static final Handle BOOTSTRAP_METHOD = new Handle(
+			H_INVOKESTATIC,
+			Type.getInternalName(CallbackEntryPoint.class),
+			"bootstrap",
+			"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;)Ljava/lang/invoke/CallSite;",
+			false);
+
+	public static void invoke(TransformContext ctx, MethodVisitor mv, Class<?> owner, String methodName) {
 		ctx.requireMinimumClassVersion(50);
 		ctx.upgradeClassVersion(51);
 
 		String descriptor = Type.getMethodDescriptor(findCallbackMethod(owner, methodName));
-
-		mv.visitMethodInsn(INVOKESTATIC, "java/lang/invoke/MethodHandles", "publicLookup", "()Ljava/lang/invoke/MethodHandles$Lookup;", false);
-		mv.visitMethodInsn(INVOKESTATIC, "java/lang/ClassLoader", "getSystemClassLoader", "()Ljava/lang/ClassLoader;", false);
-		mv.visitLdcInsn(owner.getName());
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
-		mv.visitLdcInsn(methodName);
-		mv.visitLdcInsn(Type.getMethodType(descriptor));
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "findStatic", "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false);
-
-		return new CallbackInvocation(mv, descriptor);
-	}
-
-	private MethodVisitor mv;
-	private String descriptor;
-
-	private CallbackInvocation(MethodVisitor mv, String descriptor) {
-		this.mv = mv;
-		this.descriptor = descriptor;
-	}
-
-	public void invoke() {
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/invoke/MethodHandle", "invokeExact", descriptor, false);
+		mv.visitInvokeDynamicInsn(methodName, descriptor, BOOTSTRAP_METHOD, owner.getName());
 	}
 }

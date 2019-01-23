@@ -22,7 +22,6 @@ import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.SWAP;
 
 import java.util.Map;
 import java.util.Optional;
@@ -34,8 +33,8 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import moe.yushi.authlibinjector.AuthlibInjector;
-import moe.yushi.authlibinjector.transform.CallbackInvocation;
 import moe.yushi.authlibinjector.transform.CallbackMethod;
+import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.MainArgumentsTransformer;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
@@ -123,9 +122,7 @@ public class MC52974_1710Workaround {
 								if (opcode == ARETURN) {
 									ctx.markModified();
 									super.visitInsn(DUP);
-									CallbackInvocation callback = CallbackInvocation.push(ctx, mv, MC52974_1710Workaround.class, "markGameProfile");
-									super.visitInsn(SWAP);
-									callback.invoke();
+									CallbackSupport.invoke(ctx, mv, MC52974_1710Workaround.class, "markGameProfile");
 									super.visitTypeInsn(CHECKCAST, "com/mojang/authlib/GameProfile");
 								}
 								super.visitInsn(opcode);
@@ -161,8 +158,6 @@ public class MC52974_1710Workaround {
 										? "gb".equals(owner) && "b".equals(name) && "Lcom/mojang/authlib/GameProfile;".equals(descriptor)
 										: "net/minecraft/network/play/server/S0CPacketSpawnPlayer".equals(owner) && "field_148955_b".equals(name) && "Lcom/mojang/authlib/GameProfile;".equals(descriptor))) {
 									ctx.markModified();
-									CallbackInvocation callback = CallbackInvocation.push(ctx, mv, MC52974_1710Workaround.class, "accessGameProfile");
-									super.visitInsn(SWAP);
 									super.visitFieldInsn(opcode, owner, name, descriptor);
 									if (isNotchName) {
 										super.visitMethodInsn(INVOKESTATIC, "net/minecraft/server/MinecraftServer", "I", "()Lnet/minecraft/server/MinecraftServer;", false);
@@ -170,7 +165,7 @@ public class MC52974_1710Workaround {
 										super.visitMethodInsn(INVOKESTATIC, "net/minecraft/server/MinecraftServer", "func_71276_C", "()Lnet/minecraft/server/MinecraftServer;", false);
 									}
 									super.visitLdcInsn(isNotchName ? 1 : 0);
-									callback.invoke();
+									CallbackSupport.invoke(ctx, mv, MC52974_1710Workaround.class, "accessGameProfile");
 									super.visitTypeInsn(CHECKCAST, "com/mojang/authlib/GameProfile");
 								} else {
 									super.visitFieldInsn(opcode, owner, name, descriptor);

@@ -76,7 +76,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 					mv.visitInsn(IRETURN);
 					mv.visitLabel(l0);
 					mv.visitFrame(F_SAME, 0, null, 0, null);
-					CallbackInvocation.push(ctx, mv, YggdrasilKeyTransformUnit.class, "getPublicKeys").invoke();
+					CallbackSupport.invoke(ctx, mv, YggdrasilKeyTransformUnit.class, "getPublicKeys");
 					mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;", true);
 					mv.visitVarInsn(ASTORE, 2);
 					Label l1 = new Label();
