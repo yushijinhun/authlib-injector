@@ -212,7 +212,7 @@ public class AuthlibLogInterceptor implements TransformUnit {
 	}
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if (className.startsWith("com.mojang.authlib.")) {
 			synchronized (interceptedClassloaders) {
 				if (interceptedClassloaders.contains(classLoader)) {
@@ -228,11 +228,11 @@ public class AuthlibLogInterceptor implements TransformUnit {
 							@Override
 							public void visitCode() {
 								super.visitCode();
-								CallbackInvocation callback = CallbackInvocation.push(mv, AuthlibLogInterceptor.class, "onClassLoading");
+								CallbackInvocation callback = CallbackInvocation.push(ctx, mv, AuthlibLogInterceptor.class, "onClassLoading");
 								super.visitLdcInsn(Type.getType("L" + className.replace('.', '/') + ";"));
 								super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
 								callback.invoke();
-								modifiedCallback.run();
+								ctx.markModified();
 							}
 						};
 					} else {

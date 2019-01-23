@@ -16,7 +16,6 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
@@ -25,6 +24,8 @@ import java.lang.reflect.Modifier;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
+
+import moe.yushi.authlibinjector.transform.TransformUnit.TransformContext;
 
 public class CallbackInvocation {
 
@@ -40,7 +41,10 @@ public class CallbackInvocation {
 		throw new IllegalArgumentException("No such method: " + methodName);
 	}
 
-	public static CallbackInvocation push(MethodVisitor mv, Class<?> owner, String methodName) {
+	public static CallbackInvocation push(TransformContext ctx, MethodVisitor mv, Class<?> owner, String methodName) {
+		ctx.requireMinimumClassVersion(50);
+		ctx.upgradeClassVersion(51);
+
 		String descriptor = Type.getMethodDescriptor(findCallbackMethod(owner, methodName));
 
 		mv.visitMethodInsn(INVOKESTATIC, "java/lang/invoke/MethodHandles", "publicLookup", "()Ljava/lang/invoke/MethodHandles$Lookup;", false);
@@ -48,10 +52,7 @@ public class CallbackInvocation {
 		mv.visitLdcInsn(owner.getName());
 		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
 		mv.visitLdcInsn(methodName);
-		// we cannot use CONSTANT_MethodType_info here because the class file version may be lower than 51
-		mv.visitLdcInsn(descriptor);
-		mv.visitInsn(ACONST_NULL);
-		mv.visitMethodInsn(INVOKESTATIC, "java/lang/invoke/MethodType", "fromMethodDescriptorString", "(Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodType;", false);
+		mv.visitLdcInsn(Type.getMethodType(descriptor));
 		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "findStatic", "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false);
 
 		return new CallbackInvocation(mv, descriptor);

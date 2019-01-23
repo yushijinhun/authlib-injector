@@ -109,7 +109,7 @@ public class MC52974_1710Workaround {
 
 	private static class SessionTransformer implements TransformUnit {
 		@Override
-		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 			return detectNotchName(className, "bbs", "net.minecraft.util.Session", isNotchName -> new ClassVisitor(ASM7, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
@@ -121,9 +121,9 @@ public class MC52974_1710Workaround {
 							@Override
 							public void visitInsn(int opcode) {
 								if (opcode == ARETURN) {
-									modifiedCallback.run();
+									ctx.markModified();
 									super.visitInsn(DUP);
-									CallbackInvocation callback = CallbackInvocation.push(mv, MC52974_1710Workaround.class, "markGameProfile");
+									CallbackInvocation callback = CallbackInvocation.push(ctx, mv, MC52974_1710Workaround.class, "markGameProfile");
 									super.visitInsn(SWAP);
 									callback.invoke();
 									super.visitTypeInsn(CHECKCAST, "com/mojang/authlib/GameProfile");
@@ -146,7 +146,7 @@ public class MC52974_1710Workaround {
 
 	private static class S0CPacketSpawnPlayerTransformer implements TransformUnit {
 		@Override
-		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 			return detectNotchName(className, "gb", "net.minecraft.network.play.server.S0CPacketSpawnPlayer", isNotchName -> new ClassVisitor(ASM7, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
@@ -160,8 +160,8 @@ public class MC52974_1710Workaround {
 								if (opcode == GETFIELD && (isNotchName
 										? "gb".equals(owner) && "b".equals(name) && "Lcom/mojang/authlib/GameProfile;".equals(descriptor)
 										: "net/minecraft/network/play/server/S0CPacketSpawnPlayer".equals(owner) && "field_148955_b".equals(name) && "Lcom/mojang/authlib/GameProfile;".equals(descriptor))) {
-									modifiedCallback.run();
-									CallbackInvocation callback = CallbackInvocation.push(mv, MC52974_1710Workaround.class, "accessGameProfile");
+									ctx.markModified();
+									CallbackInvocation callback = CallbackInvocation.push(ctx, mv, MC52974_1710Workaround.class, "accessGameProfile");
 									super.visitInsn(SWAP);
 									super.visitFieldInsn(opcode, owner, name, descriptor);
 									if (isNotchName) {

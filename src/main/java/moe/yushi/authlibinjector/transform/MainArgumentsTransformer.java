@@ -36,7 +36,7 @@ import moe.yushi.authlibinjector.util.Logging;
 public class MainArgumentsTransformer implements TransformUnit {
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("net.minecraft.client.main.Main".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM7, writer) {
 				@Override
@@ -46,9 +46,9 @@ public class MainArgumentsTransformer implements TransformUnit {
 							@Override
 							public void visitCode() {
 								super.visitCode();
-								modifiedCallback.run();
+								ctx.markModified();
 
-								CallbackInvocation callback = CallbackInvocation.push(mv, MainArgumentsTransformer.class, "processMainArguments");
+								CallbackInvocation callback = CallbackInvocation.push(ctx, mv, MainArgumentsTransformer.class, "processMainArguments");
 								super.visitVarInsn(ALOAD, 0);
 								callback.invoke();
 								super.visitVarInsn(ASTORE, 0);

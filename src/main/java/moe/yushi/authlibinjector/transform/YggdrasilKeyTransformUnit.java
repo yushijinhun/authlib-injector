@@ -54,7 +54,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 	}
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM7, writer) {
 
@@ -76,7 +76,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 					mv.visitInsn(IRETURN);
 					mv.visitLabel(l0);
 					mv.visitFrame(F_SAME, 0, null, 0, null);
-					CallbackInvocation.push(mv, YggdrasilKeyTransformUnit.class, "getPublicKeys").invoke();
+					CallbackInvocation.push(ctx, mv, YggdrasilKeyTransformUnit.class, "getPublicKeys").invoke();
 					mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;", true);
 					mv.visitVarInsn(ASTORE, 2);
 					Label l1 = new Label();
@@ -117,7 +117,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 									&& "com/mojang/authlib/properties/Property".equals(owner)
 									&& "isSignatureValid".equals(name)
 									&& "(Ljava/security/PublicKey;)Z".equals(descriptor)) {
-								modifiedCallback.run();
+								ctx.markModified();
 								super.visitMethodInsn(INVOKESTATIC,
 										"com/mojang/authlib/yggdrasil/YggdrasilMinecraftSessionService",
 										"authlib_injector_isSignatureValid",

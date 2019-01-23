@@ -37,7 +37,7 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 	}
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM7, writer) {
 
@@ -59,7 +59,7 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 								} else if ((status == 5 || status == 9) && opcode == AASTORE) {
 									status++;
 									if (status == 10) {
-										modifiedCallback.run();
+										ctx.markModified();
 										super.visitIntInsn(SIPUSH, skinWhitelist.length + 2);
 										super.visitTypeInsn(ANEWARRAY, "java/lang/String");
 										super.visitInsn(DUP);
