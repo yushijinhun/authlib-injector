@@ -123,7 +123,6 @@ public class MC52974_1710Workaround {
 									ctx.markModified();
 									super.visitInsn(DUP);
 									CallbackSupport.invoke(ctx, mv, MC52974_1710Workaround.class, "markGameProfile");
-									super.visitTypeInsn(CHECKCAST, "com/mojang/authlib/GameProfile");
 								}
 								super.visitInsn(opcode);
 							}
@@ -154,11 +153,12 @@ public class MC52974_1710Workaround {
 						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
 							@Override
 							public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+								super.visitFieldInsn(opcode, owner, name, descriptor);
+
 								if (opcode == GETFIELD && (isNotchName
 										? "gb".equals(owner) && "b".equals(name) && "Lcom/mojang/authlib/GameProfile;".equals(descriptor)
 										: "net/minecraft/network/play/server/S0CPacketSpawnPlayer".equals(owner) && "field_148955_b".equals(name) && "Lcom/mojang/authlib/GameProfile;".equals(descriptor))) {
 									ctx.markModified();
-									super.visitFieldInsn(opcode, owner, name, descriptor);
 									if (isNotchName) {
 										super.visitMethodInsn(INVOKESTATIC, "net/minecraft/server/MinecraftServer", "I", "()Lnet/minecraft/server/MinecraftServer;", false);
 									} else {
@@ -167,8 +167,6 @@ public class MC52974_1710Workaround {
 									super.visitLdcInsn(isNotchName ? 1 : 0);
 									CallbackSupport.invoke(ctx, mv, MC52974_1710Workaround.class, "accessGameProfile");
 									super.visitTypeInsn(CHECKCAST, "com/mojang/authlib/GameProfile");
-								} else {
-									super.visitFieldInsn(opcode, owner, name, descriptor);
 								}
 							}
 						};

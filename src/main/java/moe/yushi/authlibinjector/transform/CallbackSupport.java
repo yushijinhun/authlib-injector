@@ -27,7 +27,9 @@ import org.objectweb.asm.Type;
 
 import moe.yushi.authlibinjector.transform.TransformUnit.TransformContext;
 
-public class CallbackSupport {
+public final class CallbackSupport {
+	private CallbackSupport() {
+	}
 
 	private static Method findCallbackMethod(Class<?> owner, String methodName) {
 		for (Method method : owner.getDeclaredMethods()) {
