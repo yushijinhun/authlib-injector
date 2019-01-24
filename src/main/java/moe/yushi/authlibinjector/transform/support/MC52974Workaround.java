@@ -60,7 +60,7 @@ public class MC52974Workaround implements TransformUnit {
 	}
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM7, writer) {
 				@Override
@@ -70,7 +70,7 @@ public class MC52974Workaround implements TransformUnit {
 							@Override
 							public void visitCode() {
 								super.visitCode();
-								modifiedCallback.run();
+								ctx.markModified();
 								super.visitLdcInsn(1);
 								super.visitVarInsn(ISTORE, 2);
 							}

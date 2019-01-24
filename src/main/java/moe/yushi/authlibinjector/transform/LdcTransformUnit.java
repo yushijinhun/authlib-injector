@@ -24,7 +24,7 @@ import org.objectweb.asm.MethodVisitor;
 public abstract class LdcTransformUnit implements TransformUnit {
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		return Optional.of(new ClassVisitor(ASM7, writer) {
 
 			@Override
@@ -36,7 +36,7 @@ public abstract class LdcTransformUnit implements TransformUnit {
 						if (cst instanceof String) {
 							Optional<String> transformed = transformLdc((String) cst);
 							if (transformed.isPresent() && !transformed.get().equals(cst)) {
-								modifiedCallback.run();
+								ctx.markModified();
 								super.visitLdcInsn(transformed.get());
 							} else {
 								super.visitLdcInsn(cst);

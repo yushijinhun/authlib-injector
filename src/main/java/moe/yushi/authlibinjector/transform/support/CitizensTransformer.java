@@ -42,7 +42,7 @@ import moe.yushi.authlibinjector.transform.TransformUnit;
 public class CitizensTransformer implements TransformUnit {
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("net.citizensnpcs.Settings$Setting".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM7, writer) {
 				@Override
@@ -62,7 +62,7 @@ public class CitizensTransformer implements TransformUnit {
 								super.visitInsn(RETURN);
 								super.visitLabel(lbl);
 								super.visitFrame(F_SAME, 0, null, 0, null);
-								modifiedCallback.run();
+								ctx.markModified();
 							}
 						};
 					}

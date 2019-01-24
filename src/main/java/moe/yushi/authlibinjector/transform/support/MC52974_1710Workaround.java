@@ -31,9 +31,10 @@ import java.util.logging.Level;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
 import moe.yushi.authlibinjector.AuthlibInjector;
+import moe.yushi.authlibinjector.transform.CallbackMethod;
+import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.MainArgumentsTransformer;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
@@ -57,12 +58,14 @@ public class MC52974_1710Workaround {
 	// Empty GameProfile -> Filled GameProfile?
 	private static final Map<Object, Optional<Object>> markedGameProfiles = new WeakIdentityHashMap<>();
 
+	@CallbackMethod
 	public static void markGameProfile(Object gp) {
 		synchronized (markedGameProfiles) {
 			markedGameProfiles.putIfAbsent(gp, Optional.empty());
 		}
 	}
 
+	@CallbackMethod
 	public static Object accessGameProfile(Object gp, Object minecraftServer, boolean isNotchName) {
 		synchronized (markedGameProfiles) {
 			Optional<Object> value = markedGameProfiles.get(gp);
@@ -105,7 +108,7 @@ public class MC52974_1710Workaround {
 
 	private static class SessionTransformer implements TransformUnit {
 		@Override
-		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 			return detectNotchName(className, "bbs", "net.minecraft.util.Session", isNotchName -> new ClassVisitor(ASM7, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
@@ -117,9 +120,9 @@ public class MC52974_1710Workaround {
 							@Override
 							public void visitInsn(int opcode) {
 								if (opcode == ARETURN) {
-									modifiedCallback.run();
+									ctx.markModified();
 									super.visitInsn(DUP);
-									super.visitMethodInsn(INVOKESTATIC, Type.getInternalName(MC52974_1710Workaround.class), "markGameProfile", "(Ljava/lang/Object;)V", false);
+									CallbackSupport.invoke(ctx, mv, MC52974_1710Workaround.class, "markGameProfile");
 								}
 								super.visitInsn(opcode);
 							}
@@ -139,7 +142,7 @@ public class MC52974_1710Workaround {
 
 	private static class S0CPacketSpawnPlayerTransformer implements TransformUnit {
 		@Override
-		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 			return detectNotchName(className, "gb", "net.minecraft.network.play.server.S0CPacketSpawnPlayer", isNotchName -> new ClassVisitor(ASM7, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
@@ -155,14 +158,14 @@ public class MC52974_1710Workaround {
 								if (opcode == GETFIELD && (isNotchName
 										? "gb".equals(owner) && "b".equals(name) && "Lcom/mojang/authlib/GameProfile;".equals(descriptor)
 										: "net/minecraft/network/play/server/S0CPacketSpawnPlayer".equals(owner) && "field_148955_b".equals(name) && "Lcom/mojang/authlib/GameProfile;".equals(descriptor))) {
-									modifiedCallback.run();
+									ctx.markModified();
 									if (isNotchName) {
 										super.visitMethodInsn(INVOKESTATIC, "net/minecraft/server/MinecraftServer", "I", "()Lnet/minecraft/server/MinecraftServer;", false);
 									} else {
 										super.visitMethodInsn(INVOKESTATIC, "net/minecraft/server/MinecraftServer", "func_71276_C", "()Lnet/minecraft/server/MinecraftServer;", false);
 									}
 									super.visitLdcInsn(isNotchName ? 1 : 0);
-									super.visitMethodInsn(INVOKESTATIC, Type.getInternalName(MC52974_1710Workaround.class), "accessGameProfile", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", false);
+									CallbackSupport.invoke(ctx, mv, MC52974_1710Workaround.class, "accessGameProfile");
 									super.visitTypeInsn(CHECKCAST, "com/mojang/authlib/GameProfile");
 								}
 							}

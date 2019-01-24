@@ -16,21 +16,12 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import java.util.Optional;
-import org.objectweb.asm.ClassVisitor;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface TransformUnit {
-
-	public interface TransformContext {
-
-		void markModified();
-
-		void requireMinimumClassVersion(int version);
-
-		void upgradeClassVersion(int version);
-
-	}
-
-	Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context);
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface CallbackMethod {
 }

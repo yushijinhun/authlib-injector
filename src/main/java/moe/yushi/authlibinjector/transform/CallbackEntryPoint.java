@@ -16,21 +16,20 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import java.util.Optional;
-import org.objectweb.asm.ClassVisitor;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.ConstantCallSite;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 
-public interface TransformUnit {
-
-	public interface TransformContext {
-
-		void markModified();
-
-		void requireMinimumClassVersion(int version);
-
-		void upgradeClassVersion(int version);
-
+public final class CallbackEntryPoint {
+	private CallbackEntryPoint() {
 	}
 
-	Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context);
-
+	public static CallSite bootstrap(Lookup lookup, String name, MethodType type, String owner) throws ReflectiveOperationException {
+		return new ConstantCallSite(
+				lookup.findStatic(
+						ClassLoader.getSystemClassLoader().loadClass(owner),
+						name,
+						type));
+	}
 }

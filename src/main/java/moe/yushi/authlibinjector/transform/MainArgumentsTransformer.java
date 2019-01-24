@@ -20,7 +20,6 @@ import static java.util.stream.Collectors.joining;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.ASTORE;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,14 +30,13 @@ import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
 import moe.yushi.authlibinjector.util.Logging;
 
 public class MainArgumentsTransformer implements TransformUnit {
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("net.minecraft.client.main.Main".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM7, writer) {
 				@Override
@@ -48,10 +46,10 @@ public class MainArgumentsTransformer implements TransformUnit {
 							@Override
 							public void visitCode() {
 								super.visitCode();
-								modifiedCallback.run();
+								ctx.markModified();
 
 								super.visitVarInsn(ALOAD, 0);
-								super.visitMethodInsn(INVOKESTATIC, Type.getInternalName(MainArgumentsTransformer.class), "processMainArguments", "([Ljava/lang/String;)[Ljava/lang/String;", false);
+								CallbackSupport.invoke(ctx, mv, MainArgumentsTransformer.class, "processMainArguments");
 								super.visitVarInsn(ASTORE, 0);
 							}
 						};
@@ -73,6 +71,7 @@ public class MainArgumentsTransformer implements TransformUnit {
 	// ==== Main arguments processing ====
 	private static final List<Function<String[], String[]>> ARGUMENTS_LISTENERS = new CopyOnWriteArrayList<>();
 
+	@CallbackMethod
 	public static String[] processMainArguments(String[] args) {
 		Logging.TRANSFORM.fine(() -> "Main arguments: " + Stream.of(args).collect(joining(" ")));
 

@@ -17,6 +17,7 @@
 package moe.yushi.authlibinjector.transform;
 
 import static java.util.Collections.emptyList;
+import static org.objectweb.asm.Opcodes.ASM7;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -34,6 +35,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
 import moe.yushi.authlibinjector.AuthlibInjector;
+import moe.yushi.authlibinjector.transform.TransformUnit.TransformContext;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class ClassTransformer implements ClassFileTransformer {
@@ -46,12 +48,71 @@ public class ClassTransformer implements ClassFileTransformer {
 
 	private static class TransformHandle {
 
+		private static class TransformContextImpl implements TransformContext {
+			public boolean modifiedMark;
+			public int minVersionMark = -1;
+			public int upgradedVersionMark = -1;
+
+			@Override
+			public void markModified() {
+				modifiedMark = true;
+			}
+
+			@Override
+			public void requireMinimumClassVersion(int version) {
+				if (this.minVersionMark < version) {
+					this.minVersionMark = version;
+				}
+			}
+
+			@Override
+			public void upgradeClassVersion(int version) {
+				if (this.upgradedVersionMark < version) {
+					this.upgradedVersionMark = version;
+				}
+			}
+		}
+
+		private static class ClassVersionException extends RuntimeException {
+			public ClassVersionException(String message) {
+				super(message);
+			}
+		}
+
+		private class ClassVersionTransformUnit implements TransformUnit {
+			@Override
+			public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context) {
+				return Optional.of(new ClassVisitor(ASM7, writer) {
+					@Override
+					public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+						int major = version & 0xffff;
+
+						if (minVersion != -1 && major < minVersion) {
+							throw new ClassVersionException("class version (" + major + ") is lower than required(" + minVersion + ")");
+						}
+
+						if (upgradedVersion != -1 && major < upgradedVersion) {
+							Logging.TRANSFORM.fine("Upgrading class version from " + major + " to " + upgradedVersion);
+							version = upgradedVersion;
+							context.markModified();
+						}
+						super.visit(version, access, name, signature, superName, interfaces);
+					}
+				});
+			}
+
+			@Override
+			public String toString() {
+				return "Class File Version Transformer";
+			}
+		}
+
 		private List<TransformUnit> appliedTransformers;
-		private boolean currentModified;
 		private String className;
 		private byte[] classBuffer;
-		private ClassWriter pooledClassWriter;
 		private ClassLoader classLoader;
+		private int minVersion = -1;
+		private int upgradedVersion = -1;
 
 		public TransformHandle(ClassLoader classLoader, String className, byte[] classBuffer) {
 			this.className = className;
@@ -60,37 +121,45 @@ public class ClassTransformer implements ClassFileTransformer {
 		}
 
 		public void accept(TransformUnit unit) {
-			ClassWriter writer;
-			if (pooledClassWriter == null) {
-				writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-			} else {
-				writer = pooledClassWriter;
-				pooledClassWriter = null;
-			}
+			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+			TransformContextImpl ctx = new TransformContextImpl();
 
-			Optional<ClassVisitor> optionalVisitor = unit.transform(classLoader, className, writer, () -> currentModified = true);
+			Optional<ClassVisitor> optionalVisitor = unit.transform(classLoader, className, writer, ctx);
 			if (optionalVisitor.isPresent()) {
-				currentModified = false;
 				ClassReader reader = new ClassReader(classBuffer);
 				reader.accept(optionalVisitor.get(), 0);
-				if (currentModified) {
+				if (ctx.modifiedMark) {
 					Logging.TRANSFORM.info("Transformed [" + className + "] with [" + unit + "]");
 					if (appliedTransformers == null) {
 						appliedTransformers = new ArrayList<>();
 					}
 					appliedTransformers.add(unit);
 					classBuffer = writer.toByteArray();
+					if (ctx.minVersionMark > this.minVersion) {
+						this.minVersion = ctx.minVersionMark;
+					}
+					if (ctx.upgradedVersionMark > this.upgradedVersion) {
+						this.upgradedVersion = ctx.upgradedVersionMark;
+					}
 				}
-			} else {
-				pooledClassWriter = writer;
 			}
 		}
 
-		public Optional<byte[]> getTransformResult() {
+		public Optional<byte[]> finish() {
 			if (appliedTransformers == null || appliedTransformers.isEmpty()) {
 				return Optional.empty();
 			} else {
-				return Optional.of(classBuffer);
+				if (minVersion == -1 && upgradedVersion == -1) {
+					return Optional.of(classBuffer);
+				} else {
+					try {
+						accept(new ClassVersionTransformUnit());
+						return Optional.of(classBuffer);
+					} catch (ClassVersionException e) {
+						Logging.TRANSFORM.warning("Skipping [" + className + "], " + e.getMessage());
+						return Optional.empty();
+					}
+				}
 			}
 		}
 
@@ -119,7 +188,7 @@ public class ClassTransformer implements ClassFileTransformer {
 				units.forEach(handle::accept);
 				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 
-				Optional<byte[]> transformResult = handle.getTransformResult();
+				Optional<byte[]> transformResult = handle.finish();
 				if (PRINT_UNTRANSFORMED_CLASSES && !transformResult.isPresent()) {
 					Logging.TRANSFORM.fine("No transformation is applied to [" + className + "]");
 				}

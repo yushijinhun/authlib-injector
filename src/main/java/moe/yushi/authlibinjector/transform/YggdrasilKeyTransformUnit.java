@@ -43,18 +43,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 	private static final List<PublicKey> PUBLIC_KEYS = new CopyOnWriteArrayList<>();
 
+	@CallbackMethod
 	public static List<PublicKey> getPublicKeys() {
 		return PUBLIC_KEYS;
 	}
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM7, writer) {
 
@@ -76,7 +76,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 					mv.visitInsn(IRETURN);
 					mv.visitLabel(l0);
 					mv.visitFrame(F_SAME, 0, null, 0, null);
-					mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(YggdrasilKeyTransformUnit.class), "getPublicKeys", "()Ljava/util/List;", false);
+					CallbackSupport.invoke(ctx, mv, YggdrasilKeyTransformUnit.class, "getPublicKeys");
 					mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;", true);
 					mv.visitVarInsn(ASTORE, 2);
 					Label l1 = new Label();
@@ -117,7 +117,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 									&& "com/mojang/authlib/properties/Property".equals(owner)
 									&& "isSignatureValid".equals(name)
 									&& "(Ljava/security/PublicKey;)Z".equals(descriptor)) {
-								modifiedCallback.run();
+								ctx.markModified();
 								super.visitMethodInsn(INVOKESTATIC,
 										"com/mojang/authlib/yggdrasil/YggdrasilMinecraftSessionService",
 										"authlib_injector_isSignatureValid",
