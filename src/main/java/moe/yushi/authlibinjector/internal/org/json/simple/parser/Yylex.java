@@ -214,7 +214,6 @@ class Yylex {
 	/* error codes */
 	private static final int ZZ_UNKNOWN_ERROR = 0;
 	private static final int ZZ_NO_MATCH = 1;
-	private static final int ZZ_PUSHBACK_2BIG = 2;
 
 	/* error messages for the codes above */
 	private static final String ZZ_ERROR_MSG[] = {
@@ -384,17 +383,6 @@ class Yylex {
 	}
 
 	/**
-	 * Closes the input stream.
-	 */
-	public final void yyclose() throws IOException {
-		zzAtEOF = true; /* indicate end of file */
-		zzEndRead = zzStartRead; /* invalidate buffer */
-
-		if (zzReader != null)
-			zzReader.close();
-	}
-
-	/**
 	 * Resets the scanner to read from a new input stream.
 	 * Does not close the old reader.
 	 *
@@ -412,13 +400,6 @@ class Yylex {
 		zzCurrentPos = zzMarkedPos = 0;
 		yychar = 0;
 		zzLexicalState = YYINITIAL;
-	}
-
-	/**
-	 * Returns the current lexical state.
-	 */
-	public final int yystate() {
-		return zzLexicalState;
 	}
 
 	/**
@@ -455,13 +436,6 @@ class Yylex {
 	}
 
 	/**
-	 * Returns the length of the matched text region.
-	 */
-	public final int yylength() {
-		return zzMarkedPos - zzStartRead;
-	}
-
-	/**
 	 * Reports an error that occured while scanning.
 	 *
 	 * In a wellformed scanner (no or only correct usage of
@@ -485,22 +459,6 @@ class Yylex {
 		}
 
 		throw new IllegalStateException(message);
-	}
-
-	/**
-	 * Pushes the specified amount of characters back into the input stream.
-	 *
-	 * They will be read again by then next call of the scanning method
-	 *
-	 * @param number
-	 *            the number of characters to be read again.
-	 *            This number must not be greater than yylength()!
-	 */
-	public void yypushback(int number) {
-		if (number > yylength())
-			zzScanError(ZZ_PUSHBACK_2BIG);
-
-		zzMarkedPos -= number;
 	}
 
 	/**

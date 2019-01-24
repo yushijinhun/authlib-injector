@@ -38,7 +38,6 @@ package moe.yushi.authlibinjector.internal.org.json.simple.parser;
  *
  */
 public class ParseException extends Exception {
-	private static final long serialVersionUID = -7880698968187728547L;
 
 	public static final int ERROR_UNEXPECTED_CHAR = 0;
 	public static final int ERROR_UNEXPECTED_TOKEN = 1;
