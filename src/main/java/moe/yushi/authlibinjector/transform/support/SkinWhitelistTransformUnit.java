@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package moe.yushi.authlibinjector.transform;
+package moe.yushi.authlibinjector.transform.support;
 
 import static org.objectweb.asm.Opcodes.AASTORE;
 import static org.objectweb.asm.Opcodes.ANEWARRAY;
@@ -27,6 +27,8 @@ import static org.objectweb.asm.Opcodes.SIPUSH;
 import java.util.Optional;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+
+import moe.yushi.authlibinjector.transform.TransformUnit;
 
 public class SkinWhitelistTransformUnit implements TransformUnit {
 

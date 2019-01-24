@@ -16,7 +16,7 @@
  */
 package moe.yushi.authlibinjector.test;
 
-import static moe.yushi.authlibinjector.transform.MainArgumentsTransformer.inferVersionSeries;
+import static moe.yushi.authlibinjector.transform.support.MainArgumentsTransformer.inferVersionSeries;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Optional;

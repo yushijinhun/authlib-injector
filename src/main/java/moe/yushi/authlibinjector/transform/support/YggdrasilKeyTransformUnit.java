@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package moe.yushi.authlibinjector.transform;
+package moe.yushi.authlibinjector.transform.support;
 
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
@@ -43,6 +43,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+
+import moe.yushi.authlibinjector.transform.CallbackMethod;
+import moe.yushi.authlibinjector.transform.CallbackSupport;
+import moe.yushi.authlibinjector.transform.TransformUnit;
 
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
@@ -104,7 +108,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 					mv.visitFrame(F_CHOP, 1, null, 0, null);
 					mv.visitInsn(ICONST_0);
 					mv.visitInsn(IRETURN);
-					mv.visitMaxs(2, 4);
+					mv.visitMaxs(-1, -1);
 					mv.visitEnd();
 				}
 

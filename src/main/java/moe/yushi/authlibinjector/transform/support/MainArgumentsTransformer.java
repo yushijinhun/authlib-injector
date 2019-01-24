@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package moe.yushi.authlibinjector.transform;
+package moe.yushi.authlibinjector.transform.support;
 
 import static java.util.stream.Collectors.joining;
 import static org.objectweb.asm.Opcodes.ALOAD;
@@ -31,6 +31,9 @@ import java.util.stream.Stream;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import moe.yushi.authlibinjector.transform.CallbackMethod;
+import moe.yushi.authlibinjector.transform.CallbackSupport;
+import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class MainArgumentsTransformer implements TransformUnit {

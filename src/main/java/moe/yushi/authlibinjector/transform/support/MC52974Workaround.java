@@ -29,7 +29,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import moe.yushi.authlibinjector.AuthlibInjector;
-import moe.yushi.authlibinjector.transform.MainArgumentsTransformer;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
 
