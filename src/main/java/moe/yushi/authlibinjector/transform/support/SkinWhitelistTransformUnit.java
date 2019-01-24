@@ -16,26 +16,56 @@
  */
 package moe.yushi.authlibinjector.transform.support;
 
-import static org.objectweb.asm.Opcodes.AASTORE;
-import static org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM7;
-import static org.objectweb.asm.Opcodes.DUP;
-import static org.objectweb.asm.Opcodes.ICONST_0;
-import static org.objectweb.asm.Opcodes.ICONST_1;
-import static org.objectweb.asm.Opcodes.ICONST_2;
-import static org.objectweb.asm.Opcodes.SIPUSH;
+import static org.objectweb.asm.Opcodes.IRETURN;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import moe.yushi.authlibinjector.transform.CallbackMethod;
+import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 
 public class SkinWhitelistTransformUnit implements TransformUnit {
 
-	private String[] skinWhitelist;
+	private static final String[] DEFAULT_WHITELISTED_DOMAINS = {
+			".minecraft.net",
+			".mojang.com"
+	};
 
-	public SkinWhitelistTransformUnit(String[] skinWhitelist) {
-		this.skinWhitelist = skinWhitelist;
+	private static final List<String> WHITELISTED_DOMAINS = new CopyOnWriteArrayList<>();
+
+	public static List<String> getWhitelistedDomains() {
+		return WHITELISTED_DOMAINS;
+	}
+
+	@CallbackMethod
+	public static boolean isWhitelistedDomain(String url) {
+		String domain;
+		try {
+			domain = new URI(url).getHost();
+		} catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid URL '" + url + "'");
+		}
+
+		for (String whitelisted : DEFAULT_WHITELISTED_DOMAINS) {
+			if (domain.endsWith(whitelisted)) {
+				return true;
+			}
+		}
+		for (String whitelisted : WHITELISTED_DOMAINS) {
+			if (domain.endsWith(whitelisted)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -45,68 +75,16 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					if ("<clinit>".equals(name)) {
-						return new MethodVisitor(ASM7, super.visitMethod(access, name, desc, signature, exceptions)) {
-
-							int status = 0;
-
-							@Override
-							public void visitInsn(int opcode) {
-								if (status == 0 && opcode == ICONST_2) {
-									status++;
-								} else if ((status == 2 || status == 6) && opcode == DUP) {
-									status++;
-								} else if (status == 3 && opcode == ICONST_0) {
-									status++;
-								} else if ((status == 5 || status == 9) && opcode == AASTORE) {
-									status++;
-									if (status == 10) {
-										ctx.markModified();
-										super.visitIntInsn(SIPUSH, skinWhitelist.length + 2);
-										super.visitTypeInsn(ANEWARRAY, "java/lang/String");
-										super.visitInsn(DUP);
-										super.visitInsn(ICONST_0);
-										super.visitLdcInsn(".minecraft.net");
-										super.visitInsn(AASTORE);
-										super.visitInsn(DUP);
-										super.visitInsn(ICONST_1);
-										super.visitLdcInsn(".mojang.com");
-										super.visitInsn(AASTORE);
-										for (int i = 0; i < skinWhitelist.length; i++) {
-											super.visitInsn(DUP);
-											super.visitIntInsn(SIPUSH, i + 2);
-											super.visitLdcInsn(skinWhitelist[i]);
-											super.visitInsn(AASTORE);
-										}
-									}
-								} else if (status == 7 && opcode == ICONST_1) {
-									status++;
-								} else {
-									super.visitInsn(opcode);
-								}
-							}
-
-							@Override
-							public void visitTypeInsn(int opcode, String type) {
-								if (status == 1 && opcode == ANEWARRAY && "java/lang/String".equals(type)) {
-									status++;
-								} else {
-									super.visitTypeInsn(opcode, type);
-								}
-							}
-
-							@Override
-							public void visitLdcInsn(Object cst) {
-								if (status == 4 && ".minecraft.net".equals(cst)) {
-									status++;
-								} else if (status == 8 && ".mojang.com".equals(cst)) {
-									status++;
-								} else {
-									super.visitLdcInsn(cst);
-								}
-							}
-
-						};
+					if ("isWhitelistedDomain".equals(name) && "(Ljava/lang/String;)Z".equals(desc)) {
+						ctx.markModified();
+						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+						mv.visitCode();
+						mv.visitVarInsn(ALOAD, 0);
+						CallbackSupport.invoke(ctx, mv, SkinWhitelistTransformUnit.class, "isWhitelistedDomain");
+						mv.visitInsn(IRETURN);
+						mv.visitMaxs(-1, -1);
+						mv.visitEnd();
+						return null;
 					} else {
 						return super.visitMethod(access, name, desc, signature, exceptions);
 					}
