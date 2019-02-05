@@ -28,9 +28,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.instrument.Instrumentation;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.Proxy.Type;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +44,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
@@ -104,6 +109,11 @@ public final class AuthlibInjector {
 	 * Whether to print the classes that are bytecode-analyzed but not transformed.
 	 */
 	public static final String PROP_PRINT_UNTRANSFORMED_CLASSES = "authlibinjector.printUntransformed";
+
+	/**
+	 * The proxy to use when accessing Mojang's APIs.
+	 */
+	public static final String PROP_MOJANG_PROXY = "authlibinjector.mojang.proxy";
 
 	/**
 	 * The side that authlib-injector runs on.
@@ -322,7 +332,7 @@ public final class AuthlibInjector {
 		List<URLFilter> filters = new ArrayList<>();
 
 		YggdrasilClient customClient = new YggdrasilClient(new CustomYggdrasilAPIProvider(config));
-		YggdrasilClient mojangClient = new YggdrasilClient(new MojangYggdrasilAPIProvider());
+		YggdrasilClient mojangClient = new YggdrasilClient(new MojangYggdrasilAPIProvider(), getMojangProxy());
 
 		if (Boolean.TRUE.equals(config.getMeta().get("feature.legacy_skin_api"))) {
 			Logging.CONFIG.info("Disabled local redirect for legacy skin API, as the remote Yggdrasil server supports it");
@@ -334,6 +344,35 @@ public final class AuthlibInjector {
 		filters.add(new QueryProfileFilter(mojangClient, customClient));
 
 		return filters;
+	}
+
+	private static Proxy getMojangProxy() {
+		String proxyString = System.getProperty(PROP_MOJANG_PROXY);
+		if (proxyString == null) {
+			return null;
+		}
+		Matcher matcher = Pattern.compile("^(?<protocol>[^:]+)://(?<host>[^/]+)+:(?<port>\\d+)$").matcher(proxyString);
+		if (!matcher.find()) {
+			Logging.LAUNCH.severe("Failed to parse proxy string: " + proxyString);
+			throw new InjectorInitializationException();
+		}
+
+		String protocol = matcher.group("protocol");
+		String host = matcher.group("host");
+		int port = Integer.parseInt(matcher.group("port"));
+
+		Proxy proxy;
+		switch (protocol) {
+			case "socks":
+				proxy = new Proxy(Type.SOCKS, new InetSocketAddress(host, port));
+				break;
+
+			default:
+				Logging.LAUNCH.severe("Unsupported proxy protocol: " + protocol);
+				throw new InjectorInitializationException();
+		}
+		Logging.LAUNCH.info("Mojang proxy set: " + proxy);
+		return proxy;
 	}
 
 	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
