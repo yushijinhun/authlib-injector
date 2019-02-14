@@ -43,9 +43,8 @@ public final class Logging {
 
 	private static Predicate<String> debugLoggerNamePredicate;
 
-	public static void init() {
+	static {
 		debugLoggerNamePredicate = createDebugLoggerNamePredicate();
-
 		initRootLogger();
 	}
 

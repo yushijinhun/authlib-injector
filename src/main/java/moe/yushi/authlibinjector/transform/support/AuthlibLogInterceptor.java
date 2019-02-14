@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package moe.yushi.authlibinjector.transform;
+package moe.yushi.authlibinjector.transform.support;
 
 import static org.objectweb.asm.Opcodes.ASM7;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
 import java.lang.annotation.Annotation;
@@ -38,12 +37,16 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+import moe.yushi.authlibinjector.transform.CallbackMethod;
+import moe.yushi.authlibinjector.transform.CallbackSupport;
+import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class AuthlibLogInterceptor implements TransformUnit {
 
 	private static Set<ClassLoader> interceptedClassloaders = Collections.newSetFromMap(new WeakHashMap<>());
 
+	@CallbackMethod
 	public static void onClassLoading(ClassLoader classLoader) {
 		Class<?> classLogManager;
 		try {
@@ -212,7 +215,7 @@ public class AuthlibLogInterceptor implements TransformUnit {
 	}
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if (className.startsWith("com.mojang.authlib.")) {
 			synchronized (interceptedClassloaders) {
 				if (interceptedClassloaders.contains(classLoader)) {
@@ -223,14 +226,20 @@ public class AuthlibLogInterceptor implements TransformUnit {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-					MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 					if ("<clinit>".equals(name)) {
-						mv.visitLdcInsn(Type.getType("L" + className.replace('.', '/') + ";"));
-						mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
-						mv.visitMethodInsn(INVOKESTATIC, AuthlibLogInterceptor.class.getName().replace('.', '/'), "onClassLoading", "(Ljava/lang/ClassLoader;)V", false);
-						modifiedCallback.run();
+						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+							@Override
+							public void visitCode() {
+								super.visitCode();
+								super.visitLdcInsn(Type.getType("L" + className.replace('.', '/') + ";"));
+								super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
+								CallbackSupport.invoke(ctx, mv, AuthlibLogInterceptor.class, "onClassLoading");
+								ctx.markModified();
+							}
+						};
+					} else {
+						return super.visitMethod(access, name, descriptor, signature, exceptions);
 					}
-					return mv;
 				}
 			});
 		}

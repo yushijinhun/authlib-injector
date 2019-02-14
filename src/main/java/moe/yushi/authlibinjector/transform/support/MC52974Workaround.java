@@ -1,9 +1,23 @@
+/*
+ * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package moe.yushi.authlibinjector.transform.support;
 
 import static java.util.Collections.unmodifiableSet;
 import static org.objectweb.asm.Opcodes.ASM7;
-import static org.objectweb.asm.Opcodes.ILOAD;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.ISTORE;
 
 import java.util.Arrays;
@@ -13,8 +27,8 @@ import java.util.Set;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
+import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
 
@@ -23,11 +37,10 @@ import moe.yushi.authlibinjector.util.Logging;
  */
 public class MC52974Workaround implements TransformUnit {
 
-	private static boolean affected = false;
+	private MC52974Workaround() {
+	}
 
-	// ==== Detect affected versions ====
-	public static final Set<String> AFFECTED_VERSION_SERIES = unmodifiableSet(new HashSet<>(Arrays.asList(
-			"1.7.4", // MC 1.7.9 uses this
+	private static final Set<String> AFFECTED_VERSION_SERIES = unmodifiableSet(new HashSet<>(Arrays.asList(
 			"1.7.10",
 			"1.8",
 			"1.9",
@@ -35,45 +48,18 @@ public class MC52974Workaround implements TransformUnit {
 			"1.11",
 			"1.12")));
 
-	public static Optional<String> inferVersionSeries(String[] args) {
-		boolean hit = false;
-		for (String arg : args) {
-			if (hit) {
-				if (arg.startsWith("--")) {
-					// arg doesn't seem to be a value
-					// maybe the previous argument is a value, but we wrongly recognized it as an option
-					hit = false;
-				} else {
-					return Optional.of(arg);
-				}
-			}
-
-			if ("--assetIndex".equals(arg)) {
-				hit = true;
-			}
-		}
-		return Optional.empty();
-	}
-
-	public static void acceptMainArguments(String[] args) {
-		inferVersionSeries(args).ifPresent(assetIndexName -> {
-			if (AFFECTED_VERSION_SERIES.contains(assetIndexName)) {
-				Logging.HTTPD.info("Current version series is " + assetIndexName + ", enable MC-52974 workaround.");
-				affected = true;
+	public static void init() {
+		MainArgumentsTransformer.getVersionSeriesListeners().add(version -> {
+			if (AFFECTED_VERSION_SERIES.contains(version)) {
+				Logging.TRANSFORM.info("Enable MC-52974 Workaround");
+				AuthlibInjector.getClassTransformer().units.add(new MC52974Workaround());
+				AuthlibInjector.retransformClasses("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService");
 			}
 		});
 	}
-	// ====
-
-	public static boolean overwriteRequireSecure(boolean requireSecure) {
-		if (affected) {
-			return true;
-		}
-		return requireSecure;
-	}
 
 	@Override
-	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, Runnable modifiedCallback) {
+	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM7, writer) {
 				@Override
@@ -83,9 +69,8 @@ public class MC52974Workaround implements TransformUnit {
 							@Override
 							public void visitCode() {
 								super.visitCode();
-								modifiedCallback.run();
-								super.visitVarInsn(ILOAD, 2);
-								super.visitMethodInsn(INVOKESTATIC, Type.getInternalName(MC52974Workaround.class), "overwriteRequireSecure", "(Z)Z", false);
+								ctx.markModified();
+								super.visitLdcInsn(1);
 								super.visitVarInsn(ISTORE, 2);
 							}
 						};

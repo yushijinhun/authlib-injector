@@ -49,8 +49,6 @@ import java.util.Map;
  */
 public class JSONObject extends LinkedHashMap<String, Object> implements JSONAware, JSONStreamAware {
 
-	private static final long serialVersionUID = -503443796854799292L;
-
 	public JSONObject() {
 		super();
 	}

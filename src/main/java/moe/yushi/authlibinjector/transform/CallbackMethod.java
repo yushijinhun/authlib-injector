@@ -14,14 +14,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package moe.yushi.authlibinjector;
+package moe.yushi.authlibinjector.transform;
 
-public class InjectorInitializationException extends RuntimeException {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-	public InjectorInitializationException() {
-	}
-
-	public InjectorInitializationException(Throwable cause) {
-		super(cause);
-	}
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface CallbackMethod {
 }

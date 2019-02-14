@@ -20,7 +20,7 @@ import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
-import static moe.yushi.authlibinjector.util.IOUtils.getURL;
+import static moe.yushi.authlibinjector.util.IOUtils.http;
 import static moe.yushi.authlibinjector.util.IOUtils.newUncheckedIOException;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
@@ -81,7 +81,7 @@ public class LegacySkinAPIFilter implements URLFilter {
 			Logging.HTTPD.fine("Retrieving skin for " + username + " from " + url);
 			byte[] data;
 			try {
-				data = getURL(url);
+				data = http("GET", url);
 			} catch (IOException e) {
 				throw newUncheckedIOException("Failed to retrieve skin from " + url, e);
 			}

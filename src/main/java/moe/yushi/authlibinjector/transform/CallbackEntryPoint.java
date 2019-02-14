@@ -14,14 +14,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package moe.yushi.authlibinjector;
+package moe.yushi.authlibinjector.transform;
 
-public class InjectorInitializationException extends RuntimeException {
+import java.lang.invoke.CallSite;
+import java.lang.invoke.ConstantCallSite;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 
-	public InjectorInitializationException() {
+public final class CallbackEntryPoint {
+	private CallbackEntryPoint() {
 	}
 
-	public InjectorInitializationException(Throwable cause) {
-		super(cause);
+	public static CallSite bootstrap(Lookup lookup, String name, MethodType type, String owner) throws ReflectiveOperationException {
+		return new ConstantCallSite(
+				lookup.findStatic(
+						ClassLoader.getSystemClassLoader().loadClass(owner),
+						name,
+						type));
 	}
 }

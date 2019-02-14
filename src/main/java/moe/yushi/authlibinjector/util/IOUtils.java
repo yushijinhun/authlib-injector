@@ -23,24 +23,43 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
 
 public final class IOUtils {
 
 	public static final String CONTENT_TYPE_JSON = "application/json; charset=utf-8";
 
-	public static byte[] getURL(String url) throws IOException {
-		try (InputStream in = new URL(url).openStream()) {
+	private static HttpURLConnection createConnection(String url, Proxy proxy) throws IOException {
+		if (proxy == null) {
+			return (HttpURLConnection) new URL(url).openConnection();
+		} else {
+			return (HttpURLConnection) new URL(url).openConnection(proxy);
+		}
+	}
+
+	public static byte[] http(String method, String url) throws IOException {
+		return http(method, url, null);
+	}
+
+	public static byte[] http(String method, String url, Proxy proxy) throws IOException {
+		HttpURLConnection conn = createConnection(url, proxy);
+		conn.setRequestMethod(method);
+		try (InputStream in = conn.getInputStream()) {
 			return asBytes(in);
 		}
 	}
 
-	public static byte[] postURL(String url, String contentType, byte[] payload) throws IOException {
-		HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-		conn.setRequestMethod("POST");
-		conn.setRequestProperty("Content-Type", contentType);
-		conn.setRequestProperty("Content-Length", String.valueOf(payload.length));
+	public static byte[] http(String method, String url, byte[] payload, String contentType) throws IOException {
+		return http(method, url, payload, contentType, null);
+	}
+
+	public static byte[] http(String method, String url, byte[] payload, String contentType, Proxy proxy) throws IOException {
+		HttpURLConnection conn = createConnection(url, proxy);
+		conn.setRequestMethod(method);
 		conn.setDoOutput(true);
+		conn.setFixedLengthStreamingMode(payload.length);
+		conn.setRequestProperty("Content-Type", contentType);
 		try (OutputStream out = conn.getOutputStream()) {
 			out.write(payload);
 		}

@@ -20,9 +20,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
 import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_JSON;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
-import static moe.yushi.authlibinjector.util.IOUtils.getURL;
+import static moe.yushi.authlibinjector.util.IOUtils.http;
 import static moe.yushi.authlibinjector.util.IOUtils.newUncheckedIOException;
-import static moe.yushi.authlibinjector.util.IOUtils.postURL;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonString;
@@ -31,6 +30,7 @@ import static moe.yushi.authlibinjector.util.UUIDUtils.fromUnsignedUUID;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.Proxy;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -45,17 +45,23 @@ import moe.yushi.authlibinjector.yggdrasil.GameProfile.PropertyValue;
 public class YggdrasilClient {
 
 	private YggdrasilAPIProvider apiProvider;
+	private Proxy proxy;
 
 	public YggdrasilClient(YggdrasilAPIProvider apiProvider) {
+		this(apiProvider, null);
+	}
+
+	public YggdrasilClient(YggdrasilAPIProvider apiProvider, Proxy proxy) {
 		this.apiProvider = apiProvider;
+		this.proxy = proxy;
 	}
 
 	public Map<String, UUID> queryUUIDs(Set<String> names) throws UncheckedIOException {
 		String responseText;
 		try {
-			responseText = asString(postURL(
-					apiProvider.queryUUIDsByNames(), CONTENT_TYPE_JSON,
-					JSONArray.toJSONString(names).getBytes(UTF_8)));
+			responseText = asString(http("POST", apiProvider.queryUUIDsByNames(),
+					JSONArray.toJSONString(names).getBytes(UTF_8), CONTENT_TYPE_JSON,
+					proxy));
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
@@ -82,7 +88,7 @@ public class YggdrasilClient {
 		}
 		String responseText;
 		try {
-			responseText = asString(getURL(url));
+			responseText = asString(http("GET", url, proxy));
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}

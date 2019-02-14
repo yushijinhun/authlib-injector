@@ -48,7 +48,6 @@ import java.util.Iterator;
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
 public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStreamAware {
-	private static final long serialVersionUID = 3957988303675231981L;
 
 	/**
 	 * Constructs an empty JSONArray.
