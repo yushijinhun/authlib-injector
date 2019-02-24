@@ -1,3 +1,6 @@
+ * [English](https://github.com/yushijinhun/authlib-injector/blob/develop/README.en.md)
+ * **简体中文(Chinese Simplified)**
+
 # authlib-injector
 [![circle ci](https://img.shields.io/circleci/project/github/yushijinhun/authlib-injector/master.svg?style=flat-square)](https://circleci.com/gh/yushijinhun/authlib-injector/tree/master)
 [![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/1caea43b49a059de4f8e44f11ede06a89a43a088/LICENSE)
