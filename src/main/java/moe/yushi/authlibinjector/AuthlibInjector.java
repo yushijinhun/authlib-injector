@@ -34,6 +34,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.Proxy.Type;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,6 +117,11 @@ public final class AuthlibInjector {
 	public static final String PROP_MOJANG_PROXY = "authlibinjector.mojang.proxy";
 
 	/**
+	 * Stores ignore packages file path.
+	 */
+	public static final String PROP_IGNORE_PACKAGES_FILE = "authlibinjector.ignorePackagesFile";
+
+	/**
 	 * The side that authlib-injector runs on.
 	 * Possible values: client, server.
 	 */
@@ -135,6 +141,7 @@ public final class AuthlibInjector {
 	private static Instrumentation instrumentation;
 	private static boolean retransformSupported;
 	private static ClassTransformer classTransformer;
+	private static List<String> customIgnorePackages;
 
 	public static synchronized void bootstrap(Instrumentation instrumentation) throws InjectorInitializationException {
 		if (booted) {
@@ -379,8 +386,17 @@ public final class AuthlibInjector {
 		URLProcessor urlProcessor = new URLProcessor(createFilters(config), new DefaultURLRedirector(config));
 
 		ClassTransformer transformer = new ClassTransformer();
-		for (String ignore : nonTransformablePackages) {
-			transformer.ignores.add(ignore);
+		transformer.ignores.addAll(Arrays.asList(nonTransformablePackages));
+		String ignorePackagesFiles = System.getProperty(PROP_IGNORE_PACKAGES_FILE);
+		if (ignorePackagesFiles != null)
+		{
+			try {
+				customIgnorePackages = Files.readAllLines(Paths.get(ignorePackagesFiles));
+				transformer.ignores.addAll(customIgnorePackages);
+			} catch (IOException e) {
+				Logging.CONFIG.severe("Reading ignore packages file failed");
+				throw new InjectorInitializationException(e);
+			}
 		}
 
 		if ("true".equals(System.getProperty(PROP_DUMP_CLASS))) {
@@ -460,6 +476,7 @@ public final class AuthlibInjector {
 				return false;
 			}
 		}
+		if (customIgnorePackages != null) for (String prefix : customIgnorePackages) if (name.startsWith(prefix)) return false;
 		return true;
 	}
 
