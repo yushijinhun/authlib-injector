@@ -117,9 +117,9 @@ public final class AuthlibInjector {
 	public static final String PROP_MOJANG_PROXY = "authlibinjector.mojang.proxy";
 
 	/**
-	 * Stores ignore packages file path.
+	 * Stores ignore packages.
 	 */
-	public static final String PROP_IGNORE_PACKAGES_FILE = "authlibinjector.ignorePackagesFile";
+	public static final String PROP_IGNORE_PACKAGES = "authlibinjector.ignorePackages";
 
 	/**
 	 * The side that authlib-injector runs on.
@@ -387,16 +387,11 @@ public final class AuthlibInjector {
 
 		ClassTransformer transformer = new ClassTransformer();
 		transformer.ignores.addAll(Arrays.asList(nonTransformablePackages));
-		String ignorePackagesFiles = System.getProperty(PROP_IGNORE_PACKAGES_FILE);
-		if (ignorePackagesFiles != null)
+		String ignorePackages = System.getProperty(PROP_IGNORE_PACKAGES);
+		if (ignorePackages != null)
 		{
-			try {
-				customIgnorePackages = Files.readAllLines(Paths.get(ignorePackagesFiles));
-				transformer.ignores.addAll(customIgnorePackages);
-			} catch (IOException e) {
-				Logging.CONFIG.severe("Reading ignore packages file failed");
-				throw new InjectorInitializationException(e);
-			}
+			customIgnorePackages = Arrays.asList(ignorePackages.split(",|, "));
+			transformer.ignores.addAll(customIgnorePackages);
 		}
 
 		if ("true".equals(System.getProperty(PROP_DUMP_CLASS))) {
@@ -471,13 +466,8 @@ public final class AuthlibInjector {
 			return false;
 		}
 		String name = clazz.getName();
-		for (String prefix : nonTransformablePackages) {
-			if (name.startsWith(prefix)) {
-				return false;
-			}
-		}
-		if (customIgnorePackages != null) for (String prefix : customIgnorePackages) if (name.startsWith(prefix)) return false;
-		return true;
+		if (Arrays.stream(nonTransformablePackages).anyMatch(name::startsWith)) return false;
+		return customIgnorePackages != null && customIgnorePackages.stream().noneMatch(name::startsWith);
 	}
 
 	public static ClassTransformer getClassTransformer() {
