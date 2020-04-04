@@ -513,8 +513,7 @@ public final class AuthlibInjector {
 			return false;
 		}
 		String name = clazz.getName();
-		if (ignoredPackages.stream().anyMatch(name::startsWith)) return false;
-		return customIgnorePackages != null && customIgnorePackages.stream().noneMatch(name::startsWith);
+		return ignoredPackages.stream().noneMatch(name::startsWith);
 	}
 
 	public static ClassTransformer getClassTransformer() {
