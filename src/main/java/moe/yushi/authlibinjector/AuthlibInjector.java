@@ -195,7 +195,6 @@ public final class AuthlibInjector {
 	private static Instrumentation instrumentation;
 	private static boolean retransformSupported;
 	private static ClassTransformer classTransformer;
-	private static List<String> customIgnorePackages;
 
 	public static synchronized void bootstrap(Instrumentation instrumentation) throws InjectorInitializationException {
 		if (booted) {
