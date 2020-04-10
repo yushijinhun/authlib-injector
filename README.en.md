@@ -24,7 +24,7 @@ gradle
 Build output can be found in `build/libs`.
 
 ## Deploy
-The authentication server is required to implement [Yggdrasil Server Specification](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83).
+The authentication server is required to implement [Yggdrasil Server Specification](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil-%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83).
 
 Configure Minecraft server with the following JVM parameter:
 ```
