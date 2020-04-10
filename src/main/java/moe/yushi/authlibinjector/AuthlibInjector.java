@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -70,13 +71,6 @@ import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public final class AuthlibInjector {
-
-	public static final String[] nonTransformablePackages = new String[] { "java.", "javax.", "com.sun.",
-			"com.oracle.", "jdk.", "sun.", "org.apache.", "com.google.", "oracle.", "com.oracle.", "com.paulscode.",
-			"io.netty.", "org.lwjgl.", "net.java.", "org.w3c.", "javassist.", "org.xml.", "org.jcp.", "paulscode.",
-			"com.ibm.", "joptsimple.", "moe.yushi.authlibinjector.", "org.graalvm.", "org.GNOME.", "it.unimi.dsi.fastutil.",
-			"oshi.", "com.jcraft.jogg.", "com.jcraft.jorbis.", "org.objectweb.asm.", "org.yaml.snakeyaml.", "gnu.trove.",
-			"jline.", "org.json." };
 
 	// ==== System Properties ===
 
@@ -116,6 +110,11 @@ public final class AuthlibInjector {
 	public static final String PROP_MOJANG_PROXY = "authlibinjector.mojang.proxy";
 
 	/**
+	 * Additional packages to ignore.
+	 */
+	public static final String PROP_IGNORED_PACKAGES = "authlibinjector.ignoredPackages";
+
+	/**
 	 * The side that authlib-injector runs on.
 	 * Possible values: client, server.
 	 */
@@ -125,6 +124,67 @@ public final class AuthlibInjector {
 
 	public static final String PROP_ALI_REDIRECT_LIMIT = "authlibinjector.ali.redirectLimit";
 
+	// ====
+
+	// ==== Package filtering ====
+	private static final String[] DEFAULT_IGNORED_PACKAGES = {
+			"moe.yushi.authlibinjector.",
+			"java.",
+			"javax.",
+			"jdk.",
+			"com.sun.",
+			"sun.",
+			"net.java.",
+
+			"com.google.",
+			"com.ibm.",
+			"com.jcraft.jogg.",
+			"com.jcraft.jorbis.",
+			"com.oracle.",
+			"com.paulscode.",
+
+			"org.GNOME.",
+			"org.apache.",
+			"org.graalvm.",
+			"org.jcp.",
+			"org.json.",
+			"org.lwjgl.",
+			"org.objectweb.asm.",
+			"org.w3c.",
+			"org.xml.",
+			"org.yaml.snakeyaml.",
+
+			"gnu.trove.",
+			"io.netty.",
+			"it.unimi.dsi.fastutil.",
+			"javassist.",
+			"jline.",
+			"joptsimple.",
+			"oracle.",
+			"oshi.",
+			"paulscode.",
+	};
+
+	public static final Set<String> ignoredPackages;
+
+	static {
+		Set<String> pkgs = new HashSet<>();
+		for (String pkg : DEFAULT_IGNORED_PACKAGES) {
+			pkgs.add(pkg);
+		}
+
+		String propIgnoredPkgs = System.getProperty(PROP_IGNORED_PACKAGES);
+		if (propIgnoredPkgs != null) {
+			for (String pkg : propIgnoredPkgs.split(",")) {
+				pkg = pkg.trim();
+				if (!pkg.isEmpty()) {
+					pkgs.add(pkg);
+				}
+			}
+		}
+
+		ignoredPackages = Collections.unmodifiableSet(pkgs);
+	}
 	// ====
 
 	private static final int REDIRECT_LIMIT = Integer.getInteger(PROP_ALI_REDIRECT_LIMIT, 5);
@@ -379,9 +439,7 @@ public final class AuthlibInjector {
 		URLProcessor urlProcessor = new URLProcessor(createFilters(config), new DefaultURLRedirector(config));
 
 		ClassTransformer transformer = new ClassTransformer();
-		for (String ignore : nonTransformablePackages) {
-			transformer.ignores.add(ignore);
-		}
+		transformer.ignores.addAll(ignoredPackages);
 
 		if ("true".equals(System.getProperty(PROP_DUMP_CLASS))) {
 			transformer.listeners.add(new DumpClassListener(Paths.get("").toAbsolutePath()));
@@ -455,7 +513,7 @@ public final class AuthlibInjector {
 			return false;
 		}
 		String name = clazz.getName();
-		for (String prefix : nonTransformablePackages) {
+		for (String prefix : ignoredPackages) {
 			if (name.startsWith(prefix)) {
 				return false;
 			}
