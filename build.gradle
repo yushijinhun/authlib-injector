@@ -1,6 +1,6 @@
 plugins {
-	id 'com.github.johnrengelman.shadow' version '4.0.0'
-	id 'com.palantir.git-version' version '0.11.0'
+	id 'com.github.johnrengelman.shadow' version '5.2.0'
+	id 'com.palantir.git-version' version '0.12.3'
 	id 'java'
 	id 'com.github.hierynomus.license' version '0.15.0'
 }
@@ -10,8 +10,8 @@ repositories {
 }
 
 dependencies {
-	compile 'org.ow2.asm:asm:7.0'
-	testCompile 'junit:junit:4.12'
+	compile 'org.ow2.asm:asm:8.0.1'
+	testCompile 'junit:junit:4.13'
 }
 
 sourceCompatibility = 8
