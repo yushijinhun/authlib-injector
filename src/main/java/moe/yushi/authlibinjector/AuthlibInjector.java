@@ -60,7 +60,6 @@ import moe.yushi.authlibinjector.transform.DumpClassListener;
 import moe.yushi.authlibinjector.transform.support.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
 import moe.yushi.authlibinjector.transform.support.ConstantURLTransformUnit;
-import moe.yushi.authlibinjector.transform.support.LaunchwrapperExclusionTransformer;
 import moe.yushi.authlibinjector.transform.support.MC52974Workaround;
 import moe.yushi.authlibinjector.transform.support.MC52974_1710Workaround;
 import moe.yushi.authlibinjector.transform.support.MainArgumentsTransformer;
@@ -450,7 +449,6 @@ public final class AuthlibInjector {
 			transformer.units.add(new AuthlibLogInterceptor());
 		}
 
-		transformer.units.add(new LaunchwrapperExclusionTransformer());
 		transformer.units.add(new MainArgumentsTransformer());
 		transformer.units.add(new ConstantURLTransformUnit(urlProcessor));
 		transformer.units.add(new CitizensTransformer());
