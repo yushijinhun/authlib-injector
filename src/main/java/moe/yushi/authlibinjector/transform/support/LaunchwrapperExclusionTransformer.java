@@ -22,6 +22,8 @@ import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import java.util.Optional;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+
+import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 
 public class LaunchwrapperExclusionTransformer implements TransformUnit {

@@ -16,11 +16,12 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import java.util.Optional;
-import org.objectweb.asm.ClassVisitor;
+public interface TransformContext {
 
-public interface TransformUnit {
+	void markModified();
 
-	Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context);
+	void requireMinimumClassVersion(int version);
+
+	void upgradeClassVersion(int version);
 
 }
