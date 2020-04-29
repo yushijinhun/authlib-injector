@@ -16,18 +16,17 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 public final class CallbackSupport {
 	private CallbackSupport() {
 	}
+
+	static final String METAFACTORY_NAME = "__authlibinjector_metafactory";
+	static final String METAFACTORY_SIGNATURE = "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;)Ljava/lang/invoke/CallSite;";
 
 	private static Method findCallbackMethod(Class<?> owner, String methodName) {
 		for (Method method : owner.getDeclaredMethods()) {
@@ -41,18 +40,11 @@ public final class CallbackSupport {
 		throw new IllegalArgumentException("No such method: " + methodName);
 	}
 
-	private static final Handle BOOTSTRAP_METHOD = new Handle(
-			H_INVOKESTATIC,
-			Type.getInternalName(CallbackEntryPoint.class),
-			"bootstrap",
-			"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;)Ljava/lang/invoke/CallSite;",
-			false);
-
 	public static void invoke(TransformContext ctx, MethodVisitor mv, Class<?> owner, String methodName) {
 		ctx.requireMinimumClassVersion(50);
 		ctx.upgradeClassVersion(51);
 
 		String descriptor = Type.getMethodDescriptor(findCallbackMethod(owner, methodName));
-		mv.visitInvokeDynamicInsn(methodName, descriptor, BOOTSTRAP_METHOD, owner.getName());
+		mv.visitInvokeDynamicInsn(methodName, descriptor, ctx.acquireCallbackMetafactory(), owner.getName());
 	}
 }

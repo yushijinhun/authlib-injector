@@ -17,6 +17,7 @@
 package moe.yushi.authlibinjector.transform;
 
 import static java.util.Collections.emptyList;
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
@@ -31,6 +32,7 @@ import java.util.logging.Level;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
 import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.util.Logging;
 
@@ -44,9 +46,16 @@ public class ClassTransformer implements ClassFileTransformer {
 
 	private static class TransformContextImpl implements TransformContext {
 
+		private final String className;
+
 		public boolean modifiedMark;
 		public int minVersionMark = -1;
 		public int upgradedVersionMark = -1;
+		public boolean callbackMetafactoryRequested = false;
+
+		public TransformContextImpl(String className) {
+			this.className = className;
+		}
 
 		@Override
 		public void markModified() {
@@ -66,6 +75,17 @@ public class ClassTransformer implements ClassFileTransformer {
 				this.upgradedVersionMark = version;
 			}
 		}
+
+		@Override
+		public Handle acquireCallbackMetafactory() {
+			this.callbackMetafactoryRequested = true;
+			return new Handle(
+					H_INVOKESTATIC,
+					className.replace('.', '/'),
+					CallbackSupport.METAFACTORY_NAME,
+					CallbackSupport.METAFACTORY_SIGNATURE,
+					false);
+		}
 	}
 
 	private static class TransformHandle {
@@ -77,6 +97,7 @@ public class ClassTransformer implements ClassFileTransformer {
 		private List<TransformUnit> appliedTransformers;
 		private int minVersion = -1;
 		private int upgradedVersion = -1;
+		private boolean addCallbackMetafactory = false;
 
 		public TransformHandle(ClassLoader classLoader, String className, byte[] classBuffer) {
 			this.className = className;
@@ -86,7 +107,7 @@ public class ClassTransformer implements ClassFileTransformer {
 
 		public void accept(TransformUnit unit) {
 			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-			TransformContextImpl ctx = new TransformContextImpl();
+			TransformContextImpl ctx = new TransformContextImpl(className);
 
 			Optional<ClassVisitor> optionalVisitor = unit.transform(classLoader, className, writer, ctx);
 			if (optionalVisitor.isPresent()) {
@@ -105,6 +126,7 @@ public class ClassTransformer implements ClassFileTransformer {
 					if (ctx.upgradedVersionMark > this.upgradedVersion) {
 						this.upgradedVersion = ctx.upgradedVersionMark;
 					}
+					this.addCallbackMetafactory |= ctx.callbackMetafactoryRequested;
 				}
 			}
 		}
@@ -113,6 +135,9 @@ public class ClassTransformer implements ClassFileTransformer {
 			if (appliedTransformers == null || appliedTransformers.isEmpty()) {
 				return Optional.empty();
 			} else {
+				if (addCallbackMetafactory) {
+					accept(new CallbackMetafactoryTransformer());
+				}
 				if (minVersion == -1 && upgradedVersion == -1) {
 					return Optional.of(classBuffer);
 				} else {

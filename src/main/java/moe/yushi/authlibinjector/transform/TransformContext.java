@@ -16,6 +16,8 @@
  */
 package moe.yushi.authlibinjector.transform;
 
+import org.objectweb.asm.Handle;
+
 public interface TransformContext {
 
 	void markModified();
@@ -24,4 +26,5 @@ public interface TransformContext {
 
 	void upgradeClassVersion(int version);
 
+	Handle acquireCallbackMetafactory();
 }
