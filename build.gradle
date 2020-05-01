@@ -2,7 +2,6 @@ plugins {
 	id 'com.github.johnrengelman.shadow' version '5.2.0'
 	id 'com.palantir.git-version' version '0.12.3'
 	id 'java'
-	id 'com.github.hierynomus.license' version '0.15.0'
 }
 
 repositories {
@@ -54,16 +53,6 @@ shadowJar {
 	exclude 'module-info.class'
 
 	relocate 'org.objectweb.asm', 'moe.yushi.authlibinjector.internal.org.objectweb.asm'
-}
-
-license {
-	header project.file('license-header.txt')
-	strictCheck true
-	mapping {
-		java='SLASHSTAR_STYLE'
-	}
-	include '**/*.java'
-	exclude '**/package-info.java'
 }
 
 defaultTasks 'clean', 'shadowJar'
