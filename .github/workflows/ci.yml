@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches-ignore: [ master ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup JDK 8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 8
+
+    - name: Build
+      run: gradle
+
+    - name: Test
+      run: gradle test
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Build output
+        path: build/libs/*
