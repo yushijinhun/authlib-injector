@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,8 +17,7 @@
 package moe.yushi.authlibinjector.transform;
 
 import static java.util.Collections.emptyList;
-import static org.objectweb.asm.Opcodes.ASM7;
-
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
@@ -33,9 +32,8 @@ import java.util.logging.Level;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-
+import org.objectweb.asm.Handle;
 import moe.yushi.authlibinjector.AuthlibInjector;
-import moe.yushi.authlibinjector.transform.TransformUnit.TransformContext;
 import moe.yushi.authlibinjector.util.Logging;
 
 public class ClassTransformer implements ClassFileTransformer {
@@ -46,73 +44,60 @@ public class ClassTransformer implements ClassFileTransformer {
 	public final List<ClassLoadingListener> listeners = new CopyOnWriteArrayList<>();
 	public final Set<String> ignores = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+	private static class TransformContextImpl implements TransformContext {
+
+		private final String className;
+
+		public boolean modifiedMark;
+		public int minVersionMark = -1;
+		public int upgradedVersionMark = -1;
+		public boolean callbackMetafactoryRequested = false;
+
+		public TransformContextImpl(String className) {
+			this.className = className;
+		}
+
+		@Override
+		public void markModified() {
+			modifiedMark = true;
+		}
+
+		@Override
+		public void requireMinimumClassVersion(int version) {
+			if (this.minVersionMark < version) {
+				this.minVersionMark = version;
+			}
+		}
+
+		@Override
+		public void upgradeClassVersion(int version) {
+			if (this.upgradedVersionMark < version) {
+				this.upgradedVersionMark = version;
+			}
+		}
+
+		@Override
+		public Handle acquireCallbackMetafactory() {
+			this.callbackMetafactoryRequested = true;
+			return new Handle(
+					H_INVOKESTATIC,
+					className.replace('.', '/'),
+					CallbackSupport.METAFACTORY_NAME,
+					CallbackSupport.METAFACTORY_SIGNATURE,
+					false);
+		}
+	}
+
 	private static class TransformHandle {
 
-		private static class TransformContextImpl implements TransformContext {
-			public boolean modifiedMark;
-			public int minVersionMark = -1;
-			public int upgradedVersionMark = -1;
-
-			@Override
-			public void markModified() {
-				modifiedMark = true;
-			}
-
-			@Override
-			public void requireMinimumClassVersion(int version) {
-				if (this.minVersionMark < version) {
-					this.minVersionMark = version;
-				}
-			}
-
-			@Override
-			public void upgradeClassVersion(int version) {
-				if (this.upgradedVersionMark < version) {
-					this.upgradedVersionMark = version;
-				}
-			}
-		}
-
-		private static class ClassVersionException extends RuntimeException {
-			public ClassVersionException(String message) {
-				super(message);
-			}
-		}
-
-		private class ClassVersionTransformUnit implements TransformUnit {
-			@Override
-			public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context) {
-				return Optional.of(new ClassVisitor(ASM7, writer) {
-					@Override
-					public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-						int major = version & 0xffff;
-
-						if (minVersion != -1 && major < minVersion) {
-							throw new ClassVersionException("class version (" + major + ") is lower than required(" + minVersion + ")");
-						}
-
-						if (upgradedVersion != -1 && major < upgradedVersion) {
-							Logging.TRANSFORM.fine("Upgrading class version from " + major + " to " + upgradedVersion);
-							version = upgradedVersion;
-							context.markModified();
-						}
-						super.visit(version, access, name, signature, superName, interfaces);
-					}
-				});
-			}
-
-			@Override
-			public String toString() {
-				return "Class File Version Transformer";
-			}
-		}
+		private final String className;
+		private final ClassLoader classLoader;
+		private byte[] classBuffer;
 
 		private List<TransformUnit> appliedTransformers;
-		private String className;
-		private byte[] classBuffer;
-		private ClassLoader classLoader;
 		private int minVersion = -1;
 		private int upgradedVersion = -1;
+		private boolean addCallbackMetafactory = false;
 
 		public TransformHandle(ClassLoader classLoader, String className, byte[] classBuffer) {
 			this.className = className;
@@ -122,7 +107,7 @@ public class ClassTransformer implements ClassFileTransformer {
 
 		public void accept(TransformUnit unit) {
 			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-			TransformContextImpl ctx = new TransformContextImpl();
+			TransformContextImpl ctx = new TransformContextImpl(className);
 
 			Optional<ClassVisitor> optionalVisitor = unit.transform(classLoader, className, writer, ctx);
 			if (optionalVisitor.isPresent()) {
@@ -141,6 +126,7 @@ public class ClassTransformer implements ClassFileTransformer {
 					if (ctx.upgradedVersionMark > this.upgradedVersion) {
 						this.upgradedVersion = ctx.upgradedVersionMark;
 					}
+					this.addCallbackMetafactory |= ctx.callbackMetafactoryRequested;
 				}
 			}
 		}
@@ -149,11 +135,14 @@ public class ClassTransformer implements ClassFileTransformer {
 			if (appliedTransformers == null || appliedTransformers.isEmpty()) {
 				return Optional.empty();
 			} else {
+				if (addCallbackMetafactory) {
+					accept(new CallbackMetafactoryTransformer());
+				}
 				if (minVersion == -1 && upgradedVersion == -1) {
 					return Optional.of(classBuffer);
 				} else {
 					try {
-						accept(new ClassVersionTransformUnit());
+						accept(new ClassVersionTransformUnit(minVersion, upgradedVersion));
 						return Optional.of(classBuffer);
 					} catch (ClassVersionException e) {
 						Logging.TRANSFORM.warning("Skipping [" + className + "], " + e.getMessage());

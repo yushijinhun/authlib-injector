@@ -14,13 +14,28 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package moe.yushi.authlibinjector.transform;
+package moe.yushi.authlibinjector.transform.support;
 
 import java.util.Optional;
-import org.objectweb.asm.ClassVisitor;
 
-public interface TransformUnit {
+import moe.yushi.authlibinjector.httpd.URLProcessor;
+import moe.yushi.authlibinjector.transform.LdcTransformUnit;
 
-	Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context);
+public class ConstantURLTransformUnit extends LdcTransformUnit {
 
+	private URLProcessor urlProcessor;
+
+	public ConstantURLTransformUnit(URLProcessor urlProcessor) {
+		this.urlProcessor = urlProcessor;
+	}
+
+	@Override
+	protected Optional<String> transformLdc(String input) {
+		return urlProcessor.transformURL(input);
+	}
+
+	@Override
+	public String toString() {
+		return "Constant URL Transformer";
+	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,25 +16,8 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import java.util.Optional;
-
-import moe.yushi.authlibinjector.httpd.URLProcessor;
-
-public class ConstantURLTransformUnit extends LdcTransformUnit {
-
-	private URLProcessor urlProcessor;
-
-	public ConstantURLTransformUnit(URLProcessor urlProcessor) {
-		this.urlProcessor = urlProcessor;
-	}
-
-	@Override
-	protected Optional<String> transformLdc(String input) {
-		return urlProcessor.transformURL(input);
-	}
-
-	@Override
-	public String toString() {
-		return "Constant URL Transformer";
+class ClassVersionException extends RuntimeException {
+	public ClassVersionException(String message) {
+		super(message);
 	}
 }

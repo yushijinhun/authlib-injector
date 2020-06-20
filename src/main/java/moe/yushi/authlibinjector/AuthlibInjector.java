@@ -56,11 +56,10 @@ import moe.yushi.authlibinjector.httpd.QueryUUIDsFilter;
 import moe.yushi.authlibinjector.httpd.URLFilter;
 import moe.yushi.authlibinjector.httpd.URLProcessor;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
-import moe.yushi.authlibinjector.transform.ConstantURLTransformUnit;
 import moe.yushi.authlibinjector.transform.DumpClassListener;
 import moe.yushi.authlibinjector.transform.support.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
-import moe.yushi.authlibinjector.transform.support.LaunchwrapperExclusionTransformer;
+import moe.yushi.authlibinjector.transform.support.ConstantURLTransformUnit;
 import moe.yushi.authlibinjector.transform.support.MC52974Workaround;
 import moe.yushi.authlibinjector.transform.support.MC52974_1710Workaround;
 import moe.yushi.authlibinjector.transform.support.MainArgumentsTransformer;
@@ -450,7 +449,6 @@ public final class AuthlibInjector {
 			transformer.units.add(new AuthlibLogInterceptor());
 		}
 
-		transformer.units.add(new LaunchwrapperExclusionTransformer());
 		transformer.units.add(new MainArgumentsTransformer());
 		transformer.units.add(new ConstantURLTransformUnit(urlProcessor));
 		transformer.units.add(new CitizensTransformer());
@@ -459,7 +457,7 @@ public final class AuthlibInjector {
 		SkinWhitelistTransformUnit.getWhitelistedDomains().addAll(config.getSkinDomains());
 
 		transformer.units.add(new YggdrasilKeyTransformUnit());
-		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.getPublicKeys()::add);
+		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
 
 		return transformer;
 	}

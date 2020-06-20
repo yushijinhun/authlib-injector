@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,20 +16,15 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import java.lang.invoke.CallSite;
-import java.lang.invoke.ConstantCallSite;
-import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.invoke.MethodType;
+import org.objectweb.asm.Handle;
 
-public final class CallbackEntryPoint {
-	private CallbackEntryPoint() {
-	}
+public interface TransformContext {
 
-	public static CallSite bootstrap(Lookup lookup, String name, MethodType type, String owner) throws ReflectiveOperationException {
-		return new ConstantCallSite(
-				lookup.findStatic(
-						ClassLoader.getSystemClassLoader().loadClass(owner),
-						name,
-						type));
-	}
+	void markModified();
+
+	void requireMinimumClassVersion(int version);
+
+	void upgradeClassVersion(int version);
+
+	Handle acquireCallbackMetafactory();
 }

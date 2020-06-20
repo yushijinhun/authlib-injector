@@ -1,0 +1,88 @@
+name: deploy_release
+on:
+  release:
+    types: [published]
+jobs:
+  deploy_release:
+    if: contains(github.event.release.body, '@@release.trigger_deploy@@')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install deploy key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+      - name: Restore yushijinhun/authlib-injector.yushi.moe:master cache
+        uses: actions/cache@v1
+        with:
+          path: ~/deploy
+          key: cache-deploy
+
+      - name: Pull yushijinhun/authlib-injector.yushi.moe:master
+        shell: bash
+        run: |
+          if [ -d ~/deploy ]; then
+            cd ~/deploy
+            git fetch origin
+            git add --all
+            git reset --hard origin/master
+          else
+            git clone --single-branch --branch master "git@github.com:yushijinhun/authlib-injector.yushi.moe" ~/deploy
+          fi
+
+      - name: Deploy
+        shell: bash
+        run: |
+          release_body='${{ github.event.release.body }}'
+          build_number=$(grep -Pom1 '@@release\.build_number=\K.*(?=@@)' <<< $release_body)
+          version_number=$(grep -Pom1 '@@release\.version_number=\K.*(?=@@)' <<< $release_body)
+          asset_name='${{ github.event.release.assets[0].name }}'
+
+          cd ~/deploy
+          git config --local user.name "authlib-injector Deploy Bot"
+          git config --local user.email "authlib-injector-deploy-bot@yushi.moe"
+
+          mkdir -p "artifact/$build_number"
+          wget -O "artifact/$build_number/$asset_name" '${{ github.event.release.assets[0].browser_download_url }}'
+          sha256=$(sha256sum "artifact/$build_number/$asset_name" | grep -P -o '^[0-9a-f]+')
+          jq -n \
+            --arg build_number "$build_number" \
+            --arg version "$version_number" \
+            --arg download_url "https://authlib-injector.yushi.moe/artifact/$build_number/$asset_name" \
+            --arg sha256 "$sha256" \
+            '
+              {
+                "build_number": $build_number|tonumber,
+                "version": $version,
+                "download_url": $download_url,
+                "checksums": {
+                  "sha256": $sha256
+                }
+              }
+            ' > "artifact/$build_number.json"
+
+          for file in artifact/*; do
+            if basename -- "$file" | grep -q -P '^\d+\.json$'; then
+              jq '
+                {
+                  "build_number": .build_number,
+                  "version": .version
+                }' < "$file"
+            fi
+          done | jq -s '
+            {
+              "latest_build_number": max_by(.build_number).build_number,
+              "artifacts": .
+            }' > artifacts.json
+          latest_build_number=$(jq ".latest_build_number" < artifacts.json)
+          rm -f artifact/latest.json
+          ln -s "$latest_build_number.json" "artifact/latest.json"
+
+          git add --all
+          git commit -m "Deploy release $version_number ($build_number)
+
+          GitHub Action: https://github.com/${{ github.repository }}/actions/runs/$GITHUB_RUN_ID
+          "
+          git push "git@github.com:yushijinhun/authlib-injector.yushi.moe" master:master
+
