@@ -1,0 +1,19 @@
+name: submit_release
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+jobs:
+  submit_release:
+    if:
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch release event
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          event-type: release_proposal_submit
+          client-payload: '{"pull":"${{ github.event.pull_request.url }}"}'
+

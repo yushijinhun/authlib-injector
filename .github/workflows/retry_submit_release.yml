@@ -1,0 +1,38 @@
+name: retry_submit_release
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  retry_submit_release:
+    if:
+      github.event.issue.pull_request != null &&
+      contains(github.event.issue.labels.*.name, 'release') &&
+      contains(github.event.comment.body, '@@release_proposal.retry@@')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checks write permission
+        uses: yushijinhun/repo-permission-check-action@feature/specify-user
+        with:
+          permission: write
+          user: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checks pull request
+        shell: bash
+        run: |
+          echo '${{ toJson(github) }}'
+          pr=$(curl -Ss "${{ github.event.issue.pull_request.url }}")
+          if [[ "$(jq '.merged' <<< $pr)" != "true" ]]; then
+            echo "::error ::pull request is not merged."
+            exit 1
+          elif [[ "$(jq --raw-output '.base.ref' <<< $pr)" != "master" ]]; then
+            echo "::error ::pull request isn't merged into master."
+            exit 1
+          fi
+      - name: Dispatch release event
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          event-type: release_proposal_submit
+          client-payload: '{"pull":"${{ github.event.issue.pull_request.url }}"}'
+
