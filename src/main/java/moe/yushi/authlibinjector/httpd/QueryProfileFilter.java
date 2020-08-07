@@ -47,7 +47,7 @@ public class QueryProfileFilter implements URLFilter {
 
 	@Override
 	public boolean canHandle(String domain, String path) {
-		return domain.equals("sessionserver.mojang.com") && path.startsWith("/session/minecraft/profile/");
+		return domain.equals("sessionserver.mojang.com");
 	}
 
 	@Override

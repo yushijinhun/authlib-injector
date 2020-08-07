@@ -50,7 +50,7 @@ public class QueryUUIDsFilter implements URLFilter {
 
 	@Override
 	public boolean canHandle(String domain, String path) {
-		return domain.equals("api.mojang.com") && path.startsWith("/profiles/");
+		return domain.equals("api.mojang.com");
 	}
 
 	@Override
