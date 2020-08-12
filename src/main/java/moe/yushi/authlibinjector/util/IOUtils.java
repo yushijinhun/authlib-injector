@@ -58,7 +58,6 @@ public final class IOUtils {
 		HttpURLConnection conn = createConnection(url, proxy);
 		conn.setRequestMethod(method);
 		conn.setDoOutput(true);
-		conn.setFixedLengthStreamingMode(payload.length);
 		conn.setRequestProperty("Content-Type", contentType);
 		try (OutputStream out = conn.getOutputStream()) {
 			out.write(payload);
