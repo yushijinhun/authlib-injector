@@ -112,12 +112,6 @@ public final class AuthlibInjector {
 	 */
 	public static final String PROP_IGNORED_PACKAGES = "authlibinjector.ignoredPackages";
 
-	/**
-	 * The side that authlib-injector runs on.
-	 * Possible values: client, server.
-	 */
-	public static final String PROP_SIDE = "authlibinjector.side";
-
 	public static final String PROP_DISABLE_HTTPD = "authlibinjector.httpd.disable";
 
 	// ====
@@ -233,9 +227,6 @@ public final class AuthlibInjector {
 		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
 
-		ExecutionEnvironment side = detectSide();
-		Logging.LAUNCH.fine("Detected side: " + side);
-
 		apiRoot = addHttpsIfMissing(apiRoot);
 		Logging.CONFIG.info("API root: " + apiRoot);
 		warnIfHttp(apiRoot);
@@ -320,29 +311,6 @@ public final class AuthlibInjector {
 		if (!b.endsWith("/"))
 			b += "/";
 		return a.equals(b);
-	}
-
-	private static ExecutionEnvironment detectSide() {
-		String specifiedSide = System.getProperty(PROP_SIDE);
-		if (specifiedSide != null) {
-			switch (specifiedSide) {
-				case "client":
-					return ExecutionEnvironment.CLIENT;
-				case "server":
-					return ExecutionEnvironment.SERVER;
-				default:
-					Logging.LAUNCH.warning("Invalid value [" + specifiedSide + "] for parameter " + PROP_SIDE + ", ignoring.");
-					break;
-			}
-		}
-
-		// fallback
-		if (System.getProperty(PROP_PREFETCHED_DATA) != null || System.getProperty(PROP_PREFETCHED_DATA_OLD) != null) {
-			Logging.LAUNCH.warning("Prefetched configuration must be used along with parameter " + PROP_SIDE);
-			return ExecutionEnvironment.CLIENT;
-		} else {
-			return ExecutionEnvironment.SERVER;
-		}
 	}
 
 	private static List<URLFilter> createFilters(YggdrasilConfiguration config) {
