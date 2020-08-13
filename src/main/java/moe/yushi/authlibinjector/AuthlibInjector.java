@@ -25,6 +25,7 @@ import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.removeNewLines;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.lang.instrument.Instrumentation;
 import java.net.HttpURLConnection;
@@ -243,7 +244,16 @@ public final class AuthlibInjector {
 				if (ali != null) {
 					URL absoluteAli = new URL(connection.getURL(), ali);
 					if (!urlEqualsIgnoreSlash(apiRoot, absoluteAli.toString())) {
-						connection.disconnect();
+
+						// usually the URL that ALI points to is on the same host
+						// so the TCP connection can be reused
+						// we need to consume the response to make the connection reusable
+						try (InputStream in = connection.getInputStream()) {
+							while (in.read() != -1)
+								;
+						} catch (IOException e) {
+						}
+
 						Logging.CONFIG.info("Redirect to: " + absoluteAli);
 						apiRoot = absoluteAli.toString();
 						warnIfHttp(apiRoot);
@@ -251,10 +261,8 @@ public final class AuthlibInjector {
 					}
 				}
 
-				try {
-					metadataResponse = asString(asBytes(connection.getInputStream()));
-				} finally {
-					connection.disconnect();
+				try (InputStream in = connection.getInputStream()) {
+					metadataResponse = asString(asBytes(in));
 				}
 			} catch (IOException e) {
 				Logging.CONFIG.severe("Failed to fetch metadata: " + e);
