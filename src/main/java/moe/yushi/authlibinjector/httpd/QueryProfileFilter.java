@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -47,7 +47,7 @@ public class QueryProfileFilter implements URLFilter {
 
 	@Override
 	public boolean canHandle(String domain, String path) {
-		return domain.equals("sessionserver.mojang.com") && path.startsWith("/session/minecraft/profile/");
+		return domain.equals("sessionserver.mojang.com");
 	}
 
 	@Override

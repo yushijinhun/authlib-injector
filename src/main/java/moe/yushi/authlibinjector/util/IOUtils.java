@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -58,7 +58,6 @@ public final class IOUtils {
 		HttpURLConnection conn = createConnection(url, proxy);
 		conn.setRequestMethod(method);
 		conn.setDoOutput(true);
-		conn.setFixedLengthStreamingMode(payload.length);
 		conn.setRequestProperty("Content-Type", contentType);
 		try (OutputStream out = conn.getOutputStream()) {
 			out.write(payload);

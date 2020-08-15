@@ -25,14 +25,13 @@ import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.removeNewLines;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.lang.instrument.Instrumentation;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.Proxy.Type;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -114,15 +113,7 @@ public final class AuthlibInjector {
 	 */
 	public static final String PROP_IGNORED_PACKAGES = "authlibinjector.ignoredPackages";
 
-	/**
-	 * The side that authlib-injector runs on.
-	 * Possible values: client, server.
-	 */
-	public static final String PROP_SIDE = "authlibinjector.side";
-
 	public static final String PROP_DISABLE_HTTPD = "authlibinjector.httpd.disable";
-
-	public static final String PROP_ALI_REDIRECT_LIMIT = "authlibinjector.ali.redirectLimit";
 
 	// ====
 
@@ -187,8 +178,6 @@ public final class AuthlibInjector {
 	}
 	// ====
 
-	private static final int REDIRECT_LIMIT = Integer.getInteger(PROP_ALI_REDIRECT_LIMIT, 5);
-
 	private AuthlibInjector() {}
 
 	private static boolean booted = false;
@@ -239,10 +228,7 @@ public final class AuthlibInjector {
 		String apiRoot = System.getProperty(PROP_API_ROOT);
 		if (apiRoot == null) return empty();
 
-		ExecutionEnvironment side = detectSide();
-		Logging.LAUNCH.fine("Detected side: " + side);
-
-		apiRoot = parseInputUrl(apiRoot);
+		apiRoot = addHttpsIfMissing(apiRoot);
 		Logging.CONFIG.info("API root: " + apiRoot);
 		warnIfHttp(apiRoot);
 
@@ -252,37 +238,31 @@ public final class AuthlibInjector {
 		if (!prefetched.isPresent()) {
 
 			try {
-				HttpURLConnection connection;
-				boolean redirectAllowed = side == ExecutionEnvironment.SERVER;
-				int redirectCount = 0;
-				for (;;) {
-					connection = (HttpURLConnection) new URL(apiRoot).openConnection();
-					Optional<String> ali = getApiLocationIndication(connection);
-					if (ali.isPresent()) {
-						if (!redirectAllowed) {
-							Logging.CONFIG.warning("Redirect is not allowed, ignoring ALI: " + ali.get());
-							break;
+				HttpURLConnection connection = (HttpURLConnection) new URL(apiRoot).openConnection();
+
+				String ali = connection.getHeaderField("x-authlib-injector-api-location");
+				if (ali != null) {
+					URL absoluteAli = new URL(connection.getURL(), ali);
+					if (!urlEqualsIgnoreSlash(apiRoot, absoluteAli.toString())) {
+
+						// usually the URL that ALI points to is on the same host
+						// so the TCP connection can be reused
+						// we need to consume the response to make the connection reusable
+						try (InputStream in = connection.getInputStream()) {
+							while (in.read() != -1)
+								;
+						} catch (IOException e) {
 						}
 
-						connection.disconnect();
-
-						apiRoot = ali.get();
-						if (redirectCount >= REDIRECT_LIMIT) {
-							Logging.CONFIG.severe("Exceeded maximum number of redirects (" + REDIRECT_LIMIT + "), refusing to redirect to: " + apiRoot);
-							throw new InjectorInitializationException();
-						}
-						redirectCount++;
-						Logging.CONFIG.info("Redirect to: " + apiRoot);
+						Logging.CONFIG.info("Redirect to: " + absoluteAli);
+						apiRoot = absoluteAli.toString();
 						warnIfHttp(apiRoot);
-					} else {
-						break;
+						connection = (HttpURLConnection) absoluteAli.openConnection();
 					}
 				}
 
-				try {
-					metadataResponse = asString(asBytes(connection.getInputStream()));
-				} finally {
-					connection.disconnect();
+				try (InputStream in = connection.getInputStream()) {
+					metadataResponse = asString(asBytes(in));
 				}
 			} catch (IOException e) {
 				Logging.CONFIG.severe("Failed to fetch metadata: " + e);
@@ -303,6 +283,9 @@ public final class AuthlibInjector {
 
 		Logging.CONFIG.fine("Metadata: " + metadataResponse);
 
+		if (!apiRoot.endsWith("/"))
+			apiRoot += "/";
+
 		YggdrasilConfiguration configuration;
 		try {
 			configuration = YggdrasilConfiguration.parse(apiRoot, metadataResponse);
@@ -322,66 +305,20 @@ public final class AuthlibInjector {
 		}
 	}
 
-	private static String appendSuffixSlash(String url) {
-		if (!url.endsWith("/")) {
-			return url + "/";
-		} else {
-			return url;
-		}
-	}
-
-	private static String parseInputUrl(String url) {
+	private static String addHttpsIfMissing(String url) {
 		String lowercased = url.toLowerCase();
 		if (!lowercased.startsWith("http://") && !lowercased.startsWith("https://")) {
 			url = "https://" + url;
 		}
-
-		url = appendSuffixSlash(url);
 		return url;
 	}
 
-	private static Optional<String> getApiLocationIndication(URLConnection conn) {
-		return Optional.ofNullable(conn.getHeaderFields().get("X-Authlib-Injector-API-Location"))
-				.flatMap(list -> list.isEmpty() ? Optional.empty() : Optional.of(list.get(0)))
-				.flatMap(indication -> {
-					String currentUrl = appendSuffixSlash(conn.getURL().toString());
-					String newUrl;
-					try {
-						newUrl = appendSuffixSlash(new URL(conn.getURL(), indication).toString());
-					} catch (MalformedURLException e) {
-						Logging.CONFIG.warning("Failed to resolve absolute ALI, the header is [" + indication + "]. Ignore it.");
-						return Optional.empty();
-					}
-
-					if (newUrl.equals(currentUrl)) {
-						return Optional.empty();
-					} else {
-						return Optional.of(newUrl);
-					}
-				});
-	}
-
-	private static ExecutionEnvironment detectSide() {
-		String specifiedSide = System.getProperty(PROP_SIDE);
-		if (specifiedSide != null) {
-			switch (specifiedSide) {
-				case "client":
-					return ExecutionEnvironment.CLIENT;
-				case "server":
-					return ExecutionEnvironment.SERVER;
-				default:
-					Logging.LAUNCH.warning("Invalid value [" + specifiedSide + "] for parameter " + PROP_SIDE + ", ignoring.");
-					break;
-			}
-		}
-
-		// fallback
-		if (System.getProperty(PROP_PREFETCHED_DATA) != null || System.getProperty(PROP_PREFETCHED_DATA_OLD) != null) {
-			Logging.LAUNCH.warning("Prefetched configuration must be used along with parameter " + PROP_SIDE);
-			return ExecutionEnvironment.CLIENT;
-		} else {
-			return ExecutionEnvironment.SERVER;
-		}
+	private static boolean urlEqualsIgnoreSlash(String a, String b) {
+		if (!a.endsWith("/"))
+			a += "/";
+		if (!b.endsWith("/"))
+			b += "/";
+		return a.equals(b);
 	}
 
 	private static List<URLFilter> createFilters(YggdrasilConfiguration config) {
