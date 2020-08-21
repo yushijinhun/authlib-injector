@@ -17,25 +17,23 @@
 package moe.yushi.authlibinjector.transform.support;
 
 import static java.util.stream.Collectors.joining;
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.ASTORE;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-
 import moe.yushi.authlibinjector.transform.CallbackMethod;
 import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
-import moe.yushi.authlibinjector.util.Logging;
 
 public class MainArgumentsTransformer implements TransformUnit {
 
@@ -77,7 +75,7 @@ public class MainArgumentsTransformer implements TransformUnit {
 
 	@CallbackMethod
 	public static String[] processMainArguments(String[] args) {
-		Logging.TRANSFORM.fine(() -> "Main arguments: " + Stream.of(args).collect(joining(" ")));
+		log(DEBUG, "Main arguments: " + Stream.of(args).collect(joining(" ")));
 
 		String[] result = args;
 		for (Function<String[], String[]> listener : ARGUMENTS_LISTENERS) {
@@ -117,7 +115,7 @@ public class MainArgumentsTransformer implements TransformUnit {
 	static {
 		getArgumentsListeners().add(args -> {
 			inferVersionSeries(args).ifPresent(versionSeries -> {
-				Logging.TRANSFORM.fine("Version series detected: " + versionSeries);
+				log(DEBUG, "Version series detected: " + versionSeries);
 				VERSION_SERIES_LISTENERS.forEach(listener -> listener.accept(versionSeries));
 			});
 			return args;

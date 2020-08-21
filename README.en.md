@@ -2,7 +2,7 @@
  * [简体中文(Chinese Simplified)](https://github.com/yushijinhun/authlib-injector/blob/develop/README.md)
 
 # authlib-injector
-[![circle ci](https://img.shields.io/circleci/project/github/yushijinhun/authlib-injector/master.svg?style=flat-square)](https://circleci.com/gh/yushijinhun/authlib-injector/tree/master)
+[![circle ci](https://img.shields.io/github/workflow/status/yushijinhun/authlib-injector/CI?style=flat-square)](https://github.com/yushijinhun/authlib-injector/actions?query=workflow%3ACI)
 [![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/1caea43b49a059de4f8e44f11ede06a89a43a088/LICENSE)
 ![language](https://img.shields.io/badge/language-java-yellow.svg?style=flat-square)
 ![require java 1.8+](https://img.shields.io/badge/require%20java-1.8%2B-orange.svg?style=flat-square)
@@ -24,31 +24,30 @@ gradle
 Build output can be found in `build/libs`.
 
 ## Deploy
-The authentication server is required to implement [Yggdrasil Server Specification](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil-%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83).
-
 Configure Minecraft server with the following JVM parameter:
 ```
--javaagent:{/path/to/authlib-injector.jar}={API Root of Authentication Server}
+-javaagent:{/path/to/authlib-injector.jar}={Authentication Server URL}
 ```
 
-## Debug
-### Print verbose logs
-Add the following JVM parameter:
+## Options
 ```
--Dauthlibinjector.debug={types of logs to print}
-```
-Types of logs:
- * `launch` startup of authlib-injector
- * `transform` bytecode modification
- * `config` configuration fetching
- * `httpd` local http server (The local http server acts as a reverse proxy between client and the remote authentication server, which allows authlib-injector to implement enhancements.)
- * `authlib` logs intercepted from authlib (which contains detailed network communication)
+-Dauthlibinjector.mojangProxy={proxy server URL}
+    Use proxy when accessing Mojang authentication service.
+    Only SOCKS protocol is supported.
+    URL format: socks://<host>:<port>
 
-Use `,` as the separator when specifying multiple types. To print all the logs, set the type to `all`.
+-Dauthlibinjector.debug (equals -Dauthlibinjector.debug=verbose,authlib)
+ or -Dauthlibinjector.debug=<comma-separated debug options>
+    Enable debug options.
+    Available debug options:
+      verbose             enable verbose logging
+      authlib             print logs from Mojang authlib
+      dumpClass           dump modified classes
+      printUntransformed  print classes that are analyzed but not transformed, implies 'verbose'
 
-### Dump modified classes
-Dump the modified classes to current directory with the following JVM parameter:
-```
--Dauthlibinjector.dumpClass=true
-```
+-Dauthlibinjector.ignoredPackages={comma-separated package list}
+    Ignore specified packages. Classes in these packages will not be analyzed or modified.
 
+-Dauthlibinjector.disableHttpd
+    Disable local HTTP server. Some features may not function properly.
+```

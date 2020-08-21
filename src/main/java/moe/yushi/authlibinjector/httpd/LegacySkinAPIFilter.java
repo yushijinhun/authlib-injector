@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,7 +24,9 @@ import static moe.yushi.authlibinjector.util.IOUtils.http;
 import static moe.yushi.authlibinjector.util.IOUtils.newUncheckedIOException;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
-
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -32,13 +34,11 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Status;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
-import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public class LegacySkinAPIFilter implements URLFilter {
@@ -78,18 +78,18 @@ public class LegacySkinAPIFilter implements URLFilter {
 
 		if (skinUrl.isPresent()) {
 			String url = skinUrl.get();
-			Logging.HTTPD.fine("Retrieving skin for " + username + " from " + url);
+			log(DEBUG, "Retrieving skin for " + username + " from " + url);
 			byte[] data;
 			try {
 				data = http("GET", url);
 			} catch (IOException e) {
 				throw newUncheckedIOException("Failed to retrieve skin from " + url, e);
 			}
-			Logging.HTTPD.info("Retrieved skin for " + username + " from " + url + ", " + data.length + " bytes");
+			log(INFO, "Retrieved skin for " + username + " from " + url + ", " + data.length + " bytes");
 			return of(Response.newFixedLength(Status.OK, "image/png", new ByteArrayInputStream(data), data.length));
 
 		} else {
-			Logging.HTTPD.info("No skin is found for " + username);
+			log(INFO, "No skin is found for " + username);
 			return of(Response.newFixedLength(Status.NOT_FOUND, null, null));
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,10 @@
 package moe.yushi.authlibinjector.httpd;
 
 import static moe.yushi.authlibinjector.util.IOUtils.transfer;
-
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
+import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,16 +34,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IStatus;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Status;
-import moe.yushi.authlibinjector.util.Logging;
 
 public class URLProcessor {
 
@@ -76,7 +76,7 @@ public class URLProcessor {
 
 		Optional<String> result = transform(protocol, domain, path);
 		if (result.isPresent()) {
-			Logging.TRANSFORM.fine("Transformed url [" + inputUrl + "] to [" + result.get() + "]");
+			log(DEBUG, "Transformed url [" + inputUrl + "] to [" + result.get() + "]");
 		}
 		return result;
 	}
@@ -109,7 +109,7 @@ public class URLProcessor {
 				} catch (IOException e) {
 					throw new IllegalStateException("Httpd failed to start");
 				}
-				Logging.HTTPD.info("Httpd is running on port " + httpd.getListeningPort());
+				log(INFO, "Httpd is running on port " + httpd.getListeningPort());
 			}
 			return httpd.getListeningPort();
 		}
@@ -130,12 +130,12 @@ public class URLProcessor {
 							try {
 								result = filter.handle(domain, path, session);
 							} catch (Throwable e) {
-								Logging.HTTPD.log(Level.WARNING, "An error occurred while processing request [" + session.getUri() + "]", e);
+								log(WARNING, "An error occurred while processing request [" + session.getUri() + "]", e);
 								return Response.newFixedLength(Status.INTERNAL_ERROR, MIME_PLAINTEXT, "Internal Server Error");
 							}
 
 							if (result.isPresent()) {
-								Logging.HTTPD.fine("Request to [" + session.getUri() + "] is handled by [" + filter + "]");
+								log(DEBUG, "Request to [" + session.getUri() + "] is handled by [" + filter + "]");
 								return result.get();
 							}
 						}
@@ -146,11 +146,11 @@ public class URLProcessor {
 					try {
 						return reverseProxy(session, target);
 					} catch (IOException e) {
-						Logging.HTTPD.log(Level.WARNING, "Reverse proxy error", e);
+						log(WARNING, "Reverse proxy error", e);
 						return Response.newFixedLength(Status.BAD_GATEWAY, MIME_PLAINTEXT, "Bad Gateway");
 					}
 				} else {
-					Logging.HTTPD.fine("No handler is found for [" + session.getUri() + "]");
+					log(DEBUG, "No handler is found for [" + session.getUri() + "]");
 					return Response.newFixedLength(Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found");
 				}
 			}
@@ -170,7 +170,7 @@ public class URLProcessor {
 
 		InputStream clientIn = session.getInputStream();
 
-		Logging.HTTPD.fine(() -> "Reverse proxy: > " + method + " " + url + ", headers: " + requestHeaders);
+		log(DEBUG, "Reverse proxy: > " + method + " " + url + ", headers: " + requestHeaders);
 
 		HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
 		conn.setRequestMethod(method);
@@ -197,7 +197,7 @@ public class URLProcessor {
 		} catch (IOException e) {
 			upstreamIn = conn.getErrorStream();
 		}
-		Logging.HTTPD.fine(() -> "Reverse proxy: < " + responseCode + " " + reponseMessage + " , headers: " + responseHeaders);
+		log(DEBUG, "Reverse proxy: < " + responseCode + " " + reponseMessage + " , headers: " + responseHeaders);
 
 		IStatus status = new IStatus() {
 			@Override

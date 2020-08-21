@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,12 +16,13 @@
  */
 package moe.yushi.authlibinjector.javaagent;
 
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.Level.ERROR;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import java.lang.instrument.Instrumentation;
-import java.util.logging.Level;
-
 import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.InjectorInitializationException;
-import moe.yushi.authlibinjector.util.Logging;
 
 public class AuthlibInjectorPremain {
 
@@ -29,22 +30,22 @@ public class AuthlibInjectorPremain {
 		try {
 			initInjector(arg, instrumentation, false);
 		} catch (InjectorInitializationException e) {
-			Logging.LAUNCH.log(Level.FINE, "A known exception has occurred", e);
+			log(DEBUG, "A known exception has occurred", e);
 			System.exit(1);
 		} catch (Throwable e) {
-			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred, exiting", e);
+			log(ERROR, "An exception has occurred, exiting", e);
 			System.exit(1);
 		}
 	}
 
 	public static void agentmain(String arg, Instrumentation instrumentation) {
 		try {
-			Logging.LAUNCH.info("Launched from agentmain");
+			log(INFO, "Launched from agentmain");
 			initInjector(arg, instrumentation, true);
 		} catch (InjectorInitializationException e) {
-			Logging.LAUNCH.log(Level.FINE, "A known exception has occurred", e);
+			log(DEBUG, "A known exception has occurred", e);
 		} catch (Throwable e) {
-			Logging.LAUNCH.log(Level.SEVERE, "An exception has occurred", e);
+			log(ERROR, "An exception has occurred", e);
 		}
 	}
 

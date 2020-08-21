@@ -16,9 +16,11 @@
  */
 package moe.yushi.authlibinjector.transform.support;
 
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
+import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -30,18 +32,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.logging.Level;
 import java.util.stream.Stream;
-
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
-
 import moe.yushi.authlibinjector.transform.CallbackMethod;
 import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
-import moe.yushi.authlibinjector.util.Logging;
 
 public class AuthlibLogInterceptor implements TransformUnit {
 
@@ -65,9 +63,9 @@ public class AuthlibLogInterceptor implements TransformUnit {
 
 		try {
 			registerLogHandle(clLog4j);
-			Logging.TRANSFORM.info("Registered log handler on " + clLog4j);
+			log(INFO, "Registered log handler on " + clLog4j);
 		} catch (Throwable e) {
-			Logging.TRANSFORM.log(Level.WARNING, "Failed to register log handler on " + clLog4j, e);
+			log(WARNING, "Failed to register log handler on " + clLog4j, e);
 		}
 	}
 

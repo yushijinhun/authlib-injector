@@ -2,7 +2,7 @@
  * **简体中文(Chinese Simplified)**
 
 # authlib-injector
-[![circle ci](https://img.shields.io/circleci/project/github/yushijinhun/authlib-injector/master.svg?style=flat-square)](https://circleci.com/gh/yushijinhun/authlib-injector/tree/master)
+[![circle ci](https://img.shields.io/github/workflow/status/yushijinhun/authlib-injector/CI?style=flat-square)](https://github.com/yushijinhun/authlib-injector/actions?query=workflow%3ACI)
 [![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/1caea43b49a059de4f8e44f11ede06a89a43a088/LICENSE)
 ![language](https://img.shields.io/badge/language-java-yellow.svg?style=flat-square)
 ![require java 1.8+](https://img.shields.io/badge/require%20java-1.8%2B-orange.svg?style=flat-square)
@@ -24,33 +24,32 @@ gradle
 构建输出位于 `build/libs` 下。
 
 ## 部署
-需要服务端实现本规范中的[扩展 API](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil-%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83#%E6%89%A9%E5%B1%95-api)。
 通过添加以下 JVM 参数来配置：
 ```
--javaagent:{authlib-injector.jar 的路径}={Yggdrasil 服务端的 URL（API Root）}
+-javaagent:{authlib-injector.jar 的路径}={验证服务器 URL（API 地址）}
 ```
 
-## 调试
-### 调试输出
-添加以下 JVM 参数：
+## 参数
 ```
--Dauthlibinjector.debug={要打印的调试信息类型}
-```
-调试信息类型有：
- * `launch` 有关 authlib-injector 加载的
- * `transform` 有关字节码修改的
- * `config` 有关配置获取的
- * `httpd` 有关本地 HTTP 服务器的（其负责在本地处理掉部分请求，而不是发送到 Yggdrasil 服务端）
- * `authlib` 打印从 authlib 处获取的日志（其记录了网络调用的详细信息）
+-Dauthlibinjector.mojangProxy={代理服务器 URL}
+    设置访问 Mojang 验证服务时使用的代理，目前仅支持 SOCKS 协议
+    URL 格式为 socks://<host>:<port>
 
-可以指定多个类型，中间用 `,` 分隔。如果要打印以上所有调试信息，可以设置其为 `all`。
+-Dauthlibinjector.debug (等价于 -Dauthlibinjector.debug=verbose,authlib)
+ 或 -Dauthlibinjector.debug={调试选项; 逗号分隔}
+    开启调试功能
+    可用的调试选项：
+      verbose             详细日志
+      authlib             开启 Mojang authlib 的调试输出
+      dumpClass           转储修改过的类
+      printUntransformed  打印已分析但未修改的类，暗含 verbose
 
-### 保存修改过的类
-添加以下 JVM 参数：
+-Dauthlibinjector.ignoredPackages={包列表; 逗号分隔}
+    忽略指定的包，其中的类将不会被分析或修改
+
+-Dauthlibinjector.disableHttpd
+    禁用内建的 HTTP 服务器，可能导致部分功能不正常
 ```
--Dauthlibinjector.dumpClass=true
-```
-修改过的类文件会保存在当前目录下。
 
 ## 捐助
 BMCLAPI 为 authlib-injector 提供了[下载镜像站](https://github.com/yushijinhun/authlib-injector/wiki/%E8%8E%B7%E5%8F%96-authlib-injector#bmclapi-%E9%95%9C%E5%83%8F)。如果您想要支持 authlib-injector 的开发，您可以[捐助 BMCLAPI](https://bmclapidoc.bangbang93.com/)。
