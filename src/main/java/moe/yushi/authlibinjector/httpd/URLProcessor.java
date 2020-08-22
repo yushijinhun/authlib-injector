@@ -84,7 +84,7 @@ public class URLProcessor {
 	private Optional<String> transform(String protocol, String domain, String path) {
 		boolean handleLocally = false;
 		for (URLFilter filter : filters) {
-			if (filter.canHandle(domain, path)) {
+			if (filter.canHandle(domain)) {
 				handleLocally = true;
 				break;
 			}
@@ -125,7 +125,7 @@ public class URLProcessor {
 					String domain = matcher.group("domain");
 					String path = matcher.group("path");
 					for (URLFilter filter : filters) {
-						if (filter.canHandle(domain, path)) {
+						if (filter.canHandle(domain)) {
 							Optional<Response> result;
 							try {
 								result = filter.handle(domain, path, session);

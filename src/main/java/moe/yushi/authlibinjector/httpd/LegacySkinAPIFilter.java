@@ -52,7 +52,7 @@ public class LegacySkinAPIFilter implements URLFilter {
 	}
 
 	@Override
-	public boolean canHandle(String domain, String path) {
+	public boolean canHandle(String domain) {
 		return domain.equals("skins.minecraft.net");
 	}
 

@@ -46,7 +46,7 @@ public class QueryProfileFilter implements URLFilter {
 	}
 
 	@Override
-	public boolean canHandle(String domain, String path) {
+	public boolean canHandle(String domain) {
 		return domain.equals("sessionserver.mojang.com");
 	}
 

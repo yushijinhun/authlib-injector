@@ -48,7 +48,7 @@ public class QueryUUIDsFilter implements URLFilter {
 	}
 
 	@Override
-	public boolean canHandle(String domain, String path) {
+	public boolean canHandle(String domain) {
 		return domain.equals("api.mojang.com");
 	}
 
