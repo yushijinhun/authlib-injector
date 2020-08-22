@@ -209,6 +209,7 @@ public final class AuthlibInjector {
 
 	private static List<URLFilter> createFilters(APIMetadata config) {
 		if (Config.httpdDisabled) {
+			log(INFO, "Disabled local HTTP server");
 			return emptyList();
 		}
 
@@ -217,14 +218,20 @@ public final class AuthlibInjector {
 		YggdrasilClient customClient = new YggdrasilClient(new CustomYggdrasilAPIProvider(config));
 		YggdrasilClient mojangClient = new YggdrasilClient(new MojangYggdrasilAPIProvider(), Config.mojangProxy);
 
-		if (Boolean.TRUE.equals(config.getMeta().get("feature.legacy_skin_api"))) {
-			log(INFO, "Disabled local redirect for legacy skin API, as the remote Yggdrasil server supports it");
-		} else {
+		boolean legacySkinPolyfillDefault = !Boolean.TRUE.equals(config.getMeta().get("feature.legacy_skin_api"));
+		if (Config.legacySkinPolyfill.isEnabled(legacySkinPolyfillDefault)) {
 			filters.add(new LegacySkinAPIFilter(customClient));
+		} else {
+			log(INFO, "Disabled legacy skin API polyfill");
 		}
 
-		filters.add(new QueryUUIDsFilter(mojangClient, customClient));
-		filters.add(new QueryProfileFilter(mojangClient, customClient));
+		boolean mojangNamespaceDefault = !Boolean.TRUE.equals(config.getMeta().get("feature.no_mojang_namespace"));
+		if (Config.mojangNamespace.isEnabled(mojangNamespaceDefault)) {
+			filters.add(new QueryUUIDsFilter(mojangClient, customClient));
+			filters.add(new QueryProfileFilter(mojangClient, customClient));
+		} else {
+			log(INFO, "Disabled Mojang namespace");
+		}
 
 		return filters;
 	}

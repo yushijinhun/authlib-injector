@@ -32,53 +32,33 @@ import java.util.regex.Pattern;
 public final class Config {
 
 	/*
-	 * -Dauthlibinjector.mojangProxy={proxy server URL}
+	 * See readme for option details.
 	 *
-	 * Use proxy when accessing Mojang authentication service.
-	 * Only SOCKS protocol is supported.
-	 * URL format: socks://<host>:<port>
-	 */
-
-	/*
-	 * -Dauthlibinjector.debug (equals -Dauthlibinjector.debug=verbose,authlib)
-	 *   or -Dauthlibinjector.debug=<comma-separated debug options>
-	 *
-	 * Available debug options:
-	 *  - verbose ; enable verbose logging
-	 *  - authlib ; print logs from Mojang authlib
-	 *  - dumpClass ; dump modified classes
-	 *  - printUntransformed ; print classes that are analyzed but not transformed, implies 'verbose'
-	 *
-	 * Specially, for backward compatibility, -Dauthlibinjector.debug=all equals -Dauthlibinjector.debug
-	 */
-
-	/*
-	 * -Dauthlibinjector.ignoredPackages={comma-separated package list}
-	 *
-	 * Ignore specified packages. Classes in these packages will not be analyzed or modified.
-	 */
-
-	/*
-	 * -Dauthlibinjector.disableHttpd
-	 *
-	 * Disable local HTTP server. Some features may not function properly.
-	 */
-
-	/*
 	 * Deprecated options:
-	 * -Dauthlibinjector.debug=all ; use -Dauthlibinjector.debug instead
-	 * -Dauthlibinjector.mojang.proxy=... ; use -Dauthlibinjector.mojangProxy=... instead
+	 *   -Dauthlibinjector.debug=all
+	 *      replaced by -Dauthlibinjector.debug
+	 *   -Dauthlibinjector.mojang.proxy=...
+	 *     replaced by -Dauthlibinjector.mojangProxy=...
 	 */
 
 	private Config() {}
+
+	public static enum FeatureOption {
+		DEFAULT, ENABLED, DISABLED;
+		public boolean isEnabled(boolean defaultValue) {
+			return this == DEFAULT ? defaultValue : this == ENABLED;
+		}
+	}
 
 	public static boolean verboseLogging;
 	public static boolean authlibLogging;
 	public static boolean printUntransformedClass;
 	public static boolean dumpClass;
 	public static boolean httpdDisabled;
-	public static Proxy mojangProxy;
+	public static /* nullable */ Proxy mojangProxy;
 	public static Set<String> ignoredPackages;
+	public static FeatureOption mojangNamespace;
+	public static FeatureOption legacySkinPolyfill;
 
 	private static void initDebugOptions() {
 		String prop = System.getProperty("authlibinjector.debug");
@@ -201,10 +181,26 @@ public final class Config {
 		log(INFO, "Mojang proxy: " + mojangProxy);
 	}
 
+	private static FeatureOption parseFeatureOption(String property) {
+		String prop = System.getProperty(property);
+		if (prop == null) {
+			return FeatureOption.DEFAULT;
+		}
+		try {
+			return FeatureOption.valueOf(prop.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			log(ERROR, "Invalid option: " + prop);
+			throw new InitializationException(e);
+		}
+	}
+
 	static void init() {
 		initDebugOptions();
 		initIgnoredPackages();
-		httpdDisabled = System.getProperty("-Dauthlibinjector.disableHttpd") != null;
 		initMojangProxy();
+
+		mojangNamespace = parseFeatureOption("authlibinjector.mojangNamespace");
+		legacySkinPolyfill = parseFeatureOption("authlibinjector.legacySkinPolyfill");
+		httpdDisabled = System.getProperty("authlibinjector.disableHttpd") != null;
 	}
 }

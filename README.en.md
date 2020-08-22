@@ -31,23 +31,47 @@ Configure Minecraft server with the following JVM parameter:
 
 ## Options
 ```
+-Dauthlibinjector.mojangNamespace={default|enabled|disabled}
+    Whether to enable Mojang namespace (@mojang suffix).
+    It's enabled by default if the authentication server does NOT send feature.no_mojang_namespace option.
+
+    If enabled, virtual player <username>@mojang will have the same skin as premium (Mojang) player <username>.
+    For example,
+     - /give @p minecraft:skull 1 3 {SkullOwner:"Notch@mojang"}
+     - /npc skin Notch@mojang
+    will display Notch's skin.
+
+    Note that the virtual player does NOT have the same UUID as its corresponding premium player.
+    To distinguish virtual players from actual ones, the most significant bit of time_hi_and_version is set to 1 (see RFC 4122 section 4.1.3).
+    For example:
+      069a79f4-44e9-4726-a5be-fca90e38aaf5 Notch
+      069a79f4-44e9-c726-a5be-fca90e38aaf5 Notch@mojang
+    We use this approach because, in RFC 4122, UUID version has only 6 possible values (0~5), which means the most significant is always 0.
+    In fact, Mojang uses version-4 (random) UUID, so its corresponding virtual player has a version-12 UUID.
+
 -Dauthlibinjector.mojangProxy={proxy server URL}
     Use proxy when accessing Mojang authentication service.
     Only SOCKS protocol is supported.
     URL format: socks://<host>:<port>
 
+-Dauthlibinjector.legacySkinPolyfill={default|enabled|disabled}
+    Whether to polyfill legacy skin API, namely 'GET /skins/MinecraftSkins/{username}.png'.
+    It's enabled by default if the authentication server does NOT send feature.legacy_skin_api option.
+
 -Dauthlibinjector.debug (equals -Dauthlibinjector.debug=verbose,authlib)
- or -Dauthlibinjector.debug=<comma-separated debug options>
-    Enable debug options.
+ or -Dauthlibinjector.debug={comma-separated debug options}
     Available debug options:
-      verbose             enable verbose logging
-      authlib             print logs from Mojang authlib
-      dumpClass           dump modified classes
-      printUntransformed  print classes that are analyzed but not transformed, implies 'verbose'
+     - verbose             enable verbose logging
+     - authlib             print logs from Mojang authlib
+     - dumpClass           dump modified classes
+     - printUntransformed  print classes that are analyzed but not transformed, implies 'verbose'
 
 -Dauthlibinjector.ignoredPackages={comma-separated package list}
     Ignore specified packages. Classes in these packages will not be analyzed or modified.
 
 -Dauthlibinjector.disableHttpd
-    Disable local HTTP server. Some features may not function properly.
+    Disable local HTTP server.
+    Features (see below) depending on local HTTP server will be unavailable:
+     - Mojang namespace
+     - Legacy skin API polyfill
 ```
