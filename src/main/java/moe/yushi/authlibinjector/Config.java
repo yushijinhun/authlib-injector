@@ -109,7 +109,7 @@ public final class Config {
 						break;
 					default:
 						log(ERROR, "Unrecognized debug option: " + option);
-						throw new InjectorInitializationException();
+						throw new InitializationException();
 				}
 			}
 		}
@@ -182,7 +182,7 @@ public final class Config {
 		Matcher matcher = Pattern.compile("^(?<protocol>[^:]+)://(?<host>[^/]+)+:(?<port>\\d+)$").matcher(prop);
 		if (!matcher.find()) {
 			log(ERROR, "Unrecognized proxy URL: " + prop);
-			throw new InjectorInitializationException();
+			throw new InitializationException();
 		}
 
 		String protocol = matcher.group("protocol");
@@ -196,7 +196,7 @@ public final class Config {
 
 			default:
 				log(ERROR, "Unsupported proxy protocol: " + protocol);
-				throw new InjectorInitializationException();
+				throw new InitializationException();
 		}
 		log(INFO, "Mojang proxy: " + mojangProxy);
 	}

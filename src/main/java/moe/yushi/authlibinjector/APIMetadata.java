@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,9 +37,9 @@ import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
 import moe.yushi.authlibinjector.util.KeyUtils;
 
-public class YggdrasilConfiguration {
+public class APIMetadata {
 
-	public static YggdrasilConfiguration parse(String apiRoot, String metadataResponse) throws UncheckedIOException {
+	public static APIMetadata parse(String apiRoot, String metadataResponse) throws UncheckedIOException {
 		JSONObject response = asJsonObject(parseJson(metadataResponse));
 
 		List<String> skinDomains =
@@ -59,7 +59,7 @@ public class YggdrasilConfiguration {
 						.map(it -> (Map<String, Object>) new TreeMap<>(asJsonObject(it)))
 						.orElse(emptyMap());
 
-		return new YggdrasilConfiguration(apiRoot, unmodifiableList(skinDomains), unmodifiableMap(meta), decodedPublickey);
+		return new APIMetadata(apiRoot, unmodifiableList(skinDomains), unmodifiableMap(meta), decodedPublickey);
 	}
 
 	private String apiRoot;
@@ -67,7 +67,7 @@ public class YggdrasilConfiguration {
 	private Optional<PublicKey> decodedPublickey;
 	private Map<String, Object> meta;
 
-	public YggdrasilConfiguration(String apiRoot, List<String> skinDomains, Map<String, Object> meta, Optional<PublicKey> decodedPublickey) {
+	public APIMetadata(String apiRoot, List<String> skinDomains, Map<String, Object> meta, Optional<PublicKey> decodedPublickey) {
 		this.apiRoot = requireNonNull(apiRoot);
 		this.skinDomains = requireNonNull(skinDomains);
 		this.meta = requireNonNull(meta);
@@ -92,7 +92,6 @@ public class YggdrasilConfiguration {
 
 	@Override
 	public String toString() {
-		return format("YggdrasilConfiguration [apiRoot={0}, skinDomains={1}, decodedPublickey={2}, meta={3}]", apiRoot, skinDomains, decodedPublickey, meta);
+		return format("APIMetadata [apiRoot={0}, skinDomains={1}, decodedPublickey={2}, meta={3}]", apiRoot, skinDomains, decodedPublickey, meta);
 	}
-
 }

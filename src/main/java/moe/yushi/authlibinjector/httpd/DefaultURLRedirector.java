@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,15 +19,14 @@ package moe.yushi.authlibinjector.httpd;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
-import moe.yushi.authlibinjector.YggdrasilConfiguration;
+import moe.yushi.authlibinjector.APIMetadata;
 
 public class DefaultURLRedirector implements URLRedirector {
 
 	private Map<String, String> domainMapping = new HashMap<>();
 	private String apiRoot;
 
-	public DefaultURLRedirector(YggdrasilConfiguration config) {
+	public DefaultURLRedirector(APIMetadata config) {
 		initDomainMapping();
 
 		apiRoot = config.getApiRoot();

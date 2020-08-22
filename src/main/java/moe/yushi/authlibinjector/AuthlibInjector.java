@@ -18,8 +18,7 @@ package moe.yushi.authlibinjector;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
+import static java.util.Objects.requireNonNull;
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.removeNewLines;
@@ -42,7 +41,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
@@ -65,12 +63,6 @@ import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public final class AuthlibInjector {
-
-	/**
-	 * Stores the API URL, should be set before {@link #bootstrap(Consumer)} is invoked.
-	 */
-	public static final String PROP_API_ROOT = "authlibinjector.api";
-
 	private AuthlibInjector() {}
 
 	private static boolean booted = false;
@@ -78,13 +70,13 @@ public final class AuthlibInjector {
 	private static boolean retransformSupported;
 	private static ClassTransformer classTransformer;
 
-	public static synchronized void bootstrap(Instrumentation instrumentation) throws InjectorInitializationException {
+	public static synchronized void bootstrap(Instrumentation instrumentation, String apiUrl) throws InitializationException {
 		if (booted) {
 			log(INFO, "Already started, skipping");
 			return;
 		}
 		booted = true;
-		AuthlibInjector.instrumentation = instrumentation;
+		AuthlibInjector.instrumentation = requireNonNull(instrumentation);
 		Config.init();
 
 		retransformSupported = instrumentation.isRetransformClassesSupported();
@@ -92,19 +84,14 @@ public final class AuthlibInjector {
 			log(WARNING, "Retransform is not supported");
 		}
 
-		log(INFO, "Version: " + getVersion());
+		log(INFO, "Version: " + AuthlibInjector.class.getPackage().getImplementationVersion());
 
-		Optional<YggdrasilConfiguration> optionalConfig = configure();
-		if (optionalConfig.isPresent()) {
-			classTransformer = createTransformer(optionalConfig.get());
-			instrumentation.addTransformer(classTransformer, retransformSupported);
+		APIMetadata apiMetadata = fetchAPIMetadata(apiUrl);
+		classTransformer = createTransformer(apiMetadata);
+		instrumentation.addTransformer(classTransformer, retransformSupported);
 
-			MC52974Workaround.init();
-			MC52974_1710Workaround.init();
-		} else {
-			log(ERROR, "No authentication server specified");
-			throw new InjectorInitializationException();
-		}
+		MC52974Workaround.init();
+		MC52974_1710Workaround.init();
 	}
 
 	private static Optional<String> getPrefetchedResponse() {
@@ -118,27 +105,40 @@ public final class AuthlibInjector {
 		return Optional.ofNullable(prefetched);
 	}
 
-	private static Optional<YggdrasilConfiguration> configure() {
-		String apiRoot = System.getProperty(PROP_API_ROOT);
-		if (apiRoot == null)
-			return empty();
+	private static APIMetadata fetchAPIMetadata(String apiUrl) {
+		if (apiUrl == null || apiUrl.isEmpty()) {
+			log(ERROR, "No authentication server specified");
+			throw new InitializationException();
+		}
 
-		apiRoot = addHttpsIfMissing(apiRoot);
-		log(INFO, "Authentication server: " + apiRoot);
-		warnIfHttp(apiRoot);
+		apiUrl = addHttpsIfMissing(apiUrl);
+		log(INFO, "Authentication server: " + apiUrl);
+		warnIfHttp(apiUrl);
 
 		String metadataResponse;
 
 		Optional<String> prefetched = getPrefetchedResponse();
-		if (!prefetched.isPresent()) {
+		if (prefetched.isPresent()) {
+
+			log(DEBUG, "Prefetched metadata detected");
+			try {
+				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched.get())), UTF_8);
+			} catch (IllegalArgumentException e) {
+				log(ERROR, "Unable to decode metadata: " + e + "\n"
+						+ "Encoded metadata:\n"
+						+ prefetched.get());
+				throw new InitializationException(e);
+			}
+
+		} else {
 
 			try {
-				HttpURLConnection connection = (HttpURLConnection) new URL(apiRoot).openConnection();
+				HttpURLConnection connection = (HttpURLConnection) new URL(apiUrl).openConnection();
 
 				String ali = connection.getHeaderField("x-authlib-injector-api-location");
 				if (ali != null) {
 					URL absoluteAli = new URL(connection.getURL(), ali);
-					if (!urlEqualsIgnoreSlash(apiRoot, absoluteAli.toString())) {
+					if (!urlEqualsIgnoreSlash(apiUrl, absoluteAli.toString())) {
 
 						// usually the URL that ALI points to is on the same host
 						// so the TCP connection can be reused
@@ -150,8 +150,8 @@ public final class AuthlibInjector {
 						}
 
 						log(INFO, "Redirect to: " + absoluteAli);
-						apiRoot = absoluteAli.toString();
-						warnIfHttp(apiRoot);
+						apiUrl = absoluteAli.toString();
+						warnIfHttp(apiUrl);
 						connection = (HttpURLConnection) absoluteAli.openConnection();
 					}
 				}
@@ -161,37 +161,28 @@ public final class AuthlibInjector {
 				}
 			} catch (IOException e) {
 				log(ERROR, "Failed to fetch metadata: " + e);
-				throw new InjectorInitializationException(e);
+				throw new InitializationException(e);
 			}
 
-		} else {
-			log(DEBUG, "Prefetched metadata detected");
-			try {
-				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched.get())), UTF_8);
-			} catch (IllegalArgumentException e) {
-				log(ERROR, "Unable to decode metadata: " + e + "\n"
-						+ "Encoded metadata:\n"
-						+ prefetched.get());
-				throw new InjectorInitializationException(e);
-			}
 		}
 
 		log(DEBUG, "Metadata: " + metadataResponse);
 
-		if (!apiRoot.endsWith("/"))
-			apiRoot += "/";
+		if (!apiUrl.endsWith("/")) {
+			apiUrl += "/";
+		}
 
-		YggdrasilConfiguration configuration;
+		APIMetadata metadata;
 		try {
-			configuration = YggdrasilConfiguration.parse(apiRoot, metadataResponse);
+			metadata = APIMetadata.parse(apiUrl, metadataResponse);
 		} catch (UncheckedIOException e) {
 			log(ERROR, "Unable to parse metadata: " + e.getCause() + "\n"
 					+ "Raw metadata:\n"
 					+ metadataResponse);
-			throw new InjectorInitializationException(e);
+			throw new InitializationException(e);
 		}
-		log(DEBUG, "Parsed metadata: " + configuration);
-		return of(configuration);
+		log(DEBUG, "Parsed metadata: " + metadata);
+		return metadata;
 	}
 
 	private static void warnIfHttp(String url) {
@@ -216,7 +207,7 @@ public final class AuthlibInjector {
 		return a.equals(b);
 	}
 
-	private static List<URLFilter> createFilters(YggdrasilConfiguration config) {
+	private static List<URLFilter> createFilters(APIMetadata config) {
 		if (Config.httpdDisabled) {
 			return emptyList();
 		}
@@ -238,7 +229,7 @@ public final class AuthlibInjector {
 		return filters;
 	}
 
-	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
+	private static ClassTransformer createTransformer(APIMetadata config) {
 		URLProcessor urlProcessor = new URLProcessor(createFilters(config), new DefaultURLRedirector(config));
 
 		ClassTransformer transformer = new ClassTransformer();
@@ -263,10 +254,6 @@ public final class AuthlibInjector {
 		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
 
 		return transformer;
-	}
-
-	public static String getVersion() {
-		return AuthlibInjector.class.getPackage().getImplementationVersion();
 	}
 
 	public static void retransformClasses(String... classNames) {

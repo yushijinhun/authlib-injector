@@ -14,22 +14,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package moe.yushi.authlibinjector.javaagent;
+package moe.yushi.authlibinjector;
 
 import static moe.yushi.authlibinjector.util.Logging.log;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static moe.yushi.authlibinjector.util.Logging.Level.ERROR;
 import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import java.lang.instrument.Instrumentation;
-import moe.yushi.authlibinjector.AuthlibInjector;
-import moe.yushi.authlibinjector.InjectorInitializationException;
 
-public class AuthlibInjectorPremain {
+public final class Premain {
+	private Premain() {}
 
 	public static void premain(String arg, Instrumentation instrumentation) {
 		try {
 			initInjector(arg, instrumentation, false);
-		} catch (InjectorInitializationException e) {
+		} catch (InitializationException e) {
 			log(DEBUG, "A known exception has occurred", e);
 			System.exit(1);
 		} catch (Throwable e) {
@@ -42,25 +41,18 @@ public class AuthlibInjectorPremain {
 		try {
 			log(INFO, "Launched from agentmain");
 			initInjector(arg, instrumentation, true);
-		} catch (InjectorInitializationException e) {
+		} catch (InitializationException e) {
 			log(DEBUG, "A known exception has occurred", e);
 		} catch (Throwable e) {
 			log(ERROR, "An exception has occurred", e);
 		}
 	}
 
-	public static void initInjector(String arg, Instrumentation instrumentation, boolean retransform) {
-		setupConfig(arg);
-		AuthlibInjector.bootstrap(instrumentation);
+	private static void initInjector(String arg, Instrumentation instrumentation, boolean retransform) {
+		AuthlibInjector.bootstrap(instrumentation, arg);
 
 		if (retransform) {
 			AuthlibInjector.retransformAllClasses();
-		}
-	}
-
-	private static void setupConfig(String arg) {
-		if (arg != null && !arg.isEmpty()) {
-			System.setProperty(AuthlibInjector.PROP_API_ROOT, arg);
 		}
 	}
 }
