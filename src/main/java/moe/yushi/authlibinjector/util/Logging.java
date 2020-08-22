@@ -16,12 +16,15 @@
  */
 package moe.yushi.authlibinjector.util;
 
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import moe.yushi.authlibinjector.Config;
 
 public final class Logging {
 	private Logging() {}
+
+	private static final PrintStream out = System.err;
 
 	public static enum Level {
 		DEBUG, INFO, WARNING, ERROR;
@@ -44,6 +47,6 @@ public final class Logging {
 			pw.close();
 			log += sw.toString();
 		}
-		System.err.println(log);
+		out.println(log);
 	}
 }
