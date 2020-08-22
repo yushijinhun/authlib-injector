@@ -47,6 +47,8 @@ public final class Logging {
 			pw.close();
 			log += sw.toString();
 		}
+		// remove control characters to prevent messing up the console
+		log = log.replaceAll("[\\p{Cc}&&[^\r\n\t]]", "");
 		out.println(log);
 	}
 }
