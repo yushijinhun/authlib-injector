@@ -16,6 +16,7 @@
  */
 package moe.yushi.authlibinjector.httpd;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
@@ -65,6 +66,10 @@ public class LegacySkinAPIFilter implements URLFilter {
 			return empty();
 		String username = matcher.group("username");
 
+		// Minecraft does not encode non-ASCII characters in URLs
+		// We have to workaround this problem
+		username = correctEncoding(username);
+
 		Optional<String> skinUrl;
 		try {
 			skinUrl = upstream.queryUUID(username)
@@ -103,5 +108,10 @@ public class LegacySkinAPIFilter implements URLFilter {
 				.map(it -> ofNullable(it.get("url"))
 						.map(JsonUtils::asJsonString)
 						.orElseThrow(() -> newUncheckedIOException("Invalid JSON: Missing texture url")));
+	}
+
+	private static String correctEncoding(String grable) {
+		// platform charset is used
+		return new String(grable.getBytes(ISO_8859_1));
 	}
 }

@@ -46,8 +46,7 @@
  */
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
-import static java.nio.charset.StandardCharsets.US_ASCII;
-
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -360,7 +359,7 @@ public abstract class NanoHTTPD {
 				}
 
 				// Create a BufferedReader for parsing the header.
-				BufferedReader hin = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, this.rlen), US_ASCII));
+				BufferedReader hin = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, this.rlen), ISO_8859_1));
 
 				// Decode the header into parms and header java properties
 				Map<String, String> pre = new HashMap<>();
@@ -486,7 +485,7 @@ public abstract class NanoHTTPD {
 				}
 				if (expect100Continue && !continueSent) {
 					continueSent = true;
-					this.outputStream.write("HTTP/1.1 100 Continue\r\n\r\n".getBytes(US_ASCII));
+					this.outputStream.write("HTTP/1.1 100 Continue\r\n\r\n".getBytes(ISO_8859_1));
 				}
 			}
 			return this.parsedInputStream;
