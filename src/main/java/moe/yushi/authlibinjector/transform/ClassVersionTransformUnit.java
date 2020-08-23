@@ -16,10 +16,11 @@
  */
 package moe.yushi.authlibinjector.transform;
 
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static org.objectweb.asm.Opcodes.ASM7;
 import java.util.Optional;
 import org.objectweb.asm.ClassVisitor;
-import moe.yushi.authlibinjector.util.Logging;
 
 class ClassVersionTransformUnit implements TransformUnit {
 
@@ -43,7 +44,7 @@ class ClassVersionTransformUnit implements TransformUnit {
 				}
 
 				if (upgradedVersion != -1 && major < upgradedVersion) {
-					Logging.TRANSFORM.fine("Upgrading class version from " + major + " to " + upgradedVersion);
+					log(DEBUG,"Upgrading class version from " + major + " to " + upgradedVersion);
 					version = upgradedVersion;
 					context.markModified();
 				}

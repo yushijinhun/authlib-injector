@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,14 +16,14 @@
  */
 package moe.yushi.authlibinjector.transform;
 
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
+import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-import java.util.logging.Level;
-
-import moe.yushi.authlibinjector.util.Logging;
 
 public class DumpClassListener implements ClassLoadingListener {
 
@@ -39,9 +39,9 @@ public class DumpClassListener implements ClassLoadingListener {
 			Path dumpFile = outputPath.resolve(className + "_dump.class");
 			try {
 				Files.write(dumpFile, bytecode, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-				Logging.TRANSFORM.info("Transformed class is dumped to [" + dumpFile + "]");
+				log(INFO,"Transformed class is dumped to [" + dumpFile + "]");
 			} catch (IOException e) {
-				Logging.TRANSFORM.log(Level.WARNING, "Failed to dump class [" + className + "]", e);
+				log(WARNING, "Failed to dump class [" + className + "]", e);
 			}
 		}
 	}

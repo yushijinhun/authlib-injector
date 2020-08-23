@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,8 +26,9 @@ import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonString;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static moe.yushi.authlibinjector.util.UUIDUtils.fromUnsignedUUID;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.Proxy;
@@ -36,10 +37,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONArray;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
-import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.yggdrasil.GameProfile.PropertyValue;
 
 public class YggdrasilClient {
@@ -65,7 +64,7 @@ public class YggdrasilClient {
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		Logging.HTTPD.fine("Query UUIDs of " + names + " at [" + apiProvider + "], response: " + responseText);
+		log(DEBUG, "Query UUIDs of " + names + " at [" + apiProvider + "], response: " + responseText);
 
 		Map<String, UUID> result = new LinkedHashMap<>();
 		for (Object rawProfile : asJsonArray(parseJson(responseText))) {
@@ -93,10 +92,10 @@ public class YggdrasilClient {
 			throw new UncheckedIOException(e);
 		}
 		if (responseText.isEmpty()) {
-			Logging.HTTPD.fine("Query profile of [" + uuid + "] at [" + apiProvider + "], not found");
+			log(DEBUG, "Query profile of [" + uuid + "] at [" + apiProvider + "], not found");
 			return Optional.empty();
 		}
-		Logging.HTTPD.fine("Query profile of [" + uuid + "] at [" + apiProvider + "], response: " + responseText);
+		log(DEBUG, "Query profile of [" + uuid + "] at [" + apiProvider + "], response: " + responseText);
 
 		return Optional.of(parseGameProfile(asJsonObject(parseJson(responseText))));
 	}

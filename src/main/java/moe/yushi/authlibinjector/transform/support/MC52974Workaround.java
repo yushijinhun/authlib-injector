@@ -17,21 +17,19 @@
 package moe.yushi.authlibinjector.transform.support;
 
 import static java.util.Collections.unmodifiableSet;
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.ISTORE;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-
 import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
-import moe.yushi.authlibinjector.util.Logging;
 
 /**
  * See <https://github.com/yushijinhun/authlib-injector/issues/30>
@@ -52,7 +50,7 @@ public class MC52974Workaround implements TransformUnit {
 	public static void init() {
 		MainArgumentsTransformer.getVersionSeriesListeners().add(version -> {
 			if (AFFECTED_VERSION_SERIES.contains(version)) {
-				Logging.TRANSFORM.info("Enable MC-52974 Workaround");
+				log(INFO, "Enable MC-52974 Workaround");
 				AuthlibInjector.getClassTransformer().units.add(new MC52974Workaround());
 				AuthlibInjector.retransformClasses("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService");
 			}

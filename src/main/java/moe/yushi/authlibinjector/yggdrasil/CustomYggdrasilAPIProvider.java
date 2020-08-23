@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,16 +17,14 @@
 package moe.yushi.authlibinjector.yggdrasil;
 
 import static moe.yushi.authlibinjector.util.UUIDUtils.toUnsignedUUID;
-
 import java.util.UUID;
-
-import moe.yushi.authlibinjector.YggdrasilConfiguration;
+import moe.yushi.authlibinjector.APIMetadata;
 
 public class CustomYggdrasilAPIProvider implements YggdrasilAPIProvider {
 
 	private String apiRoot;
 
-	public CustomYggdrasilAPIProvider(YggdrasilConfiguration configuration) {
+	public CustomYggdrasilAPIProvider(APIMetadata configuration) {
 		this.apiRoot = configuration.getApiRoot();
 	}
 

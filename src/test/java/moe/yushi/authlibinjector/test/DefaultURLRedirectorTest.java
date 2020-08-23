@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,18 +19,15 @@ package moe.yushi.authlibinjector.test;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
-
 import java.util.Optional;
-
 import org.junit.Test;
-
-import moe.yushi.authlibinjector.YggdrasilConfiguration;
+import moe.yushi.authlibinjector.APIMetadata;
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 
 public class DefaultURLRedirectorTest {
 
 	private String apiRoot = "https://yggdrasil.example.com/";
-	private DefaultURLRedirector redirector = new DefaultURLRedirector(new YggdrasilConfiguration(apiRoot, emptyList(), emptyMap(), Optional.empty()));
+	private DefaultURLRedirector redirector = new DefaultURLRedirector(new APIMetadata(apiRoot, emptyList(), emptyMap(), Optional.empty()));
 
 	private void testTransform(String domain, String path, String output) {
 		assertEquals(redirector.redirect(domain, path).get(), output);

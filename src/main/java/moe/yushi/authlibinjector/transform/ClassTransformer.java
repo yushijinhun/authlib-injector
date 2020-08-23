@@ -17,6 +17,10 @@
 package moe.yushi.authlibinjector.transform;
 
 import static java.util.Collections.emptyList;
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
+import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -28,17 +32,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Handle;
-import moe.yushi.authlibinjector.AuthlibInjector;
-import moe.yushi.authlibinjector.util.Logging;
+import moe.yushi.authlibinjector.Config;
 
 public class ClassTransformer implements ClassFileTransformer {
-
-	private static final boolean PRINT_UNTRANSFORMED_CLASSES = Boolean.getBoolean(AuthlibInjector.PROP_PRINT_UNTRANSFORMED_CLASSES);
 
 	public final List<TransformUnit> units = new CopyOnWriteArrayList<>();
 	public final List<ClassLoadingListener> listeners = new CopyOnWriteArrayList<>();
@@ -114,7 +114,7 @@ public class ClassTransformer implements ClassFileTransformer {
 				ClassReader reader = new ClassReader(classBuffer);
 				reader.accept(optionalVisitor.get(), 0);
 				if (ctx.modifiedMark) {
-					Logging.TRANSFORM.info("Transformed [" + className + "] with [" + unit + "]");
+					log(INFO, "Transformed [" + className + "] with [" + unit + "]");
 					if (appliedTransformers == null) {
 						appliedTransformers = new ArrayList<>();
 					}
@@ -145,7 +145,7 @@ public class ClassTransformer implements ClassFileTransformer {
 						accept(new ClassVersionTransformUnit(minVersion, upgradedVersion));
 						return Optional.of(classBuffer);
 					} catch (ClassVersionException e) {
-						Logging.TRANSFORM.warning("Skipping [" + className + "], " + e.getMessage());
+						log(WARNING, "Skipping [" + className + "], " + e.getMessage());
 						return Optional.empty();
 					}
 				}
@@ -178,12 +178,12 @@ public class ClassTransformer implements ClassFileTransformer {
 				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 
 				Optional<byte[]> transformResult = handle.finish();
-				if (PRINT_UNTRANSFORMED_CLASSES && !transformResult.isPresent()) {
-					Logging.TRANSFORM.fine("No transformation is applied to [" + className + "]");
+				if (Config.printUntransformedClass && !transformResult.isPresent()) {
+					log(DEBUG, "No transformation is applied to [" + className + "]");
 				}
 				return transformResult.orElse(null);
 			} catch (Throwable e) {
-				Logging.TRANSFORM.log(Level.WARNING, "Failed to transform [" + internalClassName + "]", e);
+				log(WARNING, "Failed to transform [" + internalClassName + "]", e);
 			}
 		}
 		return null;

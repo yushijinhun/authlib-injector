@@ -18,36 +18,30 @@ package moe.yushi.authlibinjector;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
+import static java.util.Objects.requireNonNull;
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
 import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.IOUtils.removeNewLines;
-
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.Level.ERROR;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
+import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.lang.instrument.Instrumentation;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URL;
-import java.net.Proxy.Type;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
 import moe.yushi.authlibinjector.httpd.QueryProfileFilter;
@@ -64,120 +58,11 @@ import moe.yushi.authlibinjector.transform.support.MC52974_1710Workaround;
 import moe.yushi.authlibinjector.transform.support.MainArgumentsTransformer;
 import moe.yushi.authlibinjector.transform.support.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.support.YggdrasilKeyTransformUnit;
-import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public final class AuthlibInjector {
-
-	// ==== System Properties ===
-
-	/**
-	 * Stores the API root, should be set before {@link #bootstrap(Consumer)} is invoked.
-	 */
-	public static final String PROP_API_ROOT = "authlibinjector.yggdrasil";
-
-	/**
-	 * Stores the prefetched API root response, should be set by the launcher.
-	 */
-	public static final String PROP_PREFETCHED_DATA = "authlibinjector.yggdrasil.prefetched";
-
-	/**
-	 * @see #PROP_PREFETCHED_DATA
-	 */
-	public static final String PROP_PREFETCHED_DATA_OLD = "org.to2mbn.authlibinjector.config.prefetched";
-
-	/**
-	 * The name of loggers to have debug level turned on.
-	 */
-	public static final String PROP_DEBUG = "authlibinjector.debug";
-
-	/**
-	 * Whether to save modified classes for debugging.
-	 */
-	public static final String PROP_DUMP_CLASS = "authlibinjector.dumpClass";
-
-	/**
-	 * Whether to print the classes that are bytecode-analyzed but not transformed.
-	 */
-	public static final String PROP_PRINT_UNTRANSFORMED_CLASSES = "authlibinjector.printUntransformed";
-
-	/**
-	 * The proxy to use when accessing Mojang's APIs.
-	 */
-	public static final String PROP_MOJANG_PROXY = "authlibinjector.mojang.proxy";
-
-	/**
-	 * Additional packages to ignore.
-	 */
-	public static final String PROP_IGNORED_PACKAGES = "authlibinjector.ignoredPackages";
-
-	public static final String PROP_DISABLE_HTTPD = "authlibinjector.httpd.disable";
-
-	// ====
-
-	// ==== Package filtering ====
-	private static final String[] DEFAULT_IGNORED_PACKAGES = {
-			"moe.yushi.authlibinjector.",
-			"java.",
-			"javax.",
-			"jdk.",
-			"com.sun.",
-			"sun.",
-			"net.java.",
-
-			"com.google.",
-			"com.ibm.",
-			"com.jcraft.jogg.",
-			"com.jcraft.jorbis.",
-			"com.oracle.",
-			"com.paulscode.",
-
-			"org.GNOME.",
-			"org.apache.",
-			"org.graalvm.",
-			"org.jcp.",
-			"org.json.",
-			"org.lwjgl.",
-			"org.objectweb.asm.",
-			"org.w3c.",
-			"org.xml.",
-			"org.yaml.snakeyaml.",
-
-			"gnu.trove.",
-			"io.netty.",
-			"it.unimi.dsi.fastutil.",
-			"javassist.",
-			"jline.",
-			"joptsimple.",
-			"oracle.",
-			"oshi.",
-			"paulscode.",
-	};
-
-	public static final Set<String> ignoredPackages;
-
-	static {
-		Set<String> pkgs = new HashSet<>();
-		for (String pkg : DEFAULT_IGNORED_PACKAGES) {
-			pkgs.add(pkg);
-		}
-
-		String propIgnoredPkgs = System.getProperty(PROP_IGNORED_PACKAGES);
-		if (propIgnoredPkgs != null) {
-			for (String pkg : propIgnoredPkgs.split(",")) {
-				pkg = pkg.trim();
-				if (!pkg.isEmpty()) {
-					pkgs.add(pkg);
-				}
-			}
-		}
-
-		ignoredPackages = Collections.unmodifiableSet(pkgs);
-	}
-	// ====
-
 	private AuthlibInjector() {}
 
 	private static boolean booted = false;
@@ -185,65 +70,75 @@ public final class AuthlibInjector {
 	private static boolean retransformSupported;
 	private static ClassTransformer classTransformer;
 
-	public static synchronized void bootstrap(Instrumentation instrumentation) throws InjectorInitializationException {
+	public static synchronized void bootstrap(Instrumentation instrumentation, String apiUrl) throws InitializationException {
 		if (booted) {
-			Logging.LAUNCH.info("Already started, skipping");
+			log(INFO, "Already started, skipping");
 			return;
 		}
 		booted = true;
-		AuthlibInjector.instrumentation = instrumentation;
+		AuthlibInjector.instrumentation = requireNonNull(instrumentation);
+		Config.init();
 
 		retransformSupported = instrumentation.isRetransformClassesSupported();
 		if (!retransformSupported) {
-			Logging.LAUNCH.warning("Retransform is not supported");
+			log(WARNING, "Retransform is not supported");
 		}
 
-		Logging.LAUNCH.info("Version: " + getVersion());
+		log(INFO, "Version: " + AuthlibInjector.class.getPackage().getImplementationVersion());
 
-		Optional<YggdrasilConfiguration> optionalConfig = configure();
-		if (optionalConfig.isPresent()) {
-			classTransformer = createTransformer(optionalConfig.get());
-			instrumentation.addTransformer(classTransformer, retransformSupported);
+		APIMetadata apiMetadata = fetchAPIMetadata(apiUrl);
+		classTransformer = createTransformer(apiMetadata);
+		instrumentation.addTransformer(classTransformer, retransformSupported);
 
-			MC52974Workaround.init();
-			MC52974_1710Workaround.init();
-		} else {
-			Logging.LAUNCH.severe("No config available");
-			throw new InjectorInitializationException();
-		}
+		MC52974Workaround.init();
+		MC52974_1710Workaround.init();
 	}
 
 	private static Optional<String> getPrefetchedResponse() {
-		String prefetched = System.getProperty(PROP_PREFETCHED_DATA);
+		String prefetched = System.getProperty("authlibinjector.yggdrasil.prefetched");
 		if (prefetched == null) {
-			prefetched = System.getProperty(PROP_PREFETCHED_DATA_OLD);
+			prefetched = System.getProperty("org.to2mbn.authlibinjector.config.prefetched");
 			if (prefetched != null) {
-				Logging.LAUNCH.warning(PROP_PREFETCHED_DATA_OLD + " option is deprecated, please use " + PROP_PREFETCHED_DATA + " instead");
+				log(WARNING, "'-Dorg.to2mbn.authlibinjector.config.prefetched=' is deprecated, use '-Dauthlibinjector.yggdrasil.prefetched=' instead");
 			}
 		}
 		return Optional.ofNullable(prefetched);
 	}
 
-	private static Optional<YggdrasilConfiguration> configure() {
-		String apiRoot = System.getProperty(PROP_API_ROOT);
-		if (apiRoot == null) return empty();
+	private static APIMetadata fetchAPIMetadata(String apiUrl) {
+		if (apiUrl == null || apiUrl.isEmpty()) {
+			log(ERROR, "No authentication server specified");
+			throw new InitializationException();
+		}
 
-		apiRoot = addHttpsIfMissing(apiRoot);
-		Logging.CONFIG.info("API root: " + apiRoot);
-		warnIfHttp(apiRoot);
+		apiUrl = addHttpsIfMissing(apiUrl);
+		log(INFO, "Authentication server: " + apiUrl);
+		warnIfHttp(apiUrl);
 
 		String metadataResponse;
 
 		Optional<String> prefetched = getPrefetchedResponse();
-		if (!prefetched.isPresent()) {
+		if (prefetched.isPresent()) {
+
+			log(DEBUG, "Prefetched metadata detected");
+			try {
+				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched.get())), UTF_8);
+			} catch (IllegalArgumentException e) {
+				log(ERROR, "Unable to decode metadata: " + e + "\n"
+						+ "Encoded metadata:\n"
+						+ prefetched.get());
+				throw new InitializationException(e);
+			}
+
+		} else {
 
 			try {
-				HttpURLConnection connection = (HttpURLConnection) new URL(apiRoot).openConnection();
+				HttpURLConnection connection = (HttpURLConnection) new URL(apiUrl).openConnection();
 
 				String ali = connection.getHeaderField("x-authlib-injector-api-location");
 				if (ali != null) {
 					URL absoluteAli = new URL(connection.getURL(), ali);
-					if (!urlEqualsIgnoreSlash(apiRoot, absoluteAli.toString())) {
+					if (!urlEqualsIgnoreSlash(apiUrl, absoluteAli.toString())) {
 
 						// usually the URL that ALI points to is on the same host
 						// so the TCP connection can be reused
@@ -254,9 +149,9 @@ public final class AuthlibInjector {
 						} catch (IOException e) {
 						}
 
-						Logging.CONFIG.info("Redirect to: " + absoluteAli);
-						apiRoot = absoluteAli.toString();
-						warnIfHttp(apiRoot);
+						log(INFO, "Redirect to: " + absoluteAli);
+						apiUrl = absoluteAli.toString();
+						warnIfHttp(apiUrl);
 						connection = (HttpURLConnection) absoluteAli.openConnection();
 					}
 				}
@@ -265,43 +160,34 @@ public final class AuthlibInjector {
 					metadataResponse = asString(asBytes(in));
 				}
 			} catch (IOException e) {
-				Logging.CONFIG.severe("Failed to fetch metadata: " + e);
-				throw new InjectorInitializationException(e);
+				log(ERROR, "Failed to fetch metadata: " + e);
+				throw new InitializationException(e);
 			}
 
-		} else {
-			Logging.CONFIG.info("Prefetched metadata detected");
-			try {
-				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched.get())), UTF_8);
-			} catch (IllegalArgumentException e) {
-				Logging.CONFIG.severe("Unable to decode metadata: " + e + "\n"
-						+ "Encoded metadata:\n"
-						+ prefetched.get());
-				throw new InjectorInitializationException(e);
-			}
 		}
 
-		Logging.CONFIG.fine("Metadata: " + metadataResponse);
+		log(DEBUG, "Metadata: " + metadataResponse);
 
-		if (!apiRoot.endsWith("/"))
-			apiRoot += "/";
+		if (!apiUrl.endsWith("/")) {
+			apiUrl += "/";
+		}
 
-		YggdrasilConfiguration configuration;
+		APIMetadata metadata;
 		try {
-			configuration = YggdrasilConfiguration.parse(apiRoot, metadataResponse);
+			metadata = APIMetadata.parse(apiUrl, metadataResponse);
 		} catch (UncheckedIOException e) {
-			Logging.CONFIG.severe("Unable to parse metadata: " + e.getCause() + "\n"
+			log(ERROR, "Unable to parse metadata: " + e.getCause() + "\n"
 					+ "Raw metadata:\n"
 					+ metadataResponse);
-			throw new InjectorInitializationException(e);
+			throw new InitializationException(e);
 		}
-		Logging.CONFIG.fine("Parsed metadata: " + configuration);
-		return of(configuration);
+		log(DEBUG, "Parsed metadata: " + metadata);
+		return metadata;
 	}
 
 	private static void warnIfHttp(String url) {
 		if (url.toLowerCase().startsWith("http://")) {
-			Logging.CONFIG.warning("You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.");
+			log(WARNING, "You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.");
 		}
 	}
 
@@ -321,68 +207,46 @@ public final class AuthlibInjector {
 		return a.equals(b);
 	}
 
-	private static List<URLFilter> createFilters(YggdrasilConfiguration config) {
-		if (Boolean.getBoolean(PROP_DISABLE_HTTPD)) {
+	private static List<URLFilter> createFilters(APIMetadata config) {
+		if (Config.httpdDisabled) {
+			log(INFO, "Disabled local HTTP server");
 			return emptyList();
 		}
 
 		List<URLFilter> filters = new ArrayList<>();
 
 		YggdrasilClient customClient = new YggdrasilClient(new CustomYggdrasilAPIProvider(config));
-		YggdrasilClient mojangClient = new YggdrasilClient(new MojangYggdrasilAPIProvider(), getMojangProxy());
+		YggdrasilClient mojangClient = new YggdrasilClient(new MojangYggdrasilAPIProvider(), Config.mojangProxy);
 
-		if (Boolean.TRUE.equals(config.getMeta().get("feature.legacy_skin_api"))) {
-			Logging.CONFIG.info("Disabled local redirect for legacy skin API, as the remote Yggdrasil server supports it");
-		} else {
+		boolean legacySkinPolyfillDefault = !Boolean.TRUE.equals(config.getMeta().get("feature.legacy_skin_api"));
+		if (Config.legacySkinPolyfill.isEnabled(legacySkinPolyfillDefault)) {
 			filters.add(new LegacySkinAPIFilter(customClient));
+		} else {
+			log(INFO, "Disabled legacy skin API polyfill");
 		}
 
-		filters.add(new QueryUUIDsFilter(mojangClient, customClient));
-		filters.add(new QueryProfileFilter(mojangClient, customClient));
+		boolean mojangNamespaceDefault = !Boolean.TRUE.equals(config.getMeta().get("feature.no_mojang_namespace"));
+		if (Config.mojangNamespace.isEnabled(mojangNamespaceDefault)) {
+			filters.add(new QueryUUIDsFilter(mojangClient, customClient));
+			filters.add(new QueryProfileFilter(mojangClient, customClient));
+		} else {
+			log(INFO, "Disabled Mojang namespace");
+		}
 
 		return filters;
 	}
 
-	private static Proxy getMojangProxy() {
-		String proxyString = System.getProperty(PROP_MOJANG_PROXY);
-		if (proxyString == null) {
-			return null;
-		}
-		Matcher matcher = Pattern.compile("^(?<protocol>[^:]+)://(?<host>[^/]+)+:(?<port>\\d+)$").matcher(proxyString);
-		if (!matcher.find()) {
-			Logging.LAUNCH.severe("Failed to parse proxy string: " + proxyString);
-			throw new InjectorInitializationException();
-		}
-
-		String protocol = matcher.group("protocol");
-		String host = matcher.group("host");
-		int port = Integer.parseInt(matcher.group("port"));
-
-		Proxy proxy;
-		switch (protocol) {
-			case "socks":
-				proxy = new Proxy(Type.SOCKS, new InetSocketAddress(host, port));
-				break;
-
-			default:
-				Logging.LAUNCH.severe("Unsupported proxy protocol: " + protocol);
-				throw new InjectorInitializationException();
-		}
-		Logging.LAUNCH.info("Mojang proxy set: " + proxy);
-		return proxy;
-	}
-
-	private static ClassTransformer createTransformer(YggdrasilConfiguration config) {
+	private static ClassTransformer createTransformer(APIMetadata config) {
 		URLProcessor urlProcessor = new URLProcessor(createFilters(config), new DefaultURLRedirector(config));
 
 		ClassTransformer transformer = new ClassTransformer();
-		transformer.ignores.addAll(ignoredPackages);
+		transformer.ignores.addAll(Config.ignoredPackages);
 
-		if ("true".equals(System.getProperty(PROP_DUMP_CLASS))) {
+		if (Config.dumpClass) {
 			transformer.listeners.add(new DumpClassListener(Paths.get("").toAbsolutePath()));
 		}
 
-		if (Logging.isDebugOnFor(Logging.PREFIX + ".authlib")) {
+		if (Config.authlibLogging) {
 			transformer.units.add(new AuthlibLogInterceptor());
 		}
 
@@ -399,10 +263,6 @@ public final class AuthlibInjector {
 		return transformer;
 	}
 
-	public static String getVersion() {
-		return AuthlibInjector.class.getPackage().getImplementationVersion();
-	}
-
 	public static void retransformClasses(String... classNames) {
 		if (!retransformSupported) {
 			return;
@@ -413,11 +273,11 @@ public final class AuthlibInjector {
 				.filter(AuthlibInjector::canRetransformClass)
 				.toArray(Class[]::new);
 		if (classes.length > 0) {
-			Logging.TRANSFORM.info("Attempt to retransform classes: " + Arrays.toString(classes));
+			log(INFO, "Attempt to retransform classes: " + Arrays.toString(classes));
 			try {
 				instrumentation.retransformClasses(classes);
 			} catch (Throwable e) {
-				Logging.TRANSFORM.log(Level.WARNING, "Failed to retransform", e);
+				log(WARNING, "Failed to retransform", e);
 			}
 		}
 	}
@@ -426,7 +286,7 @@ public final class AuthlibInjector {
 		if (!retransformSupported) {
 			return;
 		}
-		Logging.TRANSFORM.info("Attempt to retransform all classes");
+		log(INFO, "Attempt to retransform all classes");
 		long t0 = System.currentTimeMillis();
 
 		Class<?>[] classes = Stream.of(instrumentation.getAllLoadedClasses())
@@ -436,13 +296,13 @@ public final class AuthlibInjector {
 			try {
 				instrumentation.retransformClasses(classes);
 			} catch (Throwable e) {
-				Logging.TRANSFORM.log(Level.WARNING, "Failed to retransform", e);
+				log(WARNING, "Failed to retransform", e);
 				return;
 			}
 		}
 
 		long t1 = System.currentTimeMillis();
-		Logging.TRANSFORM.info("Retransformed " + classes.length + " classes in " + (t1 - t0) + "ms");
+		log(INFO, "Retransformed " + classes.length + " classes in " + (t1 - t0) + "ms");
 	}
 
 	private static boolean canRetransformClass(Class<?> clazz) {
@@ -450,7 +310,7 @@ public final class AuthlibInjector {
 			return false;
 		}
 		String name = clazz.getName();
-		for (String prefix : ignoredPackages) {
+		for (String prefix : Config.ignoredPackages) {
 			if (name.startsWith(prefix)) {
 				return false;
 			}

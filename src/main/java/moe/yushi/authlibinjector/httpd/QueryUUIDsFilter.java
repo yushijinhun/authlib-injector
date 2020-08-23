@@ -22,7 +22,8 @@ import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonString;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
-
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -30,11 +31,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Status;
-import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilResponseBuilder;
 
@@ -49,7 +48,7 @@ public class QueryUUIDsFilter implements URLFilter {
 	}
 
 	@Override
-	public boolean canHandle(String domain, String path) {
+	public boolean canHandle(String domain) {
 		return domain.equals("api.mojang.com");
 	}
 
@@ -95,7 +94,7 @@ public class QueryUUIDsFilter implements URLFilter {
 
 	static UUID maskUUID(UUID uuid) {
 		if (isMaskedUUID(uuid)) {
-			Logging.HTTPD.warning("UUID already masked: " + uuid);
+			log(WARNING, "UUID already masked: " + uuid);
 		}
 		return new UUID(uuid.getMostSignificantBits() | MSB_MASK, uuid.getLeastSignificantBits());
 	}

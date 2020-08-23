@@ -16,28 +16,26 @@
  */
 package moe.yushi.authlibinjector.transform.support;
 
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
+import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.logging.Level;
-
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-
 import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.transform.CallbackMethod;
 import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
-import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.util.WeakIdentityHashMap;
 
 public class MC52974_1710Workaround {
@@ -47,7 +45,7 @@ public class MC52974_1710Workaround {
 	public static void init() {
 		MainArgumentsTransformer.getVersionSeriesListeners().add(version -> {
 			if ("1.7.10".equals(version)) {
-				Logging.TRANSFORM.info("Enable MC-52974 Workaround for 1.7.10");
+				log(INFO, "Enable MC-52974 Workaround for 1.7.10");
 				AuthlibInjector.getClassTransformer().units.add(new SessionTransformer());
 				AuthlibInjector.getClassTransformer().units.add(new S0CPacketSpawnPlayerTransformer());
 				AuthlibInjector.retransformClasses("bbs", "net.minecraft.util.Session", "gb", "net.minecraft.network.play.server.S0CPacketSpawnPlayer");
@@ -76,7 +74,7 @@ public class MC52974_1710Workaround {
 
 				// query it
 				if (minecraftServer != null) {
-					Logging.TRANSFORM.info("Filling properties for " + gp);
+					log(INFO, "Filling properties for " + gp);
 					try {
 						ClassLoader cl = minecraftServer.getClass().getClassLoader();
 
@@ -98,7 +96,7 @@ public class MC52974_1710Workaround {
 						markedGameProfiles.put(gp, Optional.of(filledGameProfile));
 						return filledGameProfile;
 					} catch (ReflectiveOperationException e) {
-						Logging.TRANSFORM.log(Level.WARNING, "Failed to inject GameProfile properties", e);
+						log(WARNING, "Failed to inject GameProfile properties", e);
 					}
 				}
 			}
