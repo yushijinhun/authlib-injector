@@ -219,21 +219,19 @@ public abstract class NanoHTTPD {
 					throw new ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Missing URI.");
 				}
 
-				String uri = st.nextToken();
+				String rawUri = st.nextToken();
 
 				// Decode parameters from the URI
 				int qmi = uri.indexOf('?');
 				if (qmi >= 0) {
 					this.queryParameterString = uri.substring(qmi + 1);
 					this.parms = Collections.unmodifiableMap(decodeParms(this.queryParameterString));
-					uri = decodePercent(uri.substring(0, qmi));
+					this.uri = decodePercent(rawUri.substring(0, qmi));
 				} else {
 					this.queryParameterString = null;
 					this.parms = Collections.emptyMap();
-					uri = decodePercent(uri);
+					this.uri = decodePercent(rawUri);
 				}
-
-				this.uri = uri;
 
 				// If there's another token, its protocol version,
 				// followed by HTTP headers.
