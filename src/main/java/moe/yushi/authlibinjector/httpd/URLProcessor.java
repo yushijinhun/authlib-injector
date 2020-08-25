@@ -165,7 +165,7 @@ public class URLProcessor {
 
 		String url = session.getQueryParameterString() == null ? upstream : upstream + "?" + session.getQueryParameterString();
 
-		Map<String, String> requestHeaders = session.getHeaders();
+		Map<String, String> requestHeaders = new LinkedHashMap<>(session.getHeaders());
 		ignoredHeaders.forEach(requestHeaders::remove);
 
 		InputStream clientIn = session.getInputStream();

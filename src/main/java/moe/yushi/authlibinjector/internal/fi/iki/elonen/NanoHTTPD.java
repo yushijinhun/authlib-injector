@@ -65,7 +65,7 @@ import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -175,30 +175,19 @@ public abstract class NanoHTTPD {
 		public static final int BUFSIZE = 8192;
 
 		private final OutputStream outputStream;
-
 		private final BufferedInputStream inputStream;
+
+		private String uri;
+		private String method;
+		private String queryParameterString;
+		private Map<String, List<String>> parms;
+		private Map<String, String> headers;
+		private String protocolVersion;
 
 		private InputStream parsedInputStream;
 
-		private int splitbyte;
-
-		private int rlen;
-
-		private String uri;
-
-		private String method;
-
-		private Map<String, List<String>> parms;
-
-		private Map<String, String> headers;
-
-		private String queryParameterString;
-
-		private String remoteIp;
-
-		private String remoteHostname;
-
-		private String protocolVersion;
+		private final String remoteIp;
+		private final String remoteHostname;
 
 		private boolean expect100Continue;
 		private boolean continueSent;
@@ -210,29 +199,24 @@ public abstract class NanoHTTPD {
 			this.outputStream = outputStream;
 			this.remoteIp = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "127.0.0.1" : inetAddress.getHostAddress();
 			this.remoteHostname = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "localhost" : inetAddress.getHostName();
-			this.headers = new HashMap<>();
 		}
 
-		/**
-		 * Decodes the sent headers and loads the data into Key/value pairs
-		 */
-		private void decodeHeader(BufferedReader in, Map<String, String> pre, Map<String, List<String>> parms, Map<String, String> headers) throws ResponseException {
+		private void parseHeader(BufferedReader in) throws ResponseException {
 			try {
-				// Read the request line
-				String inLine = in.readLine();
-				if (inLine == null) {
-					return;
+				String requestLine = in.readLine();
+				if (requestLine == null) {
+					throw new ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Syntax error.");
 				}
 
-				StringTokenizer st = new StringTokenizer(inLine);
+				StringTokenizer st = new StringTokenizer(requestLine);
 				if (!st.hasMoreTokens()) {
-					throw new ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Syntax error. Usage: GET /example/file.html");
+					throw new ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Syntax error.");
 				}
 
-				pre.put("method", st.nextToken());
+				this.method = st.nextToken();
 
 				if (!st.hasMoreTokens()) {
-					throw new ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Missing URI. Usage: GET /example/file.html");
+					throw new ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Missing URI.");
 				}
 
 				String uri = st.nextToken();
@@ -240,11 +224,16 @@ public abstract class NanoHTTPD {
 				// Decode parameters from the URI
 				int qmi = uri.indexOf('?');
 				if (qmi >= 0) {
-					decodeParms(uri.substring(qmi + 1), parms);
+					this.queryParameterString = uri.substring(qmi + 1);
+					this.parms = Collections.unmodifiableMap(decodeParms(this.queryParameterString));
 					uri = decodePercent(uri.substring(0, qmi));
 				} else {
+					this.queryParameterString = null;
+					this.parms = Collections.emptyMap();
 					uri = decodePercent(uri);
 				}
+
+				this.uri = uri;
 
 				// If there's another token, its protocol version,
 				// followed by HTTP headers.
@@ -256,55 +245,20 @@ public abstract class NanoHTTPD {
 					protocolVersion = "HTTP/1.1";
 					NanoHTTPD.LOG.log(Level.FINE, "no protocol version specified, strange. Assuming HTTP/1.1.");
 				}
+
+				Map<String, String> headers = new LinkedHashMap<>();
 				String line = in.readLine();
 				while (line != null && !line.trim().isEmpty()) {
 					int p = line.indexOf(':');
 					if (p >= 0) {
-						headers.put(line.substring(0, p).trim().toLowerCase(Locale.US), line.substring(p + 1).trim());
+						headers.put(line.substring(0, p).trim().toLowerCase(Locale.ROOT), line.substring(p + 1).trim());
 					}
 					line = in.readLine();
 				}
+				this.headers = Collections.unmodifiableMap(headers);
 
-				pre.put("uri", uri);
 			} catch (IOException ioe) {
 				throw new ResponseException(Status.INTERNAL_ERROR, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage(), ioe);
-			}
-		}
-
-		/**
-		 * Decodes parameters in percent-encoded URI-format ( e.g.
-		 * "name=Jack%20Daniels&pass=Single%20Malt" ) and adds them to given
-		 * Map.
-		 */
-		private void decodeParms(String parms, Map<String, List<String>> p) {
-			if (parms == null) {
-				this.queryParameterString = "";
-				return;
-			}
-
-			this.queryParameterString = parms;
-			StringTokenizer st = new StringTokenizer(parms, "&");
-			while (st.hasMoreTokens()) {
-				String e = st.nextToken();
-				int sep = e.indexOf('=');
-				String key = null;
-				String value = null;
-
-				if (sep >= 0) {
-					key = decodePercent(e.substring(0, sep)).trim();
-					value = decodePercent(e.substring(sep + 1));
-				} else {
-					key = decodePercent(e).trim();
-					value = "";
-				}
-
-				List<String> values = p.get(key);
-				if (values == null) {
-					values = new ArrayList<>();
-					p.put(key, values);
-				}
-
-				values.add(value);
 			}
 		}
 
@@ -319,8 +273,8 @@ public abstract class NanoHTTPD {
 				// Do NOT assume that a single read will get the entire header
 				// at once!
 				byte[] buf = new byte[HTTPSession.BUFSIZE];
-				this.splitbyte = 0;
-				this.rlen = 0;
+				int splitbyte = 0;
+				int rlen = 0;
 
 				int read = -1;
 				this.inputStream.mark(HTTPSession.BUFSIZE);
@@ -338,36 +292,20 @@ public abstract class NanoHTTPD {
 					throw new SocketException("NanoHttpd Shutdown");
 				}
 				while (read > 0) {
-					this.rlen += read;
-					this.splitbyte = findHeaderEnd(buf, this.rlen);
-					if (this.splitbyte > 0) {
+					rlen += read;
+					splitbyte = findHeaderEnd(buf, rlen);
+					if (splitbyte > 0) {
 						break;
 					}
-					read = this.inputStream.read(buf, this.rlen, HTTPSession.BUFSIZE - this.rlen);
+					read = this.inputStream.read(buf, rlen, HTTPSession.BUFSIZE - rlen);
 				}
 
-				if (this.splitbyte < this.rlen) {
+				if (splitbyte < rlen) {
 					this.inputStream.reset();
-					this.inputStream.skip(this.splitbyte);
+					this.inputStream.skip(splitbyte);
 				}
 
-				this.parms = new HashMap<>();
-				if (null == this.headers) {
-					this.headers = new HashMap<>();
-				} else {
-					this.headers.clear();
-				}
-
-				// Create a BufferedReader for parsing the header.
-				BufferedReader hin = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, this.rlen), ISO_8859_1));
-
-				// Decode the header into parms and header java properties
-				Map<String, String> pre = new HashMap<>();
-				decodeHeader(hin, pre, this.parms, this.headers);
-
-				this.method = pre.get("method");
-
-				this.uri = pre.get("uri");
+				parseHeader(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, rlen), ISO_8859_1)));
 
 				String connection = this.headers.get("connection");
 				boolean keepAlive = "HTTP/1.1".equals(protocolVersion) && (connection == null || !connection.matches("(?i).*close.*"));
@@ -661,6 +599,39 @@ public abstract class NanoHTTPD {
 			NanoHTTPD.LOG.log(Level.WARNING, "Encoding not supported, ignored", ignored);
 		}
 		return decoded;
+	}
+
+	/**
+	 * Decodes parameters in percent-encoded URI-format ( e.g.
+	 * "name=Jack%20Daniels&pass=Single%20Malt" ) and adds them to given
+	 * Map.
+	 */
+	private static Map<String, List<String>> decodeParms(String parms) {
+		Map<String, List<String>> result = new LinkedHashMap<>();
+		StringTokenizer st = new StringTokenizer(parms, "&");
+		while (st.hasMoreTokens()) {
+			String e = st.nextToken();
+			int sep = e.indexOf('=');
+			String key = null;
+			String value = null;
+
+			if (sep >= 0) {
+				key = decodePercent(e.substring(0, sep)).trim();
+				value = decodePercent(e.substring(sep + 1));
+			} else {
+				key = decodePercent(e).trim();
+				value = "";
+			}
+
+			List<String> values = result.get(key);
+			if (values == null) {
+				values = new ArrayList<>();
+				result.put(key, values);
+			}
+
+			values.add(value);
+		}
+		return result;
 	}
 
 	public final int getListeningPort() {
