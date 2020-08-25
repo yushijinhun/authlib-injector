@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -397,11 +397,13 @@ public abstract class NanoHTTPD {
 
 				} else /* if both are null */ {
 					// no request payload
+					parsedInputStream = null;
 				}
 
 				expect100Continue = "HTTP/1.1".equals(protocolVersion)
 						&& "100-continue".equals(this.headers.get("expect"))
 						&& parsedInputStream != null;
+				continueSent = false;
 
 				// Ok, now do the serve()
 				this.isServing = true;
