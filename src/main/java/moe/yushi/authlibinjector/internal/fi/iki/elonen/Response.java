@@ -281,13 +281,6 @@ public class Response implements Closeable {
 	/**
 	 * Create a text response with known length.
 	 */
-	public static Response newFixedLength(String msg) {
-		return newFixedLength(Status.OK, NanoHTTPD.MIME_HTML, msg);
-	}
-
-	/**
-	 * Create a text response with known length.
-	 */
 	public static Response newFixedLength(IStatus status, String mimeType, String txt) {
 		ContentType contentType = new ContentType(mimeType);
 		if (txt == null) {
