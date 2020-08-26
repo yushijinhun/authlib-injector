@@ -46,6 +46,7 @@
  */
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
+import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_TEXT;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -202,10 +203,6 @@ public abstract class NanoHTTPD {
 	public static final int SOCKET_READ_TIMEOUT = 5000;
 
 	/**
-	 * Common MIME type for dynamic content: plain text
-	 */
-	public static final String MIME_PLAINTEXT = "text/plain";
-	/**
 	 * logger to log to.
 	 */
 	static final Logger LOG = Logger.getLogger(NanoHTTPD.class.getName());
@@ -291,7 +288,7 @@ public abstract class NanoHTTPD {
 	 * @return HTTP response, see class Response for details
 	 */
 	public Response serve(IHTTPSession session) {
-		return Response.newFixedLength(Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT, "Not Found");
+		return Response.newFixedLength(Status.NOT_FOUND, CONTENT_TYPE_TEXT, "Not Found");
 	}
 
 	/**

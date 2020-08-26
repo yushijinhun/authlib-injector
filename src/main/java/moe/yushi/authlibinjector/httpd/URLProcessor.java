@@ -16,6 +16,7 @@
  */
 package moe.yushi.authlibinjector.httpd;
 
+import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_TEXT;
 import static moe.yushi.authlibinjector.util.IOUtils.transfer;
 import static moe.yushi.authlibinjector.util.Logging.log;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
@@ -131,7 +132,7 @@ public class URLProcessor {
 								result = filter.handle(domain, path, session);
 							} catch (Throwable e) {
 								log(WARNING, "An error occurred while processing request [" + session.getUri() + "]", e);
-								return Response.newFixedLength(Status.INTERNAL_ERROR, MIME_PLAINTEXT, "Internal Server Error");
+								return Response.newFixedLength(Status.INTERNAL_ERROR, CONTENT_TYPE_TEXT, "Internal Server Error");
 							}
 
 							if (result.isPresent()) {
@@ -147,11 +148,11 @@ public class URLProcessor {
 						return reverseProxy(session, target);
 					} catch (IOException e) {
 						log(WARNING, "Reverse proxy error", e);
-						return Response.newFixedLength(Status.BAD_GATEWAY, MIME_PLAINTEXT, "Bad Gateway");
+						return Response.newFixedLength(Status.BAD_GATEWAY, CONTENT_TYPE_TEXT, "Bad Gateway");
 					}
 				} else {
 					log(DEBUG, "No handler is found for [" + session.getUri() + "]");
-					return Response.newFixedLength(Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found");
+					return Response.newFixedLength(Status.NOT_FOUND, CONTENT_TYPE_TEXT, "Not Found");
 				}
 			}
 		};

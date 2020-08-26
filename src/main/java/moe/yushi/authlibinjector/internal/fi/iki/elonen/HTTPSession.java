@@ -47,6 +47,7 @@
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_TEXT;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -275,11 +276,11 @@ class HTTPSession implements IHTTPSession {
 			// exception up the call stack.
 			throw ste;
 		} catch (IOException ioe) {
-			Response resp = Response.newFixedLength(Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
+			Response resp = Response.newFixedLength(Status.INTERNAL_ERROR, CONTENT_TYPE_TEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
 			resp.send(this.outputStream);
 			NanoHTTPD.safeClose(this.outputStream);
 		} catch (ResponseException re) {
-			Response resp = Response.newFixedLength(re.getStatus(), NanoHTTPD.MIME_PLAINTEXT, re.getMessage());
+			Response resp = Response.newFixedLength(re.getStatus(), CONTENT_TYPE_TEXT, re.getMessage());
 			resp.send(this.outputStream);
 			NanoHTTPD.safeClose(this.outputStream);
 		} finally {
