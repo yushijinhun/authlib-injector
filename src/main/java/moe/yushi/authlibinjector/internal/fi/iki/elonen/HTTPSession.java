@@ -262,7 +262,7 @@ class HTTPSession implements IHTTPSession {
 				r.setKeepAlive(keepAlive);
 				r.send(this.outputStream);
 			}
-			if (!keepAlive || r.isCloseConnection()) {
+			if (!keepAlive || "close".equals(r.getHeader("connection"))) {
 				throw new SocketException("NanoHttpd Shutdown");
 			}
 		} catch (SocketException e) {

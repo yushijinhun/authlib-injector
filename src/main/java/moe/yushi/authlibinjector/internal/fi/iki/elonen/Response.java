@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,6 +46,7 @@
  */
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
+import static java.util.Objects.requireNonNull;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -59,11 +60,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 
 /**
@@ -89,23 +89,9 @@ public class Response implements Closeable {
 	private long contentLength;
 
 	/**
-	 * Headers for the HTTP response. Use addHeader() to add lines. the
-	 * lowercase map is automatically kept up to date.
+	 * Headers for the HTTP response. Use addHeader() to add lines.
 	 */
-	private final Map<String, String> header = new HashMap<String, String>() {
-
-		@Override
-		public String put(String key, String value) {
-			lowerCaseHeader.put(key == null ? key : key.toLowerCase(), value);
-			return super.put(key, value);
-		};
-	};
-
-	/**
-	 * copy of the header map with all the keys lowercase for faster
-	 * searching.
-	 */
-	private final Map<String, String> lowerCaseHeader = new HashMap<>();
+	private final Map<String, String> headers = new LinkedHashMap<>();
 
 	/**
 	 * The request method that spawned this response.
@@ -147,37 +133,15 @@ public class Response implements Closeable {
 	 * Adds given line to the header.
 	 */
 	public void addHeader(String name, String value) {
-		this.header.put(name, value);
+		this.headers.put(name.toLowerCase(Locale.ROOT), requireNonNull(value));
 	}
 
-	/**
-	 * Indicate to close the connection after the Response has been sent.
-	 *
-	 * @param close
-	 *              {@code true} to hint connection closing, {@code false} to
-	 *              let connection be closed by client.
-	 */
-	public void closeConnection(boolean close) {
-		if (close)
-			this.header.put("connection", "close");
-		else
-			this.header.remove("connection");
-	}
-
-	/**
-	 * @return {@code true} if connection is to be closed after this
-	 *         Response has been sent.
-	 */
-	public boolean isCloseConnection() {
-		return "close".equals(getHeader("connection"));
+	public String getHeader(String name) {
+		return this.headers.get(name.toLowerCase(Locale.ROOT));
 	}
 
 	public InputStream getData() {
 		return this.data;
-	}
-
-	public String getHeader(String name) {
-		return this.lowerCaseHeader.get(name.toLowerCase());
 	}
 
 	public String getMimeType() {
@@ -215,9 +179,7 @@ public class Response implements Closeable {
 			if (getHeader("date") == null) {
 				printHeader(pw, "Date", gmtFrmt.format(new Date()));
 			}
-			for (Entry<String, String> entry : this.header.entrySet()) {
-				printHeader(pw, entry.getKey(), entry.getValue());
-			}
+			this.headers.forEach((name, value) -> printHeader(pw, name, value));
 			if (getHeader("connection") == null) {
 				printHeader(pw, "Connection", (this.keepAlive ? "keep-alive" : "close"));
 			}
