@@ -197,6 +197,48 @@ public abstract class NanoHTTPD {
 			this.remoteAddr = remoteAddr;
 		}
 
+		private ByteArrayInputStream readHeader() throws IOException {
+			// Read the first 8192 bytes.
+			// The full header should fit in here.
+			// Apache's default header limit is 8KB.
+			// Do NOT assume that a single read will get the entire header
+			// at once!
+			byte[] buf = new byte[HTTPSession.BUFSIZE];
+			int splitbyte = 0;
+			int rlen = 0;
+
+			int read = -1;
+			this.inputStream.mark(HTTPSession.BUFSIZE);
+			try {
+				read = this.inputStream.read(buf, 0, HTTPSession.BUFSIZE);
+			} catch (IOException e) {
+				safeClose(this.inputStream);
+				safeClose(this.outputStream);
+				throw new SocketException("NanoHttpd Shutdown");
+			}
+			if (read == -1) {
+				// socket was been closed
+				safeClose(this.inputStream);
+				safeClose(this.outputStream);
+				throw new SocketException("NanoHttpd Shutdown");
+			}
+			while (read > 0) {
+				rlen += read;
+				splitbyte = findHeaderEnd(buf, rlen);
+				if (splitbyte > 0) {
+					break;
+				}
+				read = this.inputStream.read(buf, rlen, HTTPSession.BUFSIZE - rlen);
+			}
+
+			if (splitbyte < rlen) {
+				this.inputStream.reset();
+				this.inputStream.skip(splitbyte);
+			}
+
+			return new ByteArrayInputStream(buf, 0, rlen);
+		}
+
 		private void parseHeader(BufferedReader in) throws ResponseException {
 			try {
 				String requestLine = in.readLine();
@@ -260,45 +302,7 @@ public abstract class NanoHTTPD {
 		public void execute() throws IOException {
 			Response r = null;
 			try {
-				// Read the first 8192 bytes.
-				// The full header should fit in here.
-				// Apache's default header limit is 8KB.
-				// Do NOT assume that a single read will get the entire header
-				// at once!
-				byte[] buf = new byte[HTTPSession.BUFSIZE];
-				int splitbyte = 0;
-				int rlen = 0;
-
-				int read = -1;
-				this.inputStream.mark(HTTPSession.BUFSIZE);
-				try {
-					read = this.inputStream.read(buf, 0, HTTPSession.BUFSIZE);
-				} catch (IOException e) {
-					safeClose(this.inputStream);
-					safeClose(this.outputStream);
-					throw new SocketException("NanoHttpd Shutdown");
-				}
-				if (read == -1) {
-					// socket was been closed
-					safeClose(this.inputStream);
-					safeClose(this.outputStream);
-					throw new SocketException("NanoHttpd Shutdown");
-				}
-				while (read > 0) {
-					rlen += read;
-					splitbyte = findHeaderEnd(buf, rlen);
-					if (splitbyte > 0) {
-						break;
-					}
-					read = this.inputStream.read(buf, rlen, HTTPSession.BUFSIZE - rlen);
-				}
-
-				if (splitbyte < rlen) {
-					this.inputStream.reset();
-					this.inputStream.skip(splitbyte);
-				}
-
-				parseHeader(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, rlen), ISO_8859_1)));
+				parseHeader(new BufferedReader(new InputStreamReader(readHeader(), ISO_8859_1)));
 
 				String connection = this.headers.get("connection");
 				boolean keepAlive = "HTTP/1.1".equals(protocolVersion) && (connection == null || !connection.matches("(?i).*close.*"));
