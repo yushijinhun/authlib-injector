@@ -160,15 +160,16 @@ public abstract class NanoHTTPD {
 	 */
 	private class ServerRunnable implements Runnable {
 
-		private final int timeout;
+		/**
+		 * Maximum time to wait on Socket.getInputStream().read() (in milliseconds)
+		 * This is required as the Keep-Alive HTTP connections would otherwise block
+		 * the socket reading thread forever (or as long the browser is open).
+		 */
+		private static final int SOCKET_READ_TIMEOUT = 5000;
 
 		private IOException bindException;
 
 		private boolean hasBinded = false;
-
-		public ServerRunnable(int timeout) {
-			this.timeout = timeout;
-		}
 
 		@Override
 		public void run() {
@@ -183,9 +184,7 @@ public abstract class NanoHTTPD {
 				try {
 					@SuppressWarnings("resource")
 					final Socket finalAccept = NanoHTTPD.this.myServerSocket.accept();
-					if (this.timeout > 0) {
-						finalAccept.setSoTimeout(this.timeout);
-					}
+					finalAccept.setSoTimeout(SOCKET_READ_TIMEOUT);
 					@SuppressWarnings("resource")
 					final InputStream inputStream = finalAccept.getInputStream();
 					NanoHTTPD.this.asyncRunner.exec(new ClientHandler(inputStream, finalAccept));
@@ -195,13 +194,6 @@ public abstract class NanoHTTPD {
 			} while (!NanoHTTPD.this.myServerSocket.isClosed());
 		}
 	}
-
-	/**
-	 * Maximum time to wait on Socket.getInputStream().read() (in milliseconds)
-	 * This is required as the Keep-Alive HTTP connections would otherwise block
-	 * the socket reading thread forever (or as long the browser is open).
-	 */
-	public static final int SOCKET_READ_TIMEOUT = 5000;
 
 	static final void safeClose(Object closeable) {
 		try {
@@ -281,37 +273,25 @@ public abstract class NanoHTTPD {
 	}
 
 	/**
-	 * Start the server.
-	 *
-	 * @throws IOException
-	 *                     if the socket is in use.
+	 * Starts the server in daemon mode.
 	 */
 	public void start() throws IOException {
-		start(NanoHTTPD.SOCKET_READ_TIMEOUT);
-	}
-
-	/**
-	 * Starts the server (in setDaemon(true) mode).
-	 */
-	public void start(final int timeout) throws IOException {
-		start(timeout, true);
+		start(true);
 	}
 
 	/**
 	 * Start the server.
 	 *
-	 * @param timeout
-	 *                timeout to use for socket connections.
 	 * @param daemon
 	 *                start the thread daemon or not.
 	 * @throws IOException
 	 *                     if the socket is in use.
 	 */
-	public void start(final int timeout, boolean daemon) throws IOException {
+	public void start(boolean daemon) throws IOException {
 		this.myServerSocket = new ServerSocket();
 		this.myServerSocket.setReuseAddress(true);
 
-		ServerRunnable serverRunnable = new ServerRunnable(timeout);
+		ServerRunnable serverRunnable = new ServerRunnable();
 		this.myThread = new Thread(serverRunnable);
 		this.myThread.setDaemon(daemon);
 		this.myThread.setName("NanoHttpd Main Listener");
