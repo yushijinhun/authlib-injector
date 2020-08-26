@@ -71,6 +71,8 @@ import java.util.logging.Level;
 
 class HTTPSession implements IHTTPSession {
 
+	public static class ConnectionCloseException extends SocketException {}
+
 	public static final int BUFSIZE = 8192;
 
 	private final OutputStream outputStream;
@@ -114,13 +116,13 @@ class HTTPSession implements IHTTPSession {
 		} catch (IOException e) {
 			NanoHTTPD.safeClose(this.inputStream);
 			NanoHTTPD.safeClose(this.outputStream);
-			throw new SocketException("NanoHttpd Shutdown");
+			throw new ConnectionCloseException();
 		}
 		if (read == -1) {
 			// socket was been closed
 			NanoHTTPD.safeClose(this.inputStream);
 			NanoHTTPD.safeClose(this.outputStream);
-			throw new SocketException("NanoHttpd Shutdown");
+			throw new ConnectionCloseException();
 		}
 		while (read > 0) {
 			rlen += read;
@@ -263,7 +265,7 @@ class HTTPSession implements IHTTPSession {
 				r.send(this.outputStream);
 			}
 			if (!keepAlive || "close".equals(r.getHeader("connection"))) {
-				throw new SocketException("NanoHttpd Shutdown");
+				throw new ConnectionCloseException();
 			}
 		} catch (SocketException e) {
 			// throw it out to close socket object (finalAccept)

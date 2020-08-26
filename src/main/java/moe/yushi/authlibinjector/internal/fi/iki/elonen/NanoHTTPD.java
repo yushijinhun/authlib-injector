@@ -53,13 +53,12 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.HTTPSession.ConnectionCloseException;
 
 /**
  * A simple, tiny, nicely embeddable HTTP server in Java
@@ -102,17 +101,16 @@ public abstract class NanoHTTPD {
 				while (!this.acceptSocket.isClosed()) {
 					session.execute(NanoHTTPD.this::serve);
 				}
-			} catch (Exception e) {
+			} catch (ConnectionCloseException e) {
 				// When the socket is closed by the client,
-				// we throw our own SocketException
+				// we throw our own ConnectionCloseException
 				// to break the "keep alive" loop above. If
 				// the exception was anything other
 				// than the expected SocketException OR a
 				// SocketTimeoutException, print the
 				// stacktrace
-				if (!(e instanceof SocketException && "NanoHttpd Shutdown".equals(e.getMessage())) && !(e instanceof SocketTimeoutException)) {
-					NanoHTTPD.LOG.log(Level.SEVERE, "Communication with the client broken, or an bug in the handler code", e);
-				}
+			} catch (Exception e) {
+				NanoHTTPD.LOG.log(Level.SEVERE, "Communication with the client broken, or an bug in the handler code", e);
 			} finally {
 				safeClose(outputStream);
 				safeClose(this.inputStream);
