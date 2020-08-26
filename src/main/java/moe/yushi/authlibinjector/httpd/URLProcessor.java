@@ -218,11 +218,17 @@ public class URLProcessor {
 				break;
 			}
 		}
+
 		Response response;
-		if (contentLength != -1) {
-			response = Response.newFixedLength(status, null, upstreamIn, contentLength);
+		if (contentLength == -1) {
+			if (conn.getHeaderField("transfer-encoding") == null) {
+				// no content
+				response = Response.newFixedLength(status, null, upstreamIn, 0);
+			} else {
+				response = Response.newChunked(status, null, upstreamIn);
+			}
 		} else {
-			response = Response.newChunked(status, null, upstreamIn);
+			response = Response.newFixedLength(status, null, upstreamIn, contentLength);
 		}
 		responseHeaders.forEach((name, values) -> values.forEach(value -> response.addHeader(name, value)));
 
