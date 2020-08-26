@@ -205,9 +205,6 @@ class HTTPSession implements IHTTPSession {
 		try {
 			parseHeader(new BufferedReader(new InputStreamReader(readHeader(), ISO_8859_1)));
 
-			String connection = this.headers.get("connection");
-			boolean keepAlive = "HTTP/1.1".equals(this.protocolVersion) && (connection == null || !connection.matches("(?i).*close.*"));
-
 			String transferEncoding = this.headers.get("transfer-encoding");
 			String contentLengthStr = this.headers.get("content-length");
 			if (transferEncoding != null && contentLengthStr == null) {
@@ -256,6 +253,8 @@ class HTTPSession implements IHTTPSession {
 				while (this.parsedInputStream.read() != -1)
 					;
 			}
+
+			boolean keepAlive = "HTTP/1.1".equals(this.protocolVersion) && !"close".equals(this.headers.get("connection"));
 
 			if (r == null) {
 				throw new ResponseException(Status.INTERNAL_ERROR, "SERVER INTERNAL ERROR: Serve() returned a null response.");
