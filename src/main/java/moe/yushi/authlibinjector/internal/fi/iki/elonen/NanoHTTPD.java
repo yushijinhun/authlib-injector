@@ -222,9 +222,9 @@ public abstract class NanoHTTPD {
 				String rawUri = st.nextToken();
 
 				// Decode parameters from the URI
-				int qmi = uri.indexOf('?');
+				int qmi = rawUri.indexOf('?');
 				if (qmi >= 0) {
-					this.queryParameterString = uri.substring(qmi + 1);
+					this.queryParameterString = rawUri.substring(qmi + 1);
 					this.parms = Collections.unmodifiableMap(decodeParms(this.queryParameterString));
 					this.uri = decodePercent(rawUri.substring(0, qmi));
 				} else {
