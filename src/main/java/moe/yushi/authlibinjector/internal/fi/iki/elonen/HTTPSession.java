@@ -178,9 +178,9 @@ class HTTPSession implements IHTTPSession {
 			// NOTE: this now forces header names lower case since they are
 			// case insensitive and vary by client.
 			if (st.hasMoreTokens()) {
-				protocolVersion = st.nextToken();
+				this.protocolVersion = st.nextToken();
 			} else {
-				protocolVersion = "HTTP/1.1";
+				this.protocolVersion = "HTTP/1.1";
 				NanoHTTPD.LOG.log(Level.FINE, "no protocol version specified, strange. Assuming HTTP/1.1.");
 			}
 
@@ -206,13 +206,13 @@ class HTTPSession implements IHTTPSession {
 			parseHeader(new BufferedReader(new InputStreamReader(readHeader(), ISO_8859_1)));
 
 			String connection = this.headers.get("connection");
-			boolean keepAlive = "HTTP/1.1".equals(protocolVersion) && (connection == null || !connection.matches("(?i).*close.*"));
+			boolean keepAlive = "HTTP/1.1".equals(this.protocolVersion) && (connection == null || !connection.matches("(?i).*close.*"));
 
 			String transferEncoding = this.headers.get("transfer-encoding");
 			String contentLengthStr = this.headers.get("content-length");
 			if (transferEncoding != null && contentLengthStr == null) {
 				if ("chunked".equals(transferEncoding)) {
-					parsedInputStream = new ChunkedInputStream(inputStream);
+					this.parsedInputStream = new ChunkedInputStream(this.inputStream);
 				} else {
 					throw new ResponseException(Status.NOT_IMPLEMENTED, "Unsupported Transfer-Encoding");
 				}
@@ -226,34 +226,34 @@ class HTTPSession implements IHTTPSession {
 				if (contentLength < 0) {
 					throw new ResponseException(Status.BAD_REQUEST, "The request has an invalid Content-Length header.");
 				}
-				parsedInputStream = new FixedLengthInputStream(inputStream, contentLength);
+				this.parsedInputStream = new FixedLengthInputStream(this.inputStream, contentLength);
 
 			} else if (transferEncoding != null && contentLengthStr != null) {
 				throw new ResponseException(Status.BAD_REQUEST, "Content-Length and Transfer-Encoding cannot exist at the same time.");
 
 			} else /* if both are null */ {
 				// no request payload
-				parsedInputStream = null;
+				this.parsedInputStream = null;
 			}
 
-			expect100Continue = "HTTP/1.1".equals(protocolVersion)
+			this.expect100Continue = "HTTP/1.1".equals(this.protocolVersion)
 					&& "100-continue".equals(this.headers.get("expect"))
-					&& parsedInputStream != null;
-			continueSent = false;
+					&& this.parsedInputStream != null;
+			this.continueSent = false;
 
 			// Ok, now do the serve()
 			this.isServing = true;
 			try {
 				r = handler.apply(this);
 			} finally {
-				synchronized (servingLock) {
+				synchronized (this.servingLock) {
 					this.isServing = false;
 				}
 			}
 
-			if (!(parsedInputStream == null || (expect100Continue && !continueSent))) {
+			if (!(this.parsedInputStream == null || (this.expect100Continue && !this.continueSent))) {
 				// consume the input
-				while (parsedInputStream.read() != -1)
+				while (this.parsedInputStream.read() != -1)
 					;
 			}
 
@@ -295,12 +295,12 @@ class HTTPSession implements IHTTPSession {
 
 	@Override
 	public final InputStream getInputStream() throws IOException {
-		synchronized (servingLock) {
-			if (!isServing) {
+		synchronized (this.servingLock) {
+			if (!this.isServing) {
 				throw new IllegalStateException();
 			}
-			if (expect100Continue && !continueSent) {
-				continueSent = true;
+			if (this.expect100Continue && !this.continueSent) {
+				this.continueSent = true;
 				this.outputStream.write("HTTP/1.1 100 Continue\r\n\r\n".getBytes(ISO_8859_1));
 			}
 		}
