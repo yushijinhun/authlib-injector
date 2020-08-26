@@ -257,7 +257,6 @@ public abstract class NanoHTTPD {
 		}
 
 		@SuppressWarnings("resource")
-		@Override
 		public void execute() throws IOException {
 			Response r = null;
 			try {

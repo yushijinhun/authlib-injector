@@ -58,22 +58,30 @@ import java.util.Map;
  */
 public interface IHTTPSession {
 
-	void execute() throws IOException;
-
-	Map<String, String> getHeaders();
-
-	InputStream getInputStream() throws IOException;
+	InetSocketAddress getRemoteAddress();
 
 	String getMethod();
-
-	Map<String, List<String>> getParameters();
-
-	String getQueryParameterString();
 
 	/**
 	 * @return the path part of the URL.
 	 */
 	String getUri();
 
-	InetSocketAddress getRemoteAddress();
+	/**
+	 * @return raw query string, null if no query exists
+	 */
+	String getQueryParameterString();
+
+	/**
+	 * @return decoded query parameters
+	 */
+	Map<String, List<String>> getParameters();
+
+	Map<String, String> getHeaders();
+
+	/**
+	 * @return request body, null if the request does not have a payload
+	 */
+	InputStream getInputStream() throws IOException;
+
 }
