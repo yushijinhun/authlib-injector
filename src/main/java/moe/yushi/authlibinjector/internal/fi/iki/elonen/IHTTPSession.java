@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -48,6 +48,7 @@ package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 
@@ -74,17 +75,5 @@ public interface IHTTPSession {
 	 */
 	String getUri();
 
-	/**
-	 * Get the remote ip address of the requester.
-	 *
-	 * @return the IP address.
-	 */
-	String getRemoteIpAddress();
-
-	/**
-	 * Get the remote hostname of the requester.
-	 *
-	 * @return the hostname.
-	 */
-	String getRemoteHostName();
+	InetSocketAddress getRemoteAddress();
 }

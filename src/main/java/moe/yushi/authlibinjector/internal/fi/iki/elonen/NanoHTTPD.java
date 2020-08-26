@@ -56,7 +56,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -110,7 +109,7 @@ public abstract class NanoHTTPD {
 			OutputStream outputStream = null;
 			try {
 				outputStream = this.acceptSocket.getOutputStream();
-				HTTPSession session = new HTTPSession(this.inputStream, outputStream, this.acceptSocket.getInetAddress());
+				HTTPSession session = new HTTPSession(this.inputStream, outputStream, (InetSocketAddress) this.acceptSocket.getRemoteSocketAddress());
 				while (!this.acceptSocket.isClosed()) {
 					session.execute();
 				}
@@ -176,6 +175,7 @@ public abstract class NanoHTTPD {
 
 		private final OutputStream outputStream;
 		private final BufferedInputStream inputStream;
+		private final InetSocketAddress remoteAddr;
 
 		private String uri;
 		private String method;
@@ -186,19 +186,15 @@ public abstract class NanoHTTPD {
 
 		private InputStream parsedInputStream;
 
-		private final String remoteIp;
-		private final String remoteHostname;
-
 		private boolean expect100Continue;
 		private boolean continueSent;
 		private boolean isServing;
 		private final Object servingLock = new Object();
 
-		public HTTPSession(InputStream inputStream, OutputStream outputStream, InetAddress inetAddress) {
+		public HTTPSession(InputStream inputStream, OutputStream outputStream, InetSocketAddress remoteAddr) {
 			this.inputStream = new BufferedInputStream(inputStream, HTTPSession.BUFSIZE);
 			this.outputStream = outputStream;
-			this.remoteIp = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "127.0.0.1" : inetAddress.getHostAddress();
-			this.remoteHostname = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "localhost" : inetAddress.getHostName();
+			this.remoteAddr = remoteAddr;
 		}
 
 		private void parseHeader(BufferedReader in) throws ResponseException {
@@ -450,13 +446,8 @@ public abstract class NanoHTTPD {
 		}
 
 		@Override
-		public String getRemoteIpAddress() {
-			return this.remoteIp;
-		}
-
-		@Override
-		public String getRemoteHostName() {
-			return this.remoteHostname;
+		public InetSocketAddress getRemoteAddress() {
+			return this.remoteAddr;
 		}
 	}
 
