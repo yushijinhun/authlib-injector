@@ -53,9 +53,9 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.HTTPSession.ConnectionCloseException;
@@ -131,13 +131,11 @@ public abstract class NanoHTTPD {
 	 */
 	private static class AsyncRunner {
 
-		private long requestCount;
-
-		private final List<ClientHandler> running = Collections.synchronizedList(new ArrayList<NanoHTTPD.ClientHandler>());
+		private final AtomicLong requestCount = new AtomicLong();
+		private final List<ClientHandler> running = new CopyOnWriteArrayList<>();
 
 		public void closeAll() {
-			// copy of the list for concurrency
-			for (ClientHandler clientHandler : new ArrayList<>(this.running)) {
+			for (ClientHandler clientHandler : this.running) {
 				clientHandler.close();
 			}
 		}
@@ -147,10 +145,9 @@ public abstract class NanoHTTPD {
 		}
 
 		public void exec(ClientHandler clientHandler) {
-			++this.requestCount;
 			Thread t = new Thread(clientHandler);
 			t.setDaemon(true);
-			t.setName("NanoHttpd Request Processor (#" + this.requestCount + ")");
+			t.setName("NanoHttpd Request Processor (#" + this.requestCount.incrementAndGet() + ")");
 			this.running.add(clientHandler);
 			t.start();
 		}
