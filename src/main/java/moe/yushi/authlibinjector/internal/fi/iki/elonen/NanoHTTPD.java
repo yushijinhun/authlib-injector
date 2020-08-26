@@ -174,7 +174,7 @@ public abstract class NanoHTTPD {
 		@Override
 		public void run() {
 			try {
-				myServerSocket.bind(hostname != null ? new InetSocketAddress(hostname, myPort) : new InetSocketAddress(myPort));
+				serverSocket.bind(hostname != null ? new InetSocketAddress(hostname, port) : new InetSocketAddress(port));
 				hasBinded = true;
 			} catch (IOException e) {
 				this.bindException = e;
@@ -183,7 +183,7 @@ public abstract class NanoHTTPD {
 			do {
 				try {
 					@SuppressWarnings("resource")
-					final Socket finalAccept = NanoHTTPD.this.myServerSocket.accept();
+					final Socket finalAccept = NanoHTTPD.this.serverSocket.accept();
 					finalAccept.setSoTimeout(SOCKET_READ_TIMEOUT);
 					@SuppressWarnings("resource")
 					final InputStream inputStream = finalAccept.getInputStream();
@@ -191,7 +191,7 @@ public abstract class NanoHTTPD {
 				} catch (IOException e) {
 					log(DEBUG, "Communication with the client broken", e);
 				}
-			} while (!NanoHTTPD.this.myServerSocket.isClosed());
+			} while (!NanoHTTPD.this.serverSocket.isClosed());
 		}
 	}
 
@@ -214,14 +214,12 @@ public abstract class NanoHTTPD {
 	}
 
 	private final String hostname;
+	private final int port;
 
-	private final int myPort;
+	private volatile ServerSocket serverSocket;
+	private Thread listenerThread;
 
-	private volatile ServerSocket myServerSocket;
-
-	private Thread myThread;
-
-	private AsyncRunner asyncRunner = new AsyncRunner();
+	private final AsyncRunner asyncRunner = new AsyncRunner();
 
 	/**
 	 * Constructs an HTTP server on given port.
@@ -243,15 +241,15 @@ public abstract class NanoHTTPD {
 	 */
 	public NanoHTTPD(String hostname, int port) {
 		this.hostname = hostname;
-		this.myPort = port;
+		this.port = port;
 	}
 
 	public final int getListeningPort() {
-		return this.myServerSocket == null ? -1 : this.myServerSocket.getLocalPort();
+		return this.serverSocket == null ? -1 : this.serverSocket.getLocalPort();
 	}
 
 	public final boolean isAlive() {
-		return wasStarted() && !this.myServerSocket.isClosed() && this.myThread.isAlive();
+		return wasStarted() && !this.serverSocket.isClosed() && this.listenerThread.isAlive();
 	}
 
 	public String getHostname() {
@@ -288,14 +286,14 @@ public abstract class NanoHTTPD {
 	 *                     if the socket is in use.
 	 */
 	public void start(boolean daemon) throws IOException {
-		this.myServerSocket = new ServerSocket();
-		this.myServerSocket.setReuseAddress(true);
+		this.serverSocket = new ServerSocket();
+		this.serverSocket.setReuseAddress(true);
 
 		ServerRunnable serverRunnable = new ServerRunnable();
-		this.myThread = new Thread(serverRunnable);
-		this.myThread.setDaemon(daemon);
-		this.myThread.setName("NanoHttpd Main Listener");
-		this.myThread.start();
+		this.listenerThread = new Thread(serverRunnable);
+		this.listenerThread.setDaemon(daemon);
+		this.listenerThread.setName("NanoHttpd Main Listener");
+		this.listenerThread.start();
 		while (!serverRunnable.hasBinded && serverRunnable.bindException == null) {
 			try {
 				Thread.sleep(10L);
@@ -315,10 +313,10 @@ public abstract class NanoHTTPD {
 	 */
 	public void stop() {
 		try {
-			safeClose(this.myServerSocket);
+			safeClose(this.serverSocket);
 			this.asyncRunner.closeAll();
-			if (this.myThread != null) {
-				this.myThread.join();
+			if (this.listenerThread != null) {
+				this.listenerThread.join();
 			}
 		} catch (Exception e) {
 			log(ERROR, "Could not stop all connections", e);
@@ -326,6 +324,6 @@ public abstract class NanoHTTPD {
 	}
 
 	public final boolean wasStarted() {
-		return this.myServerSocket != null && this.myThread != null;
+		return this.serverSocket != null && this.listenerThread != null;
 	}
 }
