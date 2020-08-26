@@ -47,6 +47,8 @@
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
 import static java.util.Objects.requireNonNull;
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.ERROR;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -64,7 +66,6 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.logging.Level;
 
 /**
  * HTTP response. Return one of these from serve().
@@ -195,7 +196,7 @@ public class Response implements Closeable {
 			outputStream.flush();
 			NanoHTTPD.safeClose(this.data);
 		} catch (IOException ioe) {
-			NanoHTTPD.LOG.log(Level.SEVERE, "Could not send response to the client", ioe);
+			log(ERROR, "Could not send response to the client", ioe);
 		}
 	}
 
@@ -210,7 +211,7 @@ public class Response implements Closeable {
 			try {
 				size = Long.parseLong(contentLengthString);
 			} catch (NumberFormatException ex) {
-				NanoHTTPD.LOG.severe("content-length was no number " + contentLengthString);
+				log(ERROR, "content-length was not number " + contentLengthString);
 			}
 		}
 		pw.print("Content-Length: " + size + "\r\n");
@@ -294,8 +295,7 @@ public class Response implements Closeable {
 				}
 				bytes = txt.getBytes(contentType.getEncoding());
 			} catch (UnsupportedEncodingException e) {
-				NanoHTTPD.LOG.log(Level.SEVERE, "encoding problem, responding nothing", e);
-				bytes = new byte[0];
+				throw new RuntimeException(e); // never happens, utf-8 is always available
 			}
 			return newFixedLength(status, contentType.getContentTypeHeader(), new ByteArrayInputStream(bytes), bytes.length);
 		}

@@ -48,6 +48,8 @@ package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_TEXT;
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -68,7 +70,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.function.Function;
-import java.util.logging.Level;
 
 class HTTPSession implements IHTTPSession {
 
@@ -182,7 +183,7 @@ class HTTPSession implements IHTTPSession {
 				this.protocolVersion = st.nextToken();
 			} else {
 				this.protocolVersion = "HTTP/1.1";
-				NanoHTTPD.LOG.log(Level.FINE, "no protocol version specified, strange. Assuming HTTP/1.1.");
+				log(DEBUG, "no protocol version specified, strange. Assuming HTTP/1.1.");
 			}
 
 			Map<String, String> headers = new LinkedHashMap<>();
@@ -363,13 +364,11 @@ class HTTPSession implements IHTTPSession {
 	 *         "foo bar"
 	 */
 	private static String decodePercent(String str) {
-		String decoded = null;
 		try {
-			decoded = URLDecoder.decode(str, "UTF8");
-		} catch (UnsupportedEncodingException ignored) {
-			NanoHTTPD.LOG.log(Level.WARNING, "Encoding not supported, ignored", ignored);
+			return URLDecoder.decode(str, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e); // never happens
 		}
-		return decoded;
 	}
 
 	/**

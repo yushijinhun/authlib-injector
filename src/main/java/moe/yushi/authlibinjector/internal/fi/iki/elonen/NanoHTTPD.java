@@ -47,6 +47,9 @@
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
 import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_TEXT;
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.Level.ERROR;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,8 +60,6 @@ import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.HTTPSession.ConnectionCloseException;
 
 /**
@@ -111,7 +112,7 @@ public abstract class NanoHTTPD {
 				// SocketTimeoutException, print the
 				// stacktrace
 			} catch (Exception e) {
-				NanoHTTPD.LOG.log(Level.SEVERE, "Communication with the client broken, or an bug in the handler code", e);
+				log(ERROR, "Communication with the client broken, or an bug in the handler code", e);
 			} finally {
 				safeClose(outputStream);
 				safeClose(this.inputStream);
@@ -189,7 +190,7 @@ public abstract class NanoHTTPD {
 					final InputStream inputStream = finalAccept.getInputStream();
 					NanoHTTPD.this.asyncRunner.exec(new ClientHandler(inputStream, finalAccept));
 				} catch (IOException e) {
-					NanoHTTPD.LOG.log(Level.FINE, "Communication with the client broken", e);
+					log(DEBUG, "Communication with the client broken", e);
 				}
 			} while (!NanoHTTPD.this.myServerSocket.isClosed());
 		}
@@ -201,11 +202,6 @@ public abstract class NanoHTTPD {
 	 * the socket reading thread forever (or as long the browser is open).
 	 */
 	public static final int SOCKET_READ_TIMEOUT = 5000;
-
-	/**
-	 * logger to log to.
-	 */
-	static final Logger LOG = Logger.getLogger(NanoHTTPD.class.getName());
 
 	static final void safeClose(Object closeable) {
 		try {
@@ -221,7 +217,7 @@ public abstract class NanoHTTPD {
 				}
 			}
 		} catch (IOException e) {
-			NanoHTTPD.LOG.log(Level.SEVERE, "Could not close", e);
+			log(ERROR, "Could not close", e);
 		}
 	}
 
@@ -345,7 +341,7 @@ public abstract class NanoHTTPD {
 				this.myThread.join();
 			}
 		} catch (Exception e) {
-			NanoHTTPD.LOG.log(Level.SEVERE, "Could not stop all connections", e);
+			log(ERROR, "Could not stop all connections", e);
 		}
 	}
 
