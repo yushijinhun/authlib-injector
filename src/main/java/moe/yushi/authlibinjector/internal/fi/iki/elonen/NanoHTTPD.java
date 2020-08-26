@@ -258,13 +258,6 @@ public abstract class NanoHTTPD {
 		this.myPort = port;
 	}
 
-	/**
-	 * Forcibly closes all connections that are open.
-	 */
-	public synchronized void closeAllConnections() {
-		stop();
-	}
-
 	public final int getListeningPort() {
 		return this.myServerSocket == null ? -1 : this.myServerSocket.getLocalPort();
 	}
