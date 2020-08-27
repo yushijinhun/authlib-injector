@@ -29,6 +29,7 @@ import java.net.URL;
 public final class IOUtils {
 
 	public static final String CONTENT_TYPE_JSON = "application/json; charset=utf-8";
+	public static final String CONTENT_TYPE_TEXT = "text/plain; charset=utf-8";
 
 	private static HttpURLConnection createConnection(String url, Proxy proxy) throws IOException {
 		if (proxy == null) {

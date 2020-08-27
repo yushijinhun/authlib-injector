@@ -16,6 +16,7 @@
  */
 package moe.yushi.authlibinjector.httpd;
 
+import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_TEXT;
 import static moe.yushi.authlibinjector.util.IOUtils.transfer;
 import static moe.yushi.authlibinjector.util.Logging.log;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
@@ -131,7 +132,7 @@ public class URLProcessor {
 								result = filter.handle(domain, path, session);
 							} catch (Throwable e) {
 								log(WARNING, "An error occurred while processing request [" + session.getUri() + "]", e);
-								return Response.newFixedLength(Status.INTERNAL_ERROR, MIME_PLAINTEXT, "Internal Server Error");
+								return Response.newFixedLength(Status.INTERNAL_ERROR, CONTENT_TYPE_TEXT, "Internal Server Error");
 							}
 
 							if (result.isPresent()) {
@@ -147,11 +148,11 @@ public class URLProcessor {
 						return reverseProxy(session, target);
 					} catch (IOException e) {
 						log(WARNING, "Reverse proxy error", e);
-						return Response.newFixedLength(Status.BAD_GATEWAY, MIME_PLAINTEXT, "Bad Gateway");
+						return Response.newFixedLength(Status.BAD_GATEWAY, CONTENT_TYPE_TEXT, "Bad Gateway");
 					}
 				} else {
 					log(DEBUG, "No handler is found for [" + session.getUri() + "]");
-					return Response.newFixedLength(Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found");
+					return Response.newFixedLength(Status.NOT_FOUND, CONTENT_TYPE_TEXT, "Not Found");
 				}
 			}
 		};
@@ -165,7 +166,7 @@ public class URLProcessor {
 
 		String url = session.getQueryParameterString() == null ? upstream : upstream + "?" + session.getQueryParameterString();
 
-		Map<String, String> requestHeaders = session.getHeaders();
+		Map<String, String> requestHeaders = new LinkedHashMap<>(session.getHeaders());
 		ignoredHeaders.forEach(requestHeaders::remove);
 
 		InputStream clientIn = session.getInputStream();
@@ -218,11 +219,17 @@ public class URLProcessor {
 				break;
 			}
 		}
+
 		Response response;
-		if (contentLength != -1) {
-			response = Response.newFixedLength(status, null, upstreamIn, contentLength);
+		if (contentLength == -1) {
+			if (conn.getHeaderField("transfer-encoding") == null) {
+				// no content
+				response = Response.newFixedLength(status, null, upstreamIn, 0);
+			} else {
+				response = Response.newChunked(status, null, upstreamIn);
+			}
 		} else {
-			response = Response.newChunked(status, null, upstreamIn);
+			response = Response.newFixedLength(status, null, upstreamIn, contentLength);
 		}
 		responseHeaders.forEach((name, values) -> values.forEach(value -> response.addHeader(name, value)));
 

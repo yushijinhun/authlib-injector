@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,32 +46,21 @@
  */
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
+import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_TEXT;
+import static moe.yushi.authlibinjector.util.Logging.log;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.Level.ERROR;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
+import moe.yushi.authlibinjector.internal.fi.iki.elonen.HTTPSession.ConnectionCloseException;
 
 /**
  * A simple, tiny, nicely embeddable HTTP server in Java
@@ -110,21 +99,20 @@ public abstract class NanoHTTPD {
 			OutputStream outputStream = null;
 			try {
 				outputStream = this.acceptSocket.getOutputStream();
-				HTTPSession session = new HTTPSession(this.inputStream, outputStream, this.acceptSocket.getInetAddress());
+				HTTPSession session = new HTTPSession(this.inputStream, outputStream, (InetSocketAddress) this.acceptSocket.getRemoteSocketAddress());
 				while (!this.acceptSocket.isClosed()) {
-					session.execute();
+					session.execute(NanoHTTPD.this::serve);
 				}
-			} catch (Exception e) {
+			} catch (ConnectionCloseException e) {
 				// When the socket is closed by the client,
-				// we throw our own SocketException
+				// we throw our own ConnectionCloseException
 				// to break the "keep alive" loop above. If
 				// the exception was anything other
 				// than the expected SocketException OR a
 				// SocketTimeoutException, print the
 				// stacktrace
-				if (!(e instanceof SocketException && "NanoHttpd Shutdown".equals(e.getMessage())) && !(e instanceof SocketTimeoutException)) {
-					NanoHTTPD.LOG.log(Level.SEVERE, "Communication with the client broken, or an bug in the handler code", e);
-				}
+			} catch (Exception e) {
+				log(ERROR, "Communication with the client broken, or an bug in the handler code", e);
 			} finally {
 				safeClose(outputStream);
 				safeClose(this.inputStream);
@@ -145,13 +133,11 @@ public abstract class NanoHTTPD {
 	 */
 	private static class AsyncRunner {
 
-		private long requestCount;
-
-		private final List<ClientHandler> running = Collections.synchronizedList(new ArrayList<NanoHTTPD.ClientHandler>());
+		private final AtomicLong requestCount = new AtomicLong();
+		private final List<ClientHandler> running = new CopyOnWriteArrayList<>();
 
 		public void closeAll() {
-			// copy of the list for concurrency
-			for (ClientHandler clientHandler : new ArrayList<>(this.running)) {
+			for (ClientHandler clientHandler : this.running) {
 				clientHandler.close();
 			}
 		}
@@ -161,364 +147,11 @@ public abstract class NanoHTTPD {
 		}
 
 		public void exec(ClientHandler clientHandler) {
-			++this.requestCount;
 			Thread t = new Thread(clientHandler);
 			t.setDaemon(true);
-			t.setName("NanoHttpd Request Processor (#" + this.requestCount + ")");
+			t.setName("NanoHttpd Request Processor (#" + this.requestCount.incrementAndGet() + ")");
 			this.running.add(clientHandler);
 			t.start();
-		}
-	}
-
-	private class HTTPSession implements IHTTPSession {
-
-		public static final int BUFSIZE = 8192;
-
-		private final OutputStream outputStream;
-
-		private final BufferedInputStream inputStream;
-
-		private InputStream parsedInputStream;
-
-		private int splitbyte;
-
-		private int rlen;
-
-		private String uri;
-
-		private String method;
-
-		private Map<String, List<String>> parms;
-
-		private Map<String, String> headers;
-
-		private String queryParameterString;
-
-		private String remoteIp;
-
-		private String remoteHostname;
-
-		private String protocolVersion;
-
-		private boolean expect100Continue;
-		private boolean continueSent;
-		private boolean isServing;
-		private final Object servingLock = new Object();
-
-		public HTTPSession(InputStream inputStream, OutputStream outputStream, InetAddress inetAddress) {
-			this.inputStream = new BufferedInputStream(inputStream, HTTPSession.BUFSIZE);
-			this.outputStream = outputStream;
-			this.remoteIp = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "127.0.0.1" : inetAddress.getHostAddress();
-			this.remoteHostname = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "localhost" : inetAddress.getHostName();
-			this.headers = new HashMap<>();
-		}
-
-		/**
-		 * Decodes the sent headers and loads the data into Key/value pairs
-		 */
-		private void decodeHeader(BufferedReader in, Map<String, String> pre, Map<String, List<String>> parms, Map<String, String> headers) throws ResponseException {
-			try {
-				// Read the request line
-				String inLine = in.readLine();
-				if (inLine == null) {
-					return;
-				}
-
-				StringTokenizer st = new StringTokenizer(inLine);
-				if (!st.hasMoreTokens()) {
-					throw new ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Syntax error. Usage: GET /example/file.html");
-				}
-
-				pre.put("method", st.nextToken());
-
-				if (!st.hasMoreTokens()) {
-					throw new ResponseException(Status.BAD_REQUEST, "BAD REQUEST: Missing URI. Usage: GET /example/file.html");
-				}
-
-				String uri = st.nextToken();
-
-				// Decode parameters from the URI
-				int qmi = uri.indexOf('?');
-				if (qmi >= 0) {
-					decodeParms(uri.substring(qmi + 1), parms);
-					uri = decodePercent(uri.substring(0, qmi));
-				} else {
-					uri = decodePercent(uri);
-				}
-
-				// If there's another token, its protocol version,
-				// followed by HTTP headers.
-				// NOTE: this now forces header names lower case since they are
-				// case insensitive and vary by client.
-				if (st.hasMoreTokens()) {
-					protocolVersion = st.nextToken();
-				} else {
-					protocolVersion = "HTTP/1.1";
-					NanoHTTPD.LOG.log(Level.FINE, "no protocol version specified, strange. Assuming HTTP/1.1.");
-				}
-				String line = in.readLine();
-				while (line != null && !line.trim().isEmpty()) {
-					int p = line.indexOf(':');
-					if (p >= 0) {
-						headers.put(line.substring(0, p).trim().toLowerCase(Locale.US), line.substring(p + 1).trim());
-					}
-					line = in.readLine();
-				}
-
-				pre.put("uri", uri);
-			} catch (IOException ioe) {
-				throw new ResponseException(Status.INTERNAL_ERROR, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage(), ioe);
-			}
-		}
-
-		/**
-		 * Decodes parameters in percent-encoded URI-format ( e.g.
-		 * "name=Jack%20Daniels&pass=Single%20Malt" ) and adds them to given
-		 * Map.
-		 */
-		private void decodeParms(String parms, Map<String, List<String>> p) {
-			if (parms == null) {
-				this.queryParameterString = "";
-				return;
-			}
-
-			this.queryParameterString = parms;
-			StringTokenizer st = new StringTokenizer(parms, "&");
-			while (st.hasMoreTokens()) {
-				String e = st.nextToken();
-				int sep = e.indexOf('=');
-				String key = null;
-				String value = null;
-
-				if (sep >= 0) {
-					key = decodePercent(e.substring(0, sep)).trim();
-					value = decodePercent(e.substring(sep + 1));
-				} else {
-					key = decodePercent(e).trim();
-					value = "";
-				}
-
-				List<String> values = p.get(key);
-				if (values == null) {
-					values = new ArrayList<>();
-					p.put(key, values);
-				}
-
-				values.add(value);
-			}
-		}
-
-		@SuppressWarnings("resource")
-		@Override
-		public void execute() throws IOException {
-			Response r = null;
-			try {
-				// Read the first 8192 bytes.
-				// The full header should fit in here.
-				// Apache's default header limit is 8KB.
-				// Do NOT assume that a single read will get the entire header
-				// at once!
-				byte[] buf = new byte[HTTPSession.BUFSIZE];
-				this.splitbyte = 0;
-				this.rlen = 0;
-
-				int read = -1;
-				this.inputStream.mark(HTTPSession.BUFSIZE);
-				try {
-					read = this.inputStream.read(buf, 0, HTTPSession.BUFSIZE);
-				} catch (IOException e) {
-					safeClose(this.inputStream);
-					safeClose(this.outputStream);
-					throw new SocketException("NanoHttpd Shutdown");
-				}
-				if (read == -1) {
-					// socket was been closed
-					safeClose(this.inputStream);
-					safeClose(this.outputStream);
-					throw new SocketException("NanoHttpd Shutdown");
-				}
-				while (read > 0) {
-					this.rlen += read;
-					this.splitbyte = findHeaderEnd(buf, this.rlen);
-					if (this.splitbyte > 0) {
-						break;
-					}
-					read = this.inputStream.read(buf, this.rlen, HTTPSession.BUFSIZE - this.rlen);
-				}
-
-				if (this.splitbyte < this.rlen) {
-					this.inputStream.reset();
-					this.inputStream.skip(this.splitbyte);
-				}
-
-				this.parms = new HashMap<>();
-				if (null == this.headers) {
-					this.headers = new HashMap<>();
-				} else {
-					this.headers.clear();
-				}
-
-				// Create a BufferedReader for parsing the header.
-				BufferedReader hin = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, this.rlen), ISO_8859_1));
-
-				// Decode the header into parms and header java properties
-				Map<String, String> pre = new HashMap<>();
-				decodeHeader(hin, pre, this.parms, this.headers);
-
-				this.method = pre.get("method");
-
-				this.uri = pre.get("uri");
-
-				String connection = this.headers.get("connection");
-				boolean keepAlive = "HTTP/1.1".equals(protocolVersion) && (connection == null || !connection.matches("(?i).*close.*"));
-
-				String transferEncoding = this.headers.get("transfer-encoding");
-				String contentLengthStr = this.headers.get("content-length");
-				if (transferEncoding != null && contentLengthStr == null) {
-					if ("chunked".equals(transferEncoding)) {
-						parsedInputStream = new ChunkedInputStream(inputStream);
-					} else {
-						throw new ResponseException(Status.NOT_IMPLEMENTED, "Unsupported Transfer-Encoding");
-					}
-
-				} else if (transferEncoding == null && contentLengthStr != null) {
-					int contentLength = -1;
-					try {
-						contentLength = Integer.parseInt(contentLengthStr);
-					} catch (NumberFormatException e) {
-					}
-					if (contentLength < 0) {
-						throw new ResponseException(Status.BAD_REQUEST, "The request has an invalid Content-Length header.");
-					}
-					parsedInputStream = new FixedLengthInputStream(inputStream, contentLength);
-
-				} else if (transferEncoding != null && contentLengthStr != null) {
-					throw new ResponseException(Status.BAD_REQUEST, "Content-Length and Transfer-Encoding cannot exist at the same time.");
-
-				} else /* if both are null */ {
-					// no request payload
-				}
-
-				expect100Continue = "HTTP/1.1".equals(protocolVersion)
-						&& "100-continue".equals(this.headers.get("expect"))
-						&& parsedInputStream != null;
-
-				// Ok, now do the serve()
-				this.isServing = true;
-				try {
-					r = serve(this);
-				} finally {
-					synchronized (servingLock) {
-						this.isServing = false;
-					}
-				}
-
-				if (!(parsedInputStream == null || (expect100Continue && !continueSent))) {
-					// consume the input
-					while (parsedInputStream.read() != -1)
-						;
-				}
-
-				if (r == null) {
-					throw new ResponseException(Status.INTERNAL_ERROR, "SERVER INTERNAL ERROR: Serve() returned a null response.");
-				} else {
-					r.setRequestMethod(this.method);
-					r.setKeepAlive(keepAlive);
-					r.send(this.outputStream);
-				}
-				if (!keepAlive || r.isCloseConnection()) {
-					throw new SocketException("NanoHttpd Shutdown");
-				}
-			} catch (SocketException e) {
-				// throw it out to close socket object (finalAccept)
-				throw e;
-			} catch (SocketTimeoutException ste) {
-				// treat socket timeouts the same way we treat socket exceptions
-				// i.e. close the stream & finalAccept object by throwing the
-				// exception up the call stack.
-				throw ste;
-			} catch (IOException ioe) {
-				Response resp = Response.newFixedLength(Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
-				resp.send(this.outputStream);
-				safeClose(this.outputStream);
-			} catch (ResponseException re) {
-				Response resp = Response.newFixedLength(re.getStatus(), NanoHTTPD.MIME_PLAINTEXT, re.getMessage());
-				resp.send(this.outputStream);
-				safeClose(this.outputStream);
-			} finally {
-				safeClose(r);
-			}
-		}
-
-		/**
-		 * Find byte index separating header from body. It must be the last byte
-		 * of the first two sequential new lines.
-		 */
-		private int findHeaderEnd(final byte[] buf, int rlen) {
-			int splitbyte = 0;
-			while (splitbyte + 1 < rlen) {
-
-				// RFC2616
-				if (buf[splitbyte] == '\r' && buf[splitbyte + 1] == '\n' && splitbyte + 3 < rlen && buf[splitbyte + 2] == '\r' && buf[splitbyte + 3] == '\n') {
-					return splitbyte + 4;
-				}
-
-				// tolerance
-				if (buf[splitbyte] == '\n' && buf[splitbyte + 1] == '\n') {
-					return splitbyte + 2;
-				}
-				splitbyte++;
-			}
-			return 0;
-		}
-
-		@Override
-		public final Map<String, String> getHeaders() {
-			return this.headers;
-		}
-
-		@Override
-		public final InputStream getInputStream() throws IOException {
-			synchronized (servingLock) {
-				if (!isServing) {
-					throw new IllegalStateException();
-				}
-				if (expect100Continue && !continueSent) {
-					continueSent = true;
-					this.outputStream.write("HTTP/1.1 100 Continue\r\n\r\n".getBytes(ISO_8859_1));
-				}
-			}
-			return this.parsedInputStream;
-		}
-
-		@Override
-		public final String getMethod() {
-			return this.method;
-		}
-
-		@Override
-		public final Map<String, List<String>> getParameters() {
-			return this.parms;
-		}
-
-		@Override
-		public String getQueryParameterString() {
-			return this.queryParameterString;
-		}
-
-		@Override
-		public final String getUri() {
-			return this.uri;
-		}
-
-		@Override
-		public String getRemoteIpAddress() {
-			return this.remoteIp;
-		}
-
-		@Override
-		public String getRemoteHostName() {
-			return this.remoteHostname;
 		}
 	}
 
@@ -527,20 +160,21 @@ public abstract class NanoHTTPD {
 	 */
 	private class ServerRunnable implements Runnable {
 
-		private final int timeout;
+		/**
+		 * Maximum time to wait on Socket.getInputStream().read() (in milliseconds)
+		 * This is required as the Keep-Alive HTTP connections would otherwise block
+		 * the socket reading thread forever (or as long the browser is open).
+		 */
+		private static final int SOCKET_READ_TIMEOUT = 5000;
 
 		private IOException bindException;
 
 		private boolean hasBinded = false;
 
-		public ServerRunnable(int timeout) {
-			this.timeout = timeout;
-		}
-
 		@Override
 		public void run() {
 			try {
-				myServerSocket.bind(hostname != null ? new InetSocketAddress(hostname, myPort) : new InetSocketAddress(myPort));
+				serverSocket.bind(hostname != null ? new InetSocketAddress(hostname, port) : new InetSocketAddress(port));
 				hasBinded = true;
 			} catch (IOException e) {
 				this.bindException = e;
@@ -549,41 +183,17 @@ public abstract class NanoHTTPD {
 			do {
 				try {
 					@SuppressWarnings("resource")
-					final Socket finalAccept = NanoHTTPD.this.myServerSocket.accept();
-					if (this.timeout > 0) {
-						finalAccept.setSoTimeout(this.timeout);
-					}
+					final Socket finalAccept = NanoHTTPD.this.serverSocket.accept();
+					finalAccept.setSoTimeout(SOCKET_READ_TIMEOUT);
 					@SuppressWarnings("resource")
 					final InputStream inputStream = finalAccept.getInputStream();
 					NanoHTTPD.this.asyncRunner.exec(new ClientHandler(inputStream, finalAccept));
 				} catch (IOException e) {
-					NanoHTTPD.LOG.log(Level.FINE, "Communication with the client broken", e);
+					log(DEBUG, "Communication with the client broken", e);
 				}
-			} while (!NanoHTTPD.this.myServerSocket.isClosed());
+			} while (!NanoHTTPD.this.serverSocket.isClosed());
 		}
 	}
-
-	/**
-	 * Maximum time to wait on Socket.getInputStream().read() (in milliseconds)
-	 * This is required as the Keep-Alive HTTP connections would otherwise block
-	 * the socket reading thread forever (or as long the browser is open).
-	 */
-	public static final int SOCKET_READ_TIMEOUT = 5000;
-
-	/**
-	 * Common MIME type for dynamic content: plain text
-	 */
-	public static final String MIME_PLAINTEXT = "text/plain";
-
-	/**
-	 * Common MIME type for dynamic content: html
-	 */
-	public static final String MIME_HTML = "text/html";
-
-	/**
-	 * logger to log to.
-	 */
-	static final Logger LOG = Logger.getLogger(NanoHTTPD.class.getName());
 
 	static final void safeClose(Object closeable) {
 		try {
@@ -599,19 +209,17 @@ public abstract class NanoHTTPD {
 				}
 			}
 		} catch (IOException e) {
-			NanoHTTPD.LOG.log(Level.SEVERE, "Could not close", e);
+			log(ERROR, "Could not close", e);
 		}
 	}
 
 	private final String hostname;
+	private final int port;
 
-	private final int myPort;
+	private volatile ServerSocket serverSocket;
+	private Thread listenerThread;
 
-	private volatile ServerSocket myServerSocket;
-
-	private Thread myThread;
-
-	private AsyncRunner asyncRunner = new AsyncRunner();
+	private final AsyncRunner asyncRunner = new AsyncRunner();
 
 	/**
 	 * Constructs an HTTP server on given port.
@@ -633,40 +241,15 @@ public abstract class NanoHTTPD {
 	 */
 	public NanoHTTPD(String hostname, int port) {
 		this.hostname = hostname;
-		this.myPort = port;
-	}
-
-	/**
-	 * Forcibly closes all connections that are open.
-	 */
-	public synchronized void closeAllConnections() {
-		stop();
-	}
-
-	/**
-	 * Decode percent encoded <code>String</code> values.
-	 *
-	 * @param str
-	 *            the percent encoded <code>String</code>
-	 * @return expanded form of the input, for example "foo%20bar" becomes
-	 *         "foo bar"
-	 */
-	private static String decodePercent(String str) {
-		String decoded = null;
-		try {
-			decoded = URLDecoder.decode(str, "UTF8");
-		} catch (UnsupportedEncodingException ignored) {
-			NanoHTTPD.LOG.log(Level.WARNING, "Encoding not supported, ignored", ignored);
-		}
-		return decoded;
+		this.port = port;
 	}
 
 	public final int getListeningPort() {
-		return this.myServerSocket == null ? -1 : this.myServerSocket.getLocalPort();
+		return this.serverSocket == null ? -1 : this.serverSocket.getLocalPort();
 	}
 
 	public final boolean isAlive() {
-		return wasStarted() && !this.myServerSocket.isClosed() && this.myThread.isAlive();
+		return wasStarted() && !this.serverSocket.isClosed() && this.listenerThread.isAlive();
 	}
 
 	public String getHostname() {
@@ -684,45 +267,33 @@ public abstract class NanoHTTPD {
 	 * @return HTTP response, see class Response for details
 	 */
 	public Response serve(IHTTPSession session) {
-		return Response.newFixedLength(Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT, "Not Found");
+		return Response.newFixedLength(Status.NOT_FOUND, CONTENT_TYPE_TEXT, "Not Found");
 	}
 
 	/**
-	 * Start the server.
-	 *
-	 * @throws IOException
-	 *                     if the socket is in use.
+	 * Starts the server in daemon mode.
 	 */
 	public void start() throws IOException {
-		start(NanoHTTPD.SOCKET_READ_TIMEOUT);
-	}
-
-	/**
-	 * Starts the server (in setDaemon(true) mode).
-	 */
-	public void start(final int timeout) throws IOException {
-		start(timeout, true);
+		start(true);
 	}
 
 	/**
 	 * Start the server.
 	 *
-	 * @param timeout
-	 *                timeout to use for socket connections.
 	 * @param daemon
 	 *                start the thread daemon or not.
 	 * @throws IOException
 	 *                     if the socket is in use.
 	 */
-	public void start(final int timeout, boolean daemon) throws IOException {
-		this.myServerSocket = new ServerSocket();
-		this.myServerSocket.setReuseAddress(true);
+	public void start(boolean daemon) throws IOException {
+		this.serverSocket = new ServerSocket();
+		this.serverSocket.setReuseAddress(true);
 
-		ServerRunnable serverRunnable = new ServerRunnable(timeout);
-		this.myThread = new Thread(serverRunnable);
-		this.myThread.setDaemon(daemon);
-		this.myThread.setName("NanoHttpd Main Listener");
-		this.myThread.start();
+		ServerRunnable serverRunnable = new ServerRunnable();
+		this.listenerThread = new Thread(serverRunnable);
+		this.listenerThread.setDaemon(daemon);
+		this.listenerThread.setName("NanoHttpd Main Listener");
+		this.listenerThread.start();
 		while (!serverRunnable.hasBinded && serverRunnable.bindException == null) {
 			try {
 				Thread.sleep(10L);
@@ -742,17 +313,17 @@ public abstract class NanoHTTPD {
 	 */
 	public void stop() {
 		try {
-			safeClose(this.myServerSocket);
+			safeClose(this.serverSocket);
 			this.asyncRunner.closeAll();
-			if (this.myThread != null) {
-				this.myThread.join();
+			if (this.listenerThread != null) {
+				this.listenerThread.join();
 			}
 		} catch (Exception e) {
-			NanoHTTPD.LOG.log(Level.SEVERE, "Could not stop all connections", e);
+			log(ERROR, "Could not stop all connections", e);
 		}
 	}
 
 	public final boolean wasStarted() {
-		return this.myServerSocket != null && this.myThread != null;
+		return this.serverSocket != null && this.listenerThread != null;
 	}
 }

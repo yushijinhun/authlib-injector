@@ -12,7 +12,7 @@
 **关于该项目的详细介绍见 [wiki](https://github.com/yushijinhun/authlib-injector/wiki)。**
 
 ## 获取
-您可以从[这里](https://authlib-injector.yushi.moe/~download/)获取最新的 authlib-injector。
+您可以从[这里](https://authlib-injector.yushi.moe/)获取最新的 authlib-injector。
 
 ## 构建
 构建依赖：Gradle、JDK 8+。

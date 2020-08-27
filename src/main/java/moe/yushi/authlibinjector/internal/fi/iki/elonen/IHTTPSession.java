@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -48,6 +48,7 @@ package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 
@@ -57,17 +58,9 @@ import java.util.Map;
  */
 public interface IHTTPSession {
 
-	void execute() throws IOException;
-
-	Map<String, String> getHeaders();
-
-	InputStream getInputStream() throws IOException;
+	InetSocketAddress getRemoteAddress();
 
 	String getMethod();
-
-	Map<String, List<String>> getParameters();
-
-	String getQueryParameterString();
 
 	/**
 	 * @return the path part of the URL.
@@ -75,16 +68,20 @@ public interface IHTTPSession {
 	String getUri();
 
 	/**
-	 * Get the remote ip address of the requester.
-	 *
-	 * @return the IP address.
+	 * @return raw query string, null if no query exists
 	 */
-	String getRemoteIpAddress();
+	String getQueryParameterString();
 
 	/**
-	 * Get the remote hostname of the requester.
-	 *
-	 * @return the hostname.
+	 * @return decoded query parameters
 	 */
-	String getRemoteHostName();
+	Map<String, List<String>> getParameters();
+
+	Map<String, String> getHeaders();
+
+	/**
+	 * @return request body, null if the request does not have a payload
+	 */
+	InputStream getInputStream() throws IOException;
+
 }
