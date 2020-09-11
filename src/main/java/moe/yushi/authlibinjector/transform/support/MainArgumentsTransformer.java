@@ -75,12 +75,13 @@ public class MainArgumentsTransformer implements TransformUnit {
 
 	@CallbackMethod
 	public static String[] processMainArguments(String[] args) {
-		log(DEBUG, "Main arguments: " + Stream.of(args).collect(joining(" ")));
+		log(DEBUG, "Original main arguments: " + Stream.of(args).collect(joining(" ")));
 
 		String[] result = args;
 		for (Function<String[], String[]> listener : ARGUMENTS_LISTENERS) {
 			result = listener.apply(result);
 		}
+		log(DEBUG, "Transformed main arguments: " + Stream.of(result).collect(joining(" ")));
 		return result;
 	}
 

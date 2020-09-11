@@ -56,6 +56,7 @@ import moe.yushi.authlibinjector.transform.support.ConstantURLTransformUnit;
 import moe.yushi.authlibinjector.transform.support.MC52974Workaround;
 import moe.yushi.authlibinjector.transform.support.MC52974_1710Workaround;
 import moe.yushi.authlibinjector.transform.support.MainArgumentsTransformer;
+import moe.yushi.authlibinjector.transform.support.ProxyParameterWorkaround;
 import moe.yushi.authlibinjector.transform.support.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.support.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
@@ -90,6 +91,7 @@ public final class AuthlibInjector {
 		classTransformer = createTransformer(apiMetadata);
 		instrumentation.addTransformer(classTransformer, retransformSupported);
 
+		ProxyParameterWorkaround.init();
 		MC52974Workaround.init();
 		MC52974_1710Workaround.init();
 	}
