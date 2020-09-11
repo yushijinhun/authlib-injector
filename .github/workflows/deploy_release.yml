@@ -70,7 +70,7 @@ jobs:
                   "version": .version
                 }' < "$file"
             fi
-          done | jq -s '
+          done | jq -s 'sort_by(.build_number)|reverse|
             {
               "latest_build_number": max_by(.build_number).build_number,
               "artifacts": .
