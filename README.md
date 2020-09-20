@@ -52,6 +52,9 @@ gradle
     设置访问 Mojang 验证服务时使用的代理, 目前仅支持 SOCKS 协议.
     URL 格式: socks://<host>:<port>
 
+    这一代理仅作用于 Mojang 命名空间 功能, 其仅用于访问 Mojang 服务器.
+    若要在访问自定义验证服务器时使用代理, 请参考 https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html .
+
 -Dauthlibinjector.legacySkinPolyfill={default|enabled|disabled}
     是否启用旧式皮肤 API polyfill, 即 'GET /skins/MinecraftSkins/{username}.png'.
     若验证服务器未设置 feature.legacy_skin_api 选项, 则该功能默认启用.
