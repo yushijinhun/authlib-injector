@@ -59,6 +59,7 @@ public final class Config {
 	public static Set<String> ignoredPackages;
 	public static FeatureOption mojangNamespace;
 	public static FeatureOption legacySkinPolyfill;
+	public static boolean noShowServerName;
 
 	private static void initDebugOptions() {
 		String prop = System.getProperty("authlibinjector.debug");
@@ -202,5 +203,6 @@ public final class Config {
 		mojangNamespace = parseFeatureOption("authlibinjector.mojangNamespace");
 		legacySkinPolyfill = parseFeatureOption("authlibinjector.legacySkinPolyfill");
 		httpdDisabled = System.getProperty("authlibinjector.disableHttpd") != null;
+		noShowServerName = System.getProperty("authlibinjector.noShowServerName") != null;
 	}
 }

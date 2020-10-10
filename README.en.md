@@ -76,4 +76,9 @@ Configure Minecraft server with the following JVM parameter:
     Features (see below) depending on local HTTP server will be unavailable:
      - Mojang namespace
      - Legacy skin API polyfill
+
+-Dauthlibinjector.noShowServerName
+    Do not show authentication server name in Minecraft menu screen.
+    By default, authlib-injector alters --versionType parameter to display the authentication server name.
+    This feature can be disabled using this option.
 ```
