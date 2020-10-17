@@ -50,6 +50,7 @@ import moe.yushi.authlibinjector.httpd.URLFilter;
 import moe.yushi.authlibinjector.httpd.URLProcessor;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
 import moe.yushi.authlibinjector.transform.DumpClassListener;
+import moe.yushi.authlibinjector.transform.support.AuthServerNameInjector;
 import moe.yushi.authlibinjector.transform.support.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
 import moe.yushi.authlibinjector.transform.support.ConstantURLTransformUnit;
@@ -94,6 +95,9 @@ public final class AuthlibInjector {
 		ProxyParameterWorkaround.init();
 		MC52974Workaround.init();
 		MC52974_1710Workaround.init();
+		if (!Config.noShowServerName) {
+			AuthServerNameInjector.init(apiMetadata);
+		}
 	}
 
 	private static Optional<String> getPrefetchedResponse() {

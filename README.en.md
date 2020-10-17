@@ -53,6 +53,9 @@ Configure Minecraft server with the following JVM parameter:
     Only SOCKS protocol is supported.
     URL format: socks://<host>:<port>
 
+    This proxy setting only affects Mojang namespace feature, and the proxy is used only when accessing Mojang's servers.
+    To enable proxy for your customized authentication server, see https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html .
+
 -Dauthlibinjector.legacySkinPolyfill={default|enabled|disabled}
     Whether to polyfill legacy skin API, namely 'GET /skins/MinecraftSkins/{username}.png'.
     It's enabled by default if the authentication server does NOT send feature.legacy_skin_api option.
@@ -73,4 +76,9 @@ Configure Minecraft server with the following JVM parameter:
     Features (see below) depending on local HTTP server will be unavailable:
      - Mojang namespace
      - Legacy skin API polyfill
+
+-Dauthlibinjector.noShowServerName
+    Do not show authentication server name in Minecraft menu screen.
+    By default, authlib-injector alters --versionType parameter to display the authentication server name.
+    This feature can be disabled using this option.
 ```

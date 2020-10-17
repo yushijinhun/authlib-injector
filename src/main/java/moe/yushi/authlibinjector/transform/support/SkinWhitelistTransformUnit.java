@@ -19,22 +19,31 @@ package moe.yushi.authlibinjector.transform.support;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.IRETURN;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-
 import moe.yushi.authlibinjector.transform.CallbackMethod;
 import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 
 public class SkinWhitelistTransformUnit implements TransformUnit {
+
+	public static boolean domainMatches(String pattern, String domain) {
+		// for security concern, empty pattern matches nothing
+		if (pattern.isEmpty()) {
+			return false;
+		}
+		if (pattern.startsWith(".")) {
+			return domain.endsWith(pattern);
+		} else {
+			return domain.equals(pattern);
+		}
+	}
 
 	private static final String[] DEFAULT_WHITELISTED_DOMAINS = {
 			".minecraft.net",
@@ -56,13 +65,13 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 			throw new IllegalArgumentException("Invalid URL '" + url + "'");
 		}
 
-		for (String whitelisted : DEFAULT_WHITELISTED_DOMAINS) {
-			if (domain.endsWith(whitelisted)) {
+		for (String pattern : DEFAULT_WHITELISTED_DOMAINS) {
+			if (domainMatches(pattern, domain)) {
 				return true;
 			}
 		}
-		for (String whitelisted : WHITELISTED_DOMAINS) {
-			if (domain.endsWith(whitelisted)) {
+		for (String pattern : WHITELISTED_DOMAINS) {
+			if (domainMatches(pattern, domain)) {
 				return true;
 			}
 		}
