@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.joining;
 import static moe.yushi.authlibinjector.util.Logging.log;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import java.util.List;
 import java.util.Optional;
@@ -40,11 +40,11 @@ public class MainArgumentsTransformer implements TransformUnit {
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("net.minecraft.client.main.Main".equals(className)) {
-			return Optional.of(new ClassVisitor(ASM7, writer) {
+			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 					if ("main".equals(name) && "([Ljava/lang/String;)V".equals(descriptor)) {
-						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+						return new MethodVisitor(ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
 							@Override
 							public void visitCode() {
 								super.visitCode();

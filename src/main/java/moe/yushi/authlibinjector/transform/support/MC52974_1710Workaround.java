@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@ import static moe.yushi.authlibinjector.util.Logging.log;
 import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import static org.objectweb.asm.Opcodes.ARETURN;
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.GETFIELD;
@@ -107,14 +107,14 @@ public class MC52974_1710Workaround {
 	private static class SessionTransformer implements TransformUnit {
 		@Override
 		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
-			return detectNotchName(className, "bbs", "net.minecraft.util.Session", isNotchName -> new ClassVisitor(ASM7, writer) {
+			return detectNotchName(className, "bbs", "net.minecraft.util.Session", isNotchName -> new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 					if (isNotchName
 							? "e".equals(name) && "()Lcom/mojang/authlib/GameProfile;".equals(descriptor)
 							: "func_148256_e".equals(name) && "()Lcom/mojang/authlib/GameProfile;".equals(descriptor)) {
 
-						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+						return new MethodVisitor(ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
 							@Override
 							public void visitInsn(int opcode) {
 								if (opcode == ARETURN) {
@@ -141,14 +141,14 @@ public class MC52974_1710Workaround {
 	private static class S0CPacketSpawnPlayerTransformer implements TransformUnit {
 		@Override
 		public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
-			return detectNotchName(className, "gb", "net.minecraft.network.play.server.S0CPacketSpawnPlayer", isNotchName -> new ClassVisitor(ASM7, writer) {
+			return detectNotchName(className, "gb", "net.minecraft.network.play.server.S0CPacketSpawnPlayer", isNotchName -> new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 					if (isNotchName
 							? "b".equals(name) && "(Let;)V".equals(descriptor)
 							: "func_148840_b".equals(name) && "(Lnet/minecraft/network/PacketBuffer;)V".equals(descriptor)) {
 
-						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+						return new MethodVisitor(ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
 							@Override
 							public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
 								super.visitFieldInsn(opcode, owner, name, descriptor);
