@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,7 +18,7 @@ package moe.yushi.authlibinjector.transform;
 
 import static moe.yushi.authlibinjector.util.Logging.log;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 import java.util.Optional;
 import org.objectweb.asm.ClassVisitor;
 
@@ -34,7 +34,7 @@ class ClassVersionTransformUnit implements TransformUnit {
 
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context) {
-		return Optional.of(new ClassVisitor(ASM7, writer) {
+		return Optional.of(new ClassVisitor(ASM9, writer) {
 			@Override
 			public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 				int major = version & 0xffff;

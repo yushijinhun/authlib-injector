@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,7 @@
 package moe.yushi.authlibinjector.transform.support;
 
 import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.F_SAME;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.IFEQ;
@@ -45,12 +45,12 @@ public class CitizensTransformer implements TransformUnit {
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("net.citizensnpcs.Settings$Setting".equals(className)) {
-			return Optional.of(new ClassVisitor(ASM7, writer) {
+			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 					if (("loadFromKey".equals(name) || "setAtKey".equals(name))
 							&& "(Lnet/citizensnpcs/api/util/DataKey;)V".equals(descriptor)) {
-						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+						return new MethodVisitor(ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
 							@Override
 							public void visitCode() {
 								super.visitCode();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@ package moe.yushi.authlibinjector.transform.support;
 import static moe.yushi.authlibinjector.util.Logging.log;
 import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -221,12 +221,12 @@ public class AuthlibLogInterceptor implements TransformUnit {
 					return Optional.empty();
 				}
 			}
-			return Optional.of(new ClassVisitor(ASM7, writer) {
+			return Optional.of(new ClassVisitor(ASM9, writer) {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 					if ("<clinit>".equals(name)) {
-						return new MethodVisitor(ASM7, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+						return new MethodVisitor(ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
 							@Override
 							public void visitCode() {
 								super.visitCode();
