@@ -45,9 +45,6 @@ public final class IOUtils {
 
 	public static byte[] http(String method, String url, Proxy proxy) throws IOException {
 		HttpURLConnection conn = createConnection(url, proxy);
-		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
-		conn.setRequestProperty("Content-Type", "application/json; utf-8");
-		conn.setRequestProperty("Accept", "application/json");
 		conn.setRequestMethod(method);
 		try (InputStream in = conn.getInputStream()) {
 			return asBytes(in);
@@ -60,11 +57,9 @@ public final class IOUtils {
 
 	public static byte[] http(String method, String url, byte[] payload, String contentType, Proxy proxy) throws IOException {
 		HttpURLConnection conn = createConnection(url, proxy);
-		conn.setRequestProperty("Content-Type", contentType);
-		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
-		conn.setRequestProperty("Accept", "application/json");
 		conn.setRequestMethod(method);
 		conn.setDoOutput(true);
+		conn.setRequestProperty("Content-Type", contentType);
 		try (OutputStream out = conn.getOutputStream()) {
 			out.write(payload);
 		}
