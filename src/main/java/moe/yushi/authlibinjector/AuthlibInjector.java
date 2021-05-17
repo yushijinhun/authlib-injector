@@ -71,6 +71,7 @@ public final class AuthlibInjector {
 	private static Instrumentation instrumentation;
 	private static boolean retransformSupported;
 	private static ClassTransformer classTransformer;
+	private static boolean tryingToUseSSLCertificateOverload = false;
 
 	public static synchronized void bootstrap(Instrumentation instrumentation, String apiUrl) throws InitializationException {
 		if (booted) {
@@ -137,11 +138,19 @@ public final class AuthlibInjector {
 			}
 
 		} else {
-			String isTrustUnknownCertificates = System.getProperty("authlibinjector.trustUnknownSSLCertificates");
-			if (isTrustUnknownCertificates != null) {
-				SSLRulesOverrider.TrustUnknownCertificates();
-				log(WARNING, "Trust in unknown SSL certificates is enabled.\n"
-						+ "Don't use this unless you have a certificate issue.");
+
+			String isTrustUnknownCertificatesOptional = System.getProperty("authlibinjector.trustUnknownSSLCertificatesOptional");
+
+			if (isTrustUnknownCertificatesOptional == null)
+				tryingToUseSSLCertificateOverload = true;
+
+			if (tryingToUseSSLCertificateOverload) {
+				String isTrustUnknownCertificates = System.getProperty("authlibinjector.trustUnknownSSLCertificates");
+				if (isTrustUnknownCertificatesOptional != null || isTrustUnknownCertificates != null) {
+					SSLRulesOverrider.TrustUnknownCertificates();
+					log(WARNING, "Trust in unknown SSL certificates is enabled.\n"
+							+ "Don't use this unless you have a certificate issue.");
+				}
 			}
 
 			try {
@@ -171,6 +180,12 @@ public final class AuthlibInjector {
 				}
 			} catch (IOException e) {
 				log(ERROR, "Failed to fetch metadata: " + e);
+
+				if (!tryingToUseSSLCertificateOverload && e.toString().startsWith("javax.net.ssl.SSLHandshakeException")) {
+					tryingToUseSSLCertificateOverload = true;
+					return fetchAPIMetadata(apiUrl);
+				}
+
 				throw new InitializationException(e);
 			}
 
