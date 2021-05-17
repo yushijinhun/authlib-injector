@@ -137,6 +137,12 @@ public final class AuthlibInjector {
 			}
 
 		} else {
+			String isTrustUnknownCertificates = System.getProperty("authlibinjector.trustUnknownSSLCertificates");
+			if (isTrustUnknownCertificates.equals("true")) {
+				SSLRulesOverrider.TrustUnknownCertificates();
+				log(WARNING, "Trust in unknown SSL certificates is enabled."
+						+ "Don't use this unless you have a certificate issue.");
+			}
 
 			try {
 				HttpURLConnection connection = (HttpURLConnection) new URL(apiUrl).openConnection();
