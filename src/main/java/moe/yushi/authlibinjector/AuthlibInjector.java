@@ -159,10 +159,8 @@ public final class AuthlibInjector {
 						// so the TCP connection can be reused
 						// we need to consume the response to make the connection reusable
 						try (InputStream in = connection.getInputStream()) {
-							while (in.read() != -1)
-								;
-						} catch (IOException e) {
-						}
+							while (in.read() != -1) ;
+						} catch (IOException e) { }
 
 						log(INFO, "Redirect to: " + absoluteAli);
 						apiUrl = absoluteAli.toString();
