@@ -140,7 +140,7 @@ public final class AuthlibInjector {
 			String isTrustUnknownCertificates = System.getProperty("authlibinjector.trustUnknownSSLCertificates");
 			if (isTrustUnknownCertificates != null) {
 				SSLRulesOverrider.TrustUnknownCertificates();
-				log(WARNING, "Trust in unknown SSL certificates is enabled."
+				log(WARNING, "Trust in unknown SSL certificates is enabled.\n"
 						+ "Don't use this unless you have a certificate issue.");
 			}
 
