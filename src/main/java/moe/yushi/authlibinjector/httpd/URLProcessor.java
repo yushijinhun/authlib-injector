@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IStatus;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD;
@@ -174,6 +175,9 @@ public class URLProcessor {
 		log(DEBUG, "Reverse proxy: > " + method + " " + url + ", headers: " + requestHeaders);
 
 		HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+		conn.setRequestProperty("Content-Type", "application/json; utf-8");
+		conn.setRequestProperty("Accept", "application/json");
 		conn.setRequestMethod(method);
 		conn.setDoOutput(clientIn != null);
 		requestHeaders.forEach(conn::setRequestProperty);

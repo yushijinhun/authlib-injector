@@ -140,6 +140,9 @@ public final class AuthlibInjector {
 
 			try {
 				HttpURLConnection connection = (HttpURLConnection) new URL(apiUrl).openConnection();
+				connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+				connection.setRequestProperty("Content-Type", "application/json; utf-8");
+				connection.setRequestProperty("Accept", "application/json");
 
 				String ali = connection.getHeaderField("x-authlib-injector-api-location");
 				if (ali != null) {
