@@ -88,6 +88,11 @@ gradle
 -Dauthlibinjector.noShowServerName
     不要在 Minecraft 主界面展示验证服务器名称.
     默认情况下, authlib-injector 通过更改 --versionType 参数来在 Minecraft 主界面显示验证服务器名称, 使用本选项可以禁用该功能.
+    
+-Dauthlibinjector.trustUnknownSSLCertificates
+    添加此参数以信任未知的SSL证书.
+    除非证书有问题，否则不要使用此选项,
+    否则可能会影响连接的安全性.
 ```
 
 ## 捐助

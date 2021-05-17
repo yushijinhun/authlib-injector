@@ -81,4 +81,9 @@ Configure Minecraft server with the following JVM parameter:
     Do not show authentication server name in Minecraft menu screen.
     By default, authlib-injector alters --versionType parameter to display the authentication server name.
     This feature can be disabled using this option.
+    
+-Dauthlibinjector.trustUnknownSSLCertificates
+    Add this parameter to trust unknown SSL certificates.
+    Do not use this option unless you have a problem with the certificate,
+    this may affect the security of the connection.
 ```
