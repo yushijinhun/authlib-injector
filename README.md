@@ -93,6 +93,13 @@ gradle
     添加此参数以信任未知的SSL证书.
     除非证书有问题，否则不要使用此选项,
     否则可能会影响连接的安全性.
+    
+-Dauthlibinjector.trustUnknownSSLCertificatesOptional
+    与 "-Dauthlibinjector.trustUnknownSSLCertificates" 参数相同,
+    但是首先它尝试在不更改SSL规则的情况下进行连接.
+    如果发生错误, 它将更改SSL规则并尝试重新连接.
+    如果希望服务器或客户端能够使用正常连接, 请使用此参数,
+    但是如果发生错误, 请将其重新定义为不合适的连接. 如果证书问题是间歇性的, 则建议使用.
 ```
 
 ## 捐助

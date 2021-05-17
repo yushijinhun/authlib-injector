@@ -86,4 +86,12 @@ Configure Minecraft server with the following JVM parameter:
     Add this parameter to trust unknown SSL certificates.
     Do not use this option unless you have a problem with the certificate,
     this may affect the security of the connection.
+    
+-Dauthlibinjector.trustUnknownSSLCertificatesOptional
+    Does the same as the "-Dauthlibinjector.trustUnknownSSLCertificates" argument,
+    but first it tries to connect without changing the rules of the SSL.
+    In case of an error, it will change the rules of the SSL and try to connect again.
+    Use this argument if you want the server or client to be able to use a normal connection,
+    but in case of an error, redefine it to a less suitable one.
+    Recommended if certificate problems occur intermittently.
 ```
