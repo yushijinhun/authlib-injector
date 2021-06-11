@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -206,16 +206,18 @@ public class Response implements Closeable {
 
 	protected long sendContentLengthHeaderIfNotAlreadyPresent(PrintWriter pw, long defaultSize) {
 		String contentLengthString = getHeader("content-length");
-		long size = defaultSize;
-		if (contentLengthString != null) {
+		if (contentLengthString == null) {
+			pw.print("Content-Length: " + defaultSize + "\r\n");
+			return defaultSize;
+		} else {
+			long size = defaultSize;
 			try {
 				size = Long.parseLong(contentLengthString);
 			} catch (NumberFormatException ex) {
 				log(ERROR, "content-length was not number " + contentLengthString);
 			}
+			return size;
 		}
-		pw.print("Content-Length: " + size + "\r\n");
-		return size;
 	}
 
 	private void sendBodyWithCorrectTransferAndEncoding(OutputStream outputStream, long pending) throws IOException {
