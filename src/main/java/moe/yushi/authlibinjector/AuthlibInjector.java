@@ -60,6 +60,7 @@ import moe.yushi.authlibinjector.transform.support.MainArgumentsTransformer;
 import moe.yushi.authlibinjector.transform.support.ProxyParameterWorkaround;
 import moe.yushi.authlibinjector.transform.support.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.support.YggdrasilKeyTransformUnit;
+import moe.yushi.authlibinjector.transform.support.YggdrasilCheckPrivilegesTransformUnit;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
@@ -264,6 +265,7 @@ public final class AuthlibInjector {
 		SkinWhitelistTransformUnit.getWhitelistedDomains().addAll(config.getSkinDomains());
 
 		transformer.units.add(new YggdrasilKeyTransformUnit());
+		transformer.units.add(new YggdrasilCheckPrivilegesTransformUnit());
 		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
 
 		return transformer;
