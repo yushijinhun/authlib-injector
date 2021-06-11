@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,8 @@ package moe.yushi.authlibinjector.httpd;
 
 import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_JSON;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
@@ -26,7 +28,14 @@ import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 
 public class PrivilegesFilter implements URLFilter {
 
-	private static final String[] PRIVILEGES = { "onlineChat", "multiplayerServer", "multiplayerRealms" };
+	private final Map<String, Boolean> privileges = new LinkedHashMap<>();
+
+	public PrivilegesFilter() {
+		privileges.put("onlineChat", true);
+		privileges.put("multiplayerServer", true);
+		privileges.put("multiplayerRealms", true);
+		privileges.put("telemetry", false);
+	}
 
 	@Override
 	public boolean canHandle(String domain) {
@@ -37,13 +46,13 @@ public class PrivilegesFilter implements URLFilter {
 	public Optional<Response> handle(String domain, String path, IHTTPSession session) throws IOException {
 		if (domain.equals("api.minecraftservices.com") && path.equals("/privileges") && session.getMethod().equals("GET")) {
 			JSONObject response = new JSONObject();
-			JSONObject privileges = new JSONObject();
-			for (String privilegeName : PRIVILEGES) {
-				JSONObject privilege = new JSONObject();
-				privilege.put("enabled", true);
-				privileges.put(privilegeName, privilege);
-			}
-			response.put("privileges", privileges);
+			JSONObject privilegesJson = new JSONObject();
+			privileges.forEach((name, enabled) -> {
+				JSONObject privilegeJson = new JSONObject();
+				privilegeJson.put("enabled", enabled);
+				privilegesJson.put(name, privilegeJson);
+			});
+			response.put("privileges", privilegesJson);
 			return Optional.of(Response.newFixedLength(Status.OK, CONTENT_TYPE_JSON, response.toJSONString()));
 		} else {
 			return Optional.empty();
