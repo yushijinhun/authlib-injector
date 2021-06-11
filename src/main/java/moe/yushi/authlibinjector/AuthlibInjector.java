@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
+import moe.yushi.authlibinjector.httpd.PrivilegesFilter;
 import moe.yushi.authlibinjector.httpd.QueryProfileFilter;
 import moe.yushi.authlibinjector.httpd.QueryUUIDsFilter;
 import moe.yushi.authlibinjector.httpd.URLFilter;
@@ -237,6 +238,12 @@ public final class AuthlibInjector {
 			filters.add(new QueryProfileFilter(mojangClient, customClient));
 		} else {
 			log(INFO, "Disabled Mojang namespace");
+		}
+
+		boolean polyfillPrivilegesApi = !Boolean.TRUE.equals(config.getMeta().get("feature.privileges_api"));
+		if (polyfillPrivilegesApi) {
+			log(INFO, "Polyfill privileges API");
+			filters.add(new PrivilegesFilter());
 		}
 
 		return filters;
