@@ -50,6 +50,11 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 			".mojang.com"
 	};
 
+	private static final String[] DEFAULT_BLACKLISTED_DOMAINS = {
+			"education.minecraft.net",
+			"bugs.mojang.com"
+	};
+
 	private static final List<String> WHITELISTED_DOMAINS = new CopyOnWriteArrayList<>();
 
 	public static List<String> getWhitelistedDomains() {
@@ -63,6 +68,12 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 			domain = new URI(url).getHost();
 		} catch (URISyntaxException e) {
 			throw new IllegalArgumentException("Invalid URL '" + url + "'");
+		}
+
+		for (String pattern : DEFAULT_BLACKLISTED_DOMAINS) {
+			if (domainMatches(pattern, domain)) {
+				return false;
+			}
 		}
 
 		for (String pattern : DEFAULT_WHITELISTED_DOMAINS) {
@@ -85,7 +96,8 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					if ("isWhitelistedDomain".equals(name) && "(Ljava/lang/String;)Z".equals(desc)) {
+					if (("isWhitelistedDomain".equals(name) || "isAllowedTextureDomain".equals(name)) &&
+							"(Ljava/lang/String;)Z".equals(desc)) {
 						ctx.markModified();
 						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 						mv.visitCode();
