@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,7 @@
 package moe.yushi.authlibinjector.transform.support;
 
 import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -50,6 +50,11 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 			".mojang.com"
 	};
 
+	private static final String[] DEFAULT_BLACKLISTED_DOMAINS = {
+			"education.minecraft.net",
+			"bugs.mojang.com"
+	};
+
 	private static final List<String> WHITELISTED_DOMAINS = new CopyOnWriteArrayList<>();
 
 	public static List<String> getWhitelistedDomains() {
@@ -63,6 +68,12 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 			domain = new URI(url).getHost();
 		} catch (URISyntaxException e) {
 			throw new IllegalArgumentException("Invalid URL '" + url + "'");
+		}
+
+		for (String pattern : DEFAULT_BLACKLISTED_DOMAINS) {
+			if (domainMatches(pattern, domain)) {
+				return false;
+			}
 		}
 
 		for (String pattern : DEFAULT_WHITELISTED_DOMAINS) {
@@ -81,11 +92,12 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
-			return Optional.of(new ClassVisitor(ASM7, writer) {
+			return Optional.of(new ClassVisitor(ASM9, writer) {
 
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					if ("isWhitelistedDomain".equals(name) && "(Ljava/lang/String;)Z".equals(desc)) {
+					if (("isWhitelistedDomain".equals(name) || "isAllowedTextureDomain".equals(name)) &&
+							"(Ljava/lang/String;)Z".equals(desc)) {
 						ctx.markModified();
 						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 						mv.visitCode();

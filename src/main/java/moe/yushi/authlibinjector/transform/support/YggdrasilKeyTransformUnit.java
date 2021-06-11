@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,7 +16,7 @@
  */
 package moe.yushi.authlibinjector.transform.support;
 
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.H_INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import java.lang.invoke.MethodHandle;
@@ -52,10 +52,10 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
-			return Optional.of(new ClassVisitor(ASM7, writer) {
+			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					return new MethodVisitor(ASM7, super.visitMethod(access, name, desc, signature, exceptions)) {
+					return new MethodVisitor(ASM9, super.visitMethod(access, name, desc, signature, exceptions)) {
 						@Override
 						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
 							if (opcode == INVOKEVIRTUAL
