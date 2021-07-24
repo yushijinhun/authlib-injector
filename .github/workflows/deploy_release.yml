@@ -40,8 +40,8 @@ jobs:
           asset_name='${{ github.event.release.assets[0].name }}'
 
           cd ~/deploy
-          git config --local user.name "authlib-injector Deploy Bot"
-          git config --local user.email "authlib-injector-deploy-bot@yushi.moe"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
           mkdir -p "artifact/$build_number"
           wget -O "artifact/$build_number/$asset_name" '${{ github.event.release.assets[0].browser_download_url }}'
