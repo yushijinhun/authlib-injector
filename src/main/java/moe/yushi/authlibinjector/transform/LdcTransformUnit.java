@@ -19,6 +19,7 @@ package moe.yushi.authlibinjector.transform;
 import static org.objectweb.asm.Opcodes.ASM9;
 import java.util.Optional;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 
 public abstract class LdcTransformUnit implements TransformUnit {
@@ -44,6 +45,21 @@ public abstract class LdcTransformUnit implements TransformUnit {
 						} else {
 							super.visitLdcInsn(cst);
 						}
+					}
+
+					@Override
+					public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+						for (int i = 0; i < bootstrapMethodArguments.length; i++) {
+							if (bootstrapMethodArguments[i] instanceof String) {
+								String constant = (String) bootstrapMethodArguments[i];
+								Optional<String> transformed = transformLdc(constant);
+								if (transformed.isPresent() && !transformed.get().equals(constant)) {
+									ctx.markModified();
+									bootstrapMethodArguments[i] = transformed.get();
+								}
+							}
+						}
+						super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
 					}
 				};
 			}
