@@ -33,6 +33,7 @@ import java.io.UncheckedIOException;
 import java.lang.instrument.Instrumentation;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,15 +103,31 @@ public final class AuthlibInjector {
 		}
 	}
 
-	private static Optional<String> getPrefetchedResponse() {
-		String prefetched = System.getProperty("authlibinjector.yggdrasil.prefetched");
-		if (prefetched == null) {
-			prefetched = System.getProperty("org.to2mbn.authlibinjector.config.prefetched");
-			if (prefetched != null) {
-				log(WARNING, "'-Dorg.to2mbn.authlibinjector.config.prefetched=' is deprecated, use '-Dauthlibinjector.yggdrasil.prefetched=' instead");
+	private static Optional<String> getPrefetchedMetadata() {
+		String metadataFile = System.getProperty("authlibinjector.prefetch.file");
+		if (metadataFile != null) {
+			try {
+				return Optional.of(new String(Files.readAllBytes(Paths.get(metadataFile)), UTF_8));
+			} catch (IOException e) {
+				log(ERROR, "Unable read metadata file [" + metadataFile + "]: " + e);
+				throw new InitializationException(e);
 			}
 		}
-		return Optional.ofNullable(prefetched);
+
+		String encoded = System.getProperty("authlibinjector.yggdrasil.prefetched");
+		if (encoded != null) {
+			log(WARNING, "'-Dauthlibinjector.yggdrasil.prefetched=' is deprecated, use '-Dauthlibinjector.prefetch.file=' instead");
+			try {
+				return Optional.of(new String(Base64.getDecoder().decode(removeNewLines(encoded)), UTF_8));
+			} catch (IllegalArgumentException e) {
+				log(ERROR, "Unable to decode metadata: " + e + "\n"
+						+ "Encoded metadata:\n"
+						+ encoded);
+				throw new InitializationException(e);
+			}
+		}
+
+		return Optional.empty();
 	}
 
 	private static APIMetadata fetchAPIMetadata(String apiUrl) {
@@ -125,18 +142,10 @@ public final class AuthlibInjector {
 
 		String metadataResponse;
 
-		Optional<String> prefetched = getPrefetchedResponse();
+		Optional<String> prefetched = getPrefetchedMetadata();
 		if (prefetched.isPresent()) {
-
 			log(DEBUG, "Prefetched metadata detected");
-			try {
-				metadataResponse = new String(Base64.getDecoder().decode(removeNewLines(prefetched.get())), UTF_8);
-			} catch (IllegalArgumentException e) {
-				log(ERROR, "Unable to decode metadata: " + e + "\n"
-						+ "Encoded metadata:\n"
-						+ prefetched.get());
-				throw new InitializationException(e);
-			}
+			metadataResponse = prefetched.get();
 
 		} else {
 
