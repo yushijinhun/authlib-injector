@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,6 +21,7 @@ import static moe.yushi.authlibinjector.util.Logging.log;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
+import static org.objectweb.asm.Opcodes.ACC_INTERFACE;
 import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -48,6 +49,7 @@ public class ClassTransformer implements ClassFileTransformer {
 
 		private final String className;
 
+		public boolean isInterface;
 		public boolean modifiedMark;
 		public int minVersionMark = -1;
 		public int upgradedVersionMark = -1;
@@ -84,7 +86,7 @@ public class ClassTransformer implements ClassFileTransformer {
 					className.replace('.', '/'),
 					CallbackSupport.METAFACTORY_NAME,
 					CallbackSupport.METAFACTORY_SIGNATURE,
-					false);
+					isInterface);
 		}
 	}
 
@@ -112,6 +114,7 @@ public class ClassTransformer implements ClassFileTransformer {
 			Optional<ClassVisitor> optionalVisitor = unit.transform(classLoader, className, writer, ctx);
 			if (optionalVisitor.isPresent()) {
 				ClassReader reader = new ClassReader(classBuffer);
+				ctx.isInterface = (reader.getAccess() & ACC_INTERFACE) != 0;
 				reader.accept(optionalVisitor.get(), 0);
 				if (ctx.modifiedMark) {
 					log(INFO, "Transformed [" + className + "] with [" + unit + "]");
