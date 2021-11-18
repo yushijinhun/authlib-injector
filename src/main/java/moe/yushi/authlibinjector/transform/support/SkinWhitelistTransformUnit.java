@@ -52,7 +52,8 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 
 	private static final String[] DEFAULT_BLACKLISTED_DOMAINS = {
 			"education.minecraft.net",
-			"bugs.mojang.com"
+			"bugs.mojang.com",
+			"feedback.minecraft.net"
 	};
 
 	private static final List<String> WHITELISTED_DOMAINS = new CopyOnWriteArrayList<>();
