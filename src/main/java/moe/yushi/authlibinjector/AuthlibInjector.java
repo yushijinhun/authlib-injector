@@ -243,7 +243,10 @@ public final class AuthlibInjector {
 			log(INFO, "Disabled Mojang namespace");
 		}
 
-		filters.add(new AntiFeaturesFilter());
+		boolean mojangAntiFeaturesDefault = Boolean.TRUE.equals(config.getMeta().get("feature.enable_mojang_anti_features"));
+		if (!Config.mojangAntiFeatures.isEnabled(mojangAntiFeaturesDefault)) {
+			filters.add(new AntiFeaturesFilter());
+		}
 
 		return filters;
 	}

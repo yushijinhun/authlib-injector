@@ -81,4 +81,17 @@ Configure Minecraft server with the following JVM parameter:
     Do not show authentication server name in Minecraft menu screen.
     By default, authlib-injector alters --versionType parameter to display the authentication server name.
     This feature can be disabled using this option.
+
+-Dauthlibinjector.mojangAntiFeatures={default|enabled|disabled}
+    Whether to turn on Minecraft's anti-features.
+    It's enabled by default if the authentication server does NOT send feature.enable_mojang_anti_features option.
+
+    These anti-features include:
+     - Minecraft server blocklist
+     - The API to query user privileges:
+       * Online chat (allowed if the option is disabled)
+       * Multiplayer (allowed if the option is disabled)
+       * Realms (allowed if the option is disabled)
+       * Telemetry (turned off if the option is disabled)
+       * Profanity filter (turned off if the option is disabled)
 ```

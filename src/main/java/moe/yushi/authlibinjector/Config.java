@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -59,6 +59,7 @@ public final class Config {
 	public static Set<String> ignoredPackages;
 	public static FeatureOption mojangNamespace;
 	public static FeatureOption legacySkinPolyfill;
+	public static FeatureOption mojangAntiFeatures;
 	public static boolean noShowServerName;
 
 	private static void initDebugOptions() {
@@ -202,6 +203,7 @@ public final class Config {
 
 		mojangNamespace = parseFeatureOption("authlibinjector.mojangNamespace");
 		legacySkinPolyfill = parseFeatureOption("authlibinjector.legacySkinPolyfill");
+		mojangAntiFeatures = parseFeatureOption("authlibinjector.mojangAntiFeatures");
 		httpdDisabled = System.getProperty("authlibinjector.disableHttpd") != null;
 		noShowServerName = System.getProperty("authlibinjector.noShowServerName") != null;
 	}
