@@ -88,6 +88,19 @@ gradle
 -Dauthlibinjector.noShowServerName
     不要在 Minecraft 主界面展示验证服务器名称.
     默认情况下, authlib-injector 通过更改 --versionType 参数来在 Minecraft 主界面显示验证服务器名称, 使用本选项可以禁用该功能.
+
+-Dauthlibinjector.mojangAntiFeatures={default|enabled|disabled}
+    设置是否开启 Minecraft 的部分 anti-feature.
+    若验证服务器未设置 feature.enable_mojang_anti_features 选项, 则默认禁用.
+
+  Minecraft 的 anti-feature 包括:
+     - Minecraft 服务器屏蔽列表
+     - 查询用户权限的接口, 涵盖以下项目:
+       * 聊天权限 (禁用后默认允许)
+       * 多人游戏权限 (禁用后默认允许)
+       * 领域权限 (禁用后默认允许)
+       * 遥测 (禁用后默认关闭)
+       * 冒犯性内容过滤 (禁用后默认关闭)
 ```
 
 ## 捐助
