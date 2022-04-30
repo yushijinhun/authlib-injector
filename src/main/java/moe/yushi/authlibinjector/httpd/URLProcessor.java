@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -98,6 +98,7 @@ public class URLProcessor {
 		return redirector.redirect(domain, path);
 	}
 
+	private DebugApiEndpoint debugApi = new DebugApiEndpoint();
 	private volatile NanoHTTPD httpd;
 	private final Object httpdLock = new Object();
 
@@ -120,6 +121,10 @@ public class URLProcessor {
 		return new NanoHTTPD("127.0.0.1", 0) {
 			@Override
 			public Response serve(IHTTPSession session) {
+				if (session.getUri().startsWith("/debug/")) {
+					return debugApi.serve(session);
+				}
+
 				Matcher matcher = LOCAL_URL_REGEX.matcher(session.getUri());
 				if (matcher.find()) {
 					String protocol = matcher.group("protocol");
