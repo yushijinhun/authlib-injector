@@ -101,6 +101,14 @@ gradle
        * 领域权限 (禁用后默认允许)
        * 遥测 (禁用后默认关闭)
        * 冒犯性内容过滤 (禁用后默认关闭)
+
+-Dauthlibinjector.profileKey={default|enabled|disabled}
+    是否启用消息签名密钥对功能, 这一功能在 22w17a 引入, 用于多人游戏中聊天消息的数字签名.
+    启用此功能后, Minecraft 会向 `/minecraftservices/player/certificates` 发送 POST 请求, 以获取由验证服务器颁发的密钥对.
+    此功能需要验证服务器支持, 若验证服务器未设置 feature.enable_profile_key 选项, 则该功能默认禁用.
+
+    当缺少消息签名密钥时, 玩家将无法进入设置了 enforce-secure-profile=true 选项的服务器.
+    而当其他玩家的客户端在收到无有效签名的聊天消息时, 会在日志中记录警告.
 ```
 
 ## 捐助

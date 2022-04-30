@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
+import moe.yushi.authlibinjector.httpd.ProfileKeyFilter;
 import moe.yushi.authlibinjector.httpd.AntiFeaturesFilter;
 import moe.yushi.authlibinjector.httpd.QueryProfileFilter;
 import moe.yushi.authlibinjector.httpd.QueryUUIDsFilter;
@@ -246,6 +247,11 @@ public final class AuthlibInjector {
 		boolean mojangAntiFeaturesDefault = Boolean.TRUE.equals(config.getMeta().get("feature.enable_mojang_anti_features"));
 		if (!Config.mojangAntiFeatures.isEnabled(mojangAntiFeaturesDefault)) {
 			filters.add(new AntiFeaturesFilter());
+		}
+
+		boolean profileKeyDefault = Boolean.TRUE.equals(config.getMeta().get("feature.enable_profile_key"));
+		if (!Config.profileKey.isEnabled(profileKeyDefault)) {
+			filters.add(new ProfileKeyFilter());
 		}
 
 		return filters;

@@ -94,4 +94,12 @@ Configure Minecraft server with the following JVM parameter:
        * Realms (allowed if the option is disabled)
        * Telemetry (turned off if the option is disabled)
        * Profanity filter (turned off if the option is disabled)
+
+-Dauthlibinjector.profileKey={default|enabled|disabled}
+    Whether to enable the profile signing key feature. This feature is introduced in 22w17a, and is used to implement the multiplayer secure chat signing.
+    If this this feature is enabled, Minecraft will send a POST request to `/minecraftservices/player/certificates` to retrieve the key pair issued by the authentication server.
+    It's enabled by default if the authentication server sends feature.enable_profile_key option.
+
+    If the profile signing key isn't present, the player will be unable to join servers that enable enforce-secure-profile=true option.
+    And other players' Minecraft client will log a warning when receiving an unsigned chat message.
 ```
