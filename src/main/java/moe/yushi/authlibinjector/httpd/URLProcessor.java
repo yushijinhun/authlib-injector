@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import moe.yushi.authlibinjector.Config;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IStatus;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD;
@@ -118,7 +119,7 @@ public class URLProcessor {
 	}
 
 	private NanoHTTPD createHttpd() {
-		return new NanoHTTPD("127.0.0.1", 0) {
+		return new NanoHTTPD("127.0.0.1", Config.httpdPort) {
 			@Override
 			public Response serve(IHTTPSession session) {
 				if (session.getUri().startsWith("/debug/")) {

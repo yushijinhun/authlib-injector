@@ -77,6 +77,9 @@ Configure Minecraft server with the following JVM parameter:
      - Mojang namespace
      - Legacy skin API polyfill
 
+-Dauthlibinjector.httpdPort={port}
+    Sets the port used by the local HTTP server, defaults to 0 (randomly chosen).
+
 -Dauthlibinjector.noShowServerName
     Do not show authentication server name in Minecraft menu screen.
     By default, authlib-injector alters --versionType parameter to display the authentication server name.

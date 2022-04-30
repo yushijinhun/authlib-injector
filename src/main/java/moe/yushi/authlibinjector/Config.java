@@ -62,6 +62,7 @@ public final class Config {
 	public static FeatureOption mojangAntiFeatures;
 	public static FeatureOption profileKey;
 	public static boolean noShowServerName;
+	public static int httpdPort;
 
 	private static void initDebugOptions() {
 		String prop = System.getProperty("authlibinjector.debug");
@@ -213,5 +214,6 @@ public final class Config {
 		profileKey = parseFeatureOption("authlibinjector.profileKey");
 		httpdDisabled = System.getProperty("authlibinjector.disableHttpd") != null;
 		noShowServerName = System.getProperty("authlibinjector.noShowServerName") != null;
+		httpdPort = Integer.getInteger("authlibinjector.httpdPort", 0);
 	}
 }

@@ -85,6 +85,9 @@ gradle
      - Mojang 命名空间
      - 旧式皮肤 API polyfill
 
+-Dauthlibinjector.httpdPort={端口号}
+    设置内置 HTTP 服务器使用的端口号, 默认为 0 (随机分配).
+
 -Dauthlibinjector.noShowServerName
     不要在 Minecraft 主界面展示验证服务器名称.
     默认情况下, authlib-injector 通过更改 --versionType 参数来在 Minecraft 主界面显示验证服务器名称, 使用本选项可以禁用该功能.
