@@ -16,7 +16,7 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import java.util.Set;
+import java.util.List;
 import org.objectweb.asm.Handle;
 
 public interface TransformContext {
@@ -29,5 +29,5 @@ public interface TransformContext {
 
 	Handle acquireCallbackMetafactory();
 
-	Set<String> getStringConstants();
+	List<String> getStringConstants();
 }
