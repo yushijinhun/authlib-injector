@@ -31,6 +31,10 @@ public class UsernameCharacterCheckTransformer implements TransformUnit {
 
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context) {
+		if (!context.getStringConstants().contains("Invalid characters in username")) {
+			return Optional.empty();
+		}
+
 		return Optional.of(new ClassVisitor(ASM9, writer) {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {

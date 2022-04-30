@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +16,7 @@
  */
 package moe.yushi.authlibinjector.transform;
 
+import java.util.Set;
 import org.objectweb.asm.Handle;
 
 public interface TransformContext {
@@ -27,4 +28,6 @@ public interface TransformContext {
 	void upgradeClassVersion(int version);
 
 	Handle acquireCallbackMetafactory();
+
+	Set<String> getStringConstants();
 }

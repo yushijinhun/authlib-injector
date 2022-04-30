@@ -28,6 +28,7 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -46,56 +47,56 @@ public class ClassTransformer implements ClassFileTransformer {
 	public final Set<String> ignores = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	public final PerformanceMetrics performanceMetrics = new PerformanceMetrics();
 
-	private static class TransformContextImpl implements TransformContext {
-
-		private final String className;
-
-		public boolean isInterface;
-		public boolean modifiedMark;
-		public int minVersionMark = -1;
-		public int upgradedVersionMark = -1;
-		public boolean callbackMetafactoryRequested = false;
-
-		public TransformContextImpl(String className) {
-			this.className = className;
-		}
-
-		@Override
-		public void markModified() {
-			modifiedMark = true;
-		}
-
-		@Override
-		public void requireMinimumClassVersion(int version) {
-			if (this.minVersionMark < version) {
-				this.minVersionMark = version;
-			}
-		}
-
-		@Override
-		public void upgradeClassVersion(int version) {
-			if (this.upgradedVersionMark < version) {
-				this.upgradedVersionMark = version;
-			}
-		}
-
-		@Override
-		public Handle acquireCallbackMetafactory() {
-			this.callbackMetafactoryRequested = true;
-			return new Handle(
-					H_INVOKESTATIC,
-					className.replace('.', '/'),
-					CallbackSupport.METAFACTORY_NAME,
-					CallbackSupport.METAFACTORY_SIGNATURE,
-					isInterface);
-		}
-	}
-
 	private static class TransformHandle {
+
+		private class TransformContextImpl implements TransformContext {
+
+			public boolean modifiedMark;
+			public int minVersionMark = -1;
+			public int upgradedVersionMark = -1;
+			public boolean callbackMetafactoryRequested = false;
+
+			@Override
+			public void markModified() {
+				modifiedMark = true;
+			}
+
+			@Override
+			public void requireMinimumClassVersion(int version) {
+				if (this.minVersionMark < version) {
+					this.minVersionMark = version;
+				}
+			}
+
+			@Override
+			public void upgradeClassVersion(int version) {
+				if (this.upgradedVersionMark < version) {
+					this.upgradedVersionMark = version;
+				}
+			}
+
+			@Override
+			public Handle acquireCallbackMetafactory() {
+				this.callbackMetafactoryRequested = true;
+				return new Handle(
+						H_INVOKESTATIC,
+						className.replace('.', '/'),
+						CallbackSupport.METAFACTORY_NAME,
+						CallbackSupport.METAFACTORY_SIGNATURE,
+						TransformHandle.this.isInterface());
+			}
+
+			@Override
+			public Set<String> getStringConstants() {
+				return TransformHandle.this.getStringConstants();
+			}
+		}
 
 		private final String className;
 		private final ClassLoader classLoader;
 		private byte[] classBuffer;
+		private ClassReader cachedClassReader;
+		private Set<String> cachedConstants;
 
 		private List<TransformUnit> appliedTransformers;
 		private int minVersion = -1;
@@ -108,30 +109,85 @@ public class ClassTransformer implements ClassFileTransformer {
 			this.classLoader = classLoader;
 		}
 
-		public void accept(TransformUnit unit) {
-			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-			TransformContextImpl ctx = new TransformContextImpl(className);
+		private ClassReader getClassReader() {
+			if (cachedClassReader == null)
+				cachedClassReader = new ClassReader(classBuffer);
+			return cachedClassReader;
+		}
 
-			Optional<ClassVisitor> optionalVisitor = unit.transform(classLoader, className, writer, ctx);
-			if (optionalVisitor.isPresent()) {
-				ClassReader reader = new ClassReader(classBuffer);
-				ctx.isInterface = (reader.getAccess() & ACC_INTERFACE) != 0;
-				reader.accept(optionalVisitor.get(), 0);
-				if (ctx.modifiedMark) {
-					log(INFO, "Transformed [" + className + "] with [" + unit + "]");
-					if (appliedTransformers == null) {
-						appliedTransformers = new ArrayList<>();
-					}
-					appliedTransformers.add(unit);
-					classBuffer = writer.toByteArray();
-					if (ctx.minVersionMark > this.minVersion) {
-						this.minVersion = ctx.minVersionMark;
-					}
-					if (ctx.upgradedVersionMark > this.upgradedVersion) {
-						this.upgradedVersion = ctx.upgradedVersionMark;
-					}
-					this.addCallbackMetafactory |= ctx.callbackMetafactoryRequested;
+		private boolean isInterface() {
+			return (getClassReader().getAccess() & ACC_INTERFACE) != 0;
+		}
+
+		private static Set<String> extractStringConstants(ClassReader reader) {
+			Set<String> constants = new HashSet<>();
+			int constantPoolSize = reader.getItemCount();
+			char[] buf = new char[reader.getMaxStringLength()];
+			for (int idx = 1; idx < constantPoolSize; idx++) {
+				int offset = reader.getItem(idx);
+				if (offset == 0)
+					continue;
+				int type = reader.readByte(offset - 1);
+				if (type == 8) { // CONSTANT_String_info
+					String constant = (String) reader.readConst(idx, buf);
+					constants.add(constant);
 				}
+			}
+			return constants;
+		}
+
+		private Set<String> getStringConstants() {
+			if (cachedConstants == null)
+				cachedConstants = extractStringConstants(getClassReader());
+			return cachedConstants;
+		}
+
+		public void accept(TransformUnit... units) {
+			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+
+			TransformContextImpl[] ctxs = new TransformContextImpl[units.length];
+			ClassVisitor chain = writer;
+			for (int i = units.length - 1; i >= 0; i--) {
+				TransformContextImpl ctx = new TransformContextImpl();
+				Optional<ClassVisitor> visitor = units[i].transform(classLoader, className, chain, ctx);
+				if (!visitor.isPresent())
+					continue;
+				ctxs[i] = ctx;
+				chain = visitor.get();
+			}
+
+			if (chain == writer)
+				return;
+
+			getClassReader().accept(chain, 0);
+
+			boolean modified = false;
+			for (int i = 0; i < units.length; i++) {
+				TransformContextImpl ctx = ctxs[i];
+				if (ctx == null || !ctx.modifiedMark)
+					continue;
+
+				log(INFO, "Transformed [" + className + "] with [" + units[i] + "]");
+
+				if (appliedTransformers == null)
+					appliedTransformers = new ArrayList<>();
+				appliedTransformers.add(units[i]);
+
+				if (ctx.minVersionMark > this.minVersion) {
+					this.minVersion = ctx.minVersionMark;
+				}
+				if (ctx.upgradedVersionMark > this.upgradedVersion) {
+					this.upgradedVersion = ctx.upgradedVersionMark;
+				}
+				this.addCallbackMetafactory |= ctx.callbackMetafactoryRequested;
+
+				modified = true;
+			}
+
+			if (modified) {
+				classBuffer = writer.toByteArray();
+				cachedClassReader = null;
+				cachedConstants = null;
 			}
 		}
 
@@ -180,7 +236,8 @@ public class ClassTransformer implements ClassFileTransformer {
 				}
 
 				TransformHandle handle = new TransformHandle(loader, className, classfileBuffer);
-				units.forEach(handle::accept);
+				TransformUnit[] unitsArray = units.toArray(new TransformUnit[0]);
+				handle.accept(unitsArray);
 				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 
 				Optional<byte[]> transformResult = handle.finish();
