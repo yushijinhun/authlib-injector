@@ -37,7 +37,7 @@ gradle
 
     需要注意的是, authlib-injector 的日志是不会输出到 Minecraft 服务端/客户端的日志文件中的.
 
-    每次启动时，日志文件都会被清空. 如果有多个进程使用同一个日志文件, 则只有最早启动的会成功打开日志文件.
+    每次启动时, 日志文件都会被清空. 如果有多个进程使用同一个日志文件, 则只有最早启动的会成功打开日志文件.
 
 -Dauthlibinjector.mojangNamespace={default|enabled|disabled}
     设置是否启用 Mojang 命名空间 (@mojang 后缀).
