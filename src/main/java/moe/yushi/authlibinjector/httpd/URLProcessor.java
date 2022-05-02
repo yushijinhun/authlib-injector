@@ -68,6 +68,10 @@ public class URLProcessor {
 	 * @return the transformed URL, or empty if it doesn't need to be transformed
 	 */
 	public Optional<String> transformURL(String inputUrl) {
+		if (!inputUrl.startsWith("http")) {
+			// fast path
+			return Optional.empty();
+		}
 		Matcher matcher = URL_REGEX.matcher(inputUrl);
 		if (!matcher.find()) {
 			return Optional.empty();
