@@ -27,11 +27,10 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -43,8 +42,8 @@ public class ClassTransformer implements ClassFileTransformer {
 
 	public final List<TransformUnit> units = new CopyOnWriteArrayList<>();
 	public final List<ClassLoadingListener> listeners = new CopyOnWriteArrayList<>();
-	public final Set<String> ignores = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	public final PerformanceMetrics performanceMetrics = new PerformanceMetrics();
+	private String[] ignores = new String[0];
 
 	private class TransformHandle {
 
@@ -224,8 +223,8 @@ public class ClassTransformer implements ClassFileTransformer {
 				long t0 = System.nanoTime();
 
 				String className = internalClassName.replace('/', '.');
-				for (String prefix : ignores) {
-					if (className.startsWith(prefix)) {
+				for (String ignore : ignores) {
+					if (className.startsWith(ignore)) {
 						listeners.forEach(it -> it.onClassLoading(loader, className, classfileBuffer, Collections.emptyList()));
 
 						long t1 = System.nanoTime();
@@ -280,5 +279,9 @@ public class ClassTransformer implements ClassFileTransformer {
 			}
 		}
 		return constants;
+	}
+
+	public void setIgnores(Collection<String> newIgnores) {
+		ignores = newIgnores.toArray(ignores);
 	}
 }

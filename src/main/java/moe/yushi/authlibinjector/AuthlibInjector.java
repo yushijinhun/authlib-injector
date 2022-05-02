@@ -261,7 +261,7 @@ public final class AuthlibInjector {
 		URLProcessor urlProcessor = new URLProcessor(createFilters(config), new DefaultURLRedirector(config));
 
 		ClassTransformer transformer = new ClassTransformer();
-		transformer.ignores.addAll(Config.ignoredPackages);
+		transformer.setIgnores(Config.ignoredPackages);
 
 		if (Config.dumpClass) {
 			transformer.listeners.add(new DumpClassListener(Paths.get("").toAbsolutePath()));
