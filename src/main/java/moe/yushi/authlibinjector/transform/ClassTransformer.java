@@ -46,7 +46,7 @@ public class ClassTransformer implements ClassFileTransformer {
 	public final Set<String> ignores = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	public final PerformanceMetrics performanceMetrics = new PerformanceMetrics();
 
-	private static class TransformHandle {
+	private class TransformHandle {
 
 		private class TransformContextImpl implements TransformContext {
 
@@ -118,23 +118,6 @@ public class ClassTransformer implements ClassFileTransformer {
 			return (getClassReader().getAccess() & ACC_INTERFACE) != 0;
 		}
 
-		private static List<String> extractStringConstants(ClassReader reader) {
-			List<String> constants = new ArrayList<>();
-			int constantPoolSize = reader.getItemCount();
-			char[] buf = new char[reader.getMaxStringLength()];
-			for (int idx = 1; idx < constantPoolSize; idx++) {
-				int offset = reader.getItem(idx);
-				if (offset == 0)
-					continue;
-				int type = reader.readByte(offset - 1);
-				if (type == 8) { // CONSTANT_String_info
-					String constant = (String) reader.readConst(idx, buf);
-					constants.add(constant);
-				}
-			}
-			return constants;
-		}
-
 		private List<String> getStringConstants() {
 			if (cachedConstants == null)
 				cachedConstants = extractStringConstants(getClassReader());
@@ -142,6 +125,8 @@ public class ClassTransformer implements ClassFileTransformer {
 		}
 
 		public void accept(TransformUnit... units) {
+			long t0 = System.nanoTime();
+
 			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
 			TransformContextImpl[] ctxs = new TransformContextImpl[units.length];
@@ -155,10 +140,22 @@ public class ClassTransformer implements ClassFileTransformer {
 				chain = visitor.get();
 			}
 
+			long t1 = System.nanoTime();
+			synchronized (performanceMetrics) {
+				performanceMetrics.scanTime += t1 - t0;
+			}
+
 			if (chain == writer)
 				return;
 
+			t0 = System.nanoTime();
+
 			getClassReader().accept(chain, 0);
+
+			t1 = System.nanoTime();
+			synchronized (performanceMetrics) {
+				performanceMetrics.analysisTime += t1 - t0;
+			}
 
 			boolean modified = false;
 			for (int i = 0; i < units.length; i++) {
@@ -230,9 +227,17 @@ public class ClassTransformer implements ClassFileTransformer {
 				for (String prefix : ignores) {
 					if (className.startsWith(prefix)) {
 						listeners.forEach(it -> it.onClassLoading(loader, className, classfileBuffer, Collections.emptyList()));
+
+						long t1 = System.nanoTime();
+						synchronized (performanceMetrics) {
+							performanceMetrics.classesSkipped++;
+							performanceMetrics.totalTime += t1 - t0;
+							performanceMetrics.matchTime += t1 - t0;
+						}
 						return null;
 					}
 				}
+				long t1 = System.nanoTime();
 
 				TransformHandle handle = new TransformHandle(loader, className, classfileBuffer);
 				TransformUnit[] unitsArray = units.toArray(new TransformUnit[0]);
@@ -244,11 +249,12 @@ public class ClassTransformer implements ClassFileTransformer {
 					log(DEBUG, "No transformation is applied to [" + className + "]");
 				}
 
-				long t1 = System.nanoTime();
+				long t2 = System.nanoTime();
 
 				synchronized (performanceMetrics) {
-					performanceMetrics.classesProcessed++;
-					performanceMetrics.totalTime += t1 - t0;
+					performanceMetrics.classesScanned++;
+					performanceMetrics.totalTime += t2 - t0;
+					performanceMetrics.matchTime += t1 - t0;
 				}
 
 				return transformResult.orElse(null);
@@ -257,5 +263,22 @@ public class ClassTransformer implements ClassFileTransformer {
 			}
 		}
 		return null;
+	}
+
+	private static List<String> extractStringConstants(ClassReader reader) {
+		List<String> constants = new ArrayList<>();
+		int constantPoolSize = reader.getItemCount();
+		char[] buf = new char[reader.getMaxStringLength()];
+		for (int idx = 1; idx < constantPoolSize; idx++) {
+			int offset = reader.getItem(idx);
+			if (offset == 0)
+				continue;
+			int type = reader.readByte(offset - 1);
+			if (type == 8) { // CONSTANT_String_info
+				String constant = (String) reader.readConst(idx, buf);
+				constants.add(constant);
+			}
+		}
+		return constants;
 	}
 }
