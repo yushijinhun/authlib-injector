@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,10 +29,13 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.regex.Pattern;
 import moe.yushi.authlibinjector.Config;
 
 public final class Logging {
 	private Logging() {}
+
+	private static final Pattern CONTROL_CHARACTERS_FILTER = Pattern.compile("[\\p{Cc}&&[^\r\n\t]]");
 
 	private static final PrintStream out = System.err;
 	private static final FileChannel logfile = openLogFile();
@@ -83,13 +86,12 @@ public final class Logging {
 			log += sw.toString();
 		}
 		// remove control characters to prevent messing up the console
-		log = log.replaceAll("[\\p{Cc}&&[^\r\n\t]]", "");
+		log = CONTROL_CHARACTERS_FILTER.matcher(log).replaceAll("");
 		out.println(log);
 
 		if (logfile != null) {
 			try {
 				logfile.write(Charset.defaultCharset().encode(log + System.lineSeparator()));
-				logfile.force(true);
 			} catch (IOException ex) {
 				out.println("[authlib-injector] [ERROR] Error writing to log file: " + ex);
 			}
