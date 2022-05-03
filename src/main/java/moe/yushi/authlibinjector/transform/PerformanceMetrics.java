@@ -16,18 +16,19 @@
  */
 package moe.yushi.authlibinjector.transform;
 
-import java.util.List;
-import org.objectweb.asm.Handle;
+public class PerformanceMetrics {
 
-public interface TransformContext {
+	volatile long totalTime;
+	volatile long matchTime;
+	volatile long scanTime;
+	volatile long analysisTime;
+	volatile long classesScanned;
+	volatile long classesSkipped;
 
-	void markModified();
-
-	void requireMinimumClassVersion(int version);
-
-	void upgradeClassVersion(int version);
-
-	Handle acquireCallbackMetafactory();
-
-	List<String> getStringConstants();
+	public synchronized long getTotalTime() { return totalTime; }
+	public synchronized long getMatchTime() { return matchTime; }
+	public synchronized long getScanTime() { return scanTime; }
+	public synchronized long getAnalysisTime() { return analysisTime; }
+	public synchronized long getClassesScanned() { return classesScanned; }
+	public synchronized long getClassesSkipped() { return classesSkipped; }
 }

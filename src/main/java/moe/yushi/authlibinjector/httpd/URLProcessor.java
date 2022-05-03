@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import moe.yushi.authlibinjector.Config;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IStatus;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.NanoHTTPD;
@@ -67,6 +68,10 @@ public class URLProcessor {
 	 * @return the transformed URL, or empty if it doesn't need to be transformed
 	 */
 	public Optional<String> transformURL(String inputUrl) {
+		if (!inputUrl.startsWith("http")) {
+			// fast path
+			return Optional.empty();
+		}
 		Matcher matcher = URL_REGEX.matcher(inputUrl);
 		if (!matcher.find()) {
 			return Optional.empty();
@@ -98,6 +103,7 @@ public class URLProcessor {
 		return redirector.redirect(domain, path);
 	}
 
+	private DebugApiEndpoint debugApi = new DebugApiEndpoint();
 	private volatile NanoHTTPD httpd;
 	private final Object httpdLock = new Object();
 
@@ -117,9 +123,13 @@ public class URLProcessor {
 	}
 
 	private NanoHTTPD createHttpd() {
-		return new NanoHTTPD("127.0.0.1", 0) {
+		return new NanoHTTPD("127.0.0.1", Config.httpdPort) {
 			@Override
 			public Response serve(IHTTPSession session) {
+				if (session.getUri().startsWith("/debug/")) {
+					return debugApi.serve(session);
+				}
+
 				Matcher matcher = LOCAL_URL_REGEX.matcher(session.getUri());
 				if (matcher.find()) {
 					String protocol = matcher.group("protocol");

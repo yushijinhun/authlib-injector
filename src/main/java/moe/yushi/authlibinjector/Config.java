@@ -60,7 +60,9 @@ public final class Config {
 	public static FeatureOption mojangNamespace;
 	public static FeatureOption legacySkinPolyfill;
 	public static FeatureOption mojangAntiFeatures;
+	public static FeatureOption profileKey;
 	public static boolean noShowServerName;
+	public static int httpdPort;
 
 	private static void initDebugOptions() {
 		String prop = System.getProperty("authlibinjector.debug");
@@ -105,34 +107,6 @@ public final class Config {
 			"com.sun.",
 			"sun.",
 			"net.java.",
-
-			"com.google.",
-			"com.ibm.",
-			"com.jcraft.jogg.",
-			"com.jcraft.jorbis.",
-			"com.oracle.",
-			"com.paulscode.",
-
-			"org.GNOME.",
-			"org.apache.",
-			"org.graalvm.",
-			"org.jcp.",
-			"org.json.",
-			"org.lwjgl.",
-			"org.objectweb.asm.",
-			"org.w3c.",
-			"org.xml.",
-			"org.yaml.snakeyaml.",
-
-			"gnu.trove.",
-			"io.netty.",
-			"it.unimi.dsi.fastutil.",
-			"javassist.",
-			"jline.",
-			"joptsimple.",
-			"oracle.",
-			"oshi.",
-			"paulscode.",
 	};
 
 	private static void initIgnoredPackages() {
@@ -204,7 +178,9 @@ public final class Config {
 		mojangNamespace = parseFeatureOption("authlibinjector.mojangNamespace");
 		legacySkinPolyfill = parseFeatureOption("authlibinjector.legacySkinPolyfill");
 		mojangAntiFeatures = parseFeatureOption("authlibinjector.mojangAntiFeatures");
+		profileKey = parseFeatureOption("authlibinjector.profileKey");
 		httpdDisabled = System.getProperty("authlibinjector.disableHttpd") != null;
 		noShowServerName = System.getProperty("authlibinjector.noShowServerName") != null;
+		httpdPort = Integer.getInteger("authlibinjector.httpdPort", 0);
 	}
 }

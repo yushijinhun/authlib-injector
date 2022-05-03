@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,6 +26,17 @@ public abstract class LdcTransformUnit implements TransformUnit {
 
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
+		boolean matched = false;
+		for (String constant : ctx.getStringConstants()) {
+			Optional<String> transformed = transformLdc(constant);
+			if (transformed.isPresent() && !transformed.get().equals(constant)) {
+				matched = true;
+				break;
+			}
+		}
+		if (!matched)
+			return Optional.empty();
+
 		return Optional.of(new ClassVisitor(ASM9, writer) {
 
 			@Override

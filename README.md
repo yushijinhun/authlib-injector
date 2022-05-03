@@ -37,7 +37,7 @@ gradle
 
     需要注意的是, authlib-injector 的日志是不会输出到 Minecraft 服务端/客户端的日志文件中的.
 
-    每次启动时，日志文件都会被清空. 如果有多个进程使用同一个日志文件, 则只有最早启动的会成功打开日志文件.
+    每次启动时, 日志文件都会被清空. 如果有多个进程使用同一个日志文件, 则只有最早启动的会成功打开日志文件.
 
 -Dauthlibinjector.mojangNamespace={default|enabled|disabled}
     设置是否启用 Mojang 命名空间 (@mojang 后缀).
@@ -85,6 +85,9 @@ gradle
      - Mojang 命名空间
      - 旧式皮肤 API polyfill
 
+-Dauthlibinjector.httpdPort={端口号}
+    设置内置 HTTP 服务器使用的端口号, 默认为 0 (随机分配).
+
 -Dauthlibinjector.noShowServerName
     不要在 Minecraft 主界面展示验证服务器名称.
     默认情况下, authlib-injector 通过更改 --versionType 参数来在 Minecraft 主界面显示验证服务器名称, 使用本选项可以禁用该功能.
@@ -101,6 +104,14 @@ gradle
        * 领域权限 (禁用后默认允许)
        * 遥测 (禁用后默认关闭)
        * 冒犯性内容过滤 (禁用后默认关闭)
+
+-Dauthlibinjector.profileKey={default|enabled|disabled}
+    是否启用消息签名密钥对功能, 这一功能在 22w17a 引入, 用于多人游戏中聊天消息的数字签名.
+    启用此功能后, Minecraft 会向 /minecraftservices/player/certificates 发送 POST 请求, 以获取由验证服务器颁发的密钥对.
+    此功能需要验证服务器支持, 若验证服务器未设置 feature.enable_profile_key 选项, 则该功能默认禁用.
+
+    当缺少消息签名密钥时, 玩家将无法进入设置了 enforce-secure-profile=true 选项的服务器.
+    而当其他玩家的客户端在收到无有效签名的聊天消息时, 会在日志中记录警告.
 ```
 
 ## 捐助
