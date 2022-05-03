@@ -1,6 +1,6 @@
 plugins {
-	id 'com.github.johnrengelman.shadow' version '7.0.0'
-	id 'com.palantir.git-version' version '0.12.3'
+	id 'com.github.johnrengelman.shadow' version '7.1.2'
+	id 'com.palantir.git-version' version '0.13.0'
 	id 'java'
 }
 
@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.ow2.asm:asm:9.2'
+	implementation 'org.ow2.asm:asm:9.3'
 	testImplementation 'junit:junit:4.13.2'
 }
 
