@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,15 +18,14 @@ package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("resource")
 public class ChunkedInputStreamTest {
@@ -76,99 +75,99 @@ public class ChunkedInputStreamTest {
 		assertEquals(underlying.read(), -1);
 	}
 
-	@Test(expected = EOFException.class)
+	@Test
 	public void testReadEOF1() throws IOException {
 		byte[] data = ("a").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(EOFException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = EOFException.class)
+	@Test
 	public void testReadEOF2() throws IOException {
 		byte[] data = ("a\r").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(EOFException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = EOFException.class)
+	@Test
 	public void testReadEOF3() throws IOException {
 		byte[] data = ("a\r\n").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(EOFException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = EOFException.class)
+	@Test
 	public void testReadEOF4() throws IOException {
 		byte[] data = ("a\r\nabc").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(EOFException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = EOFException.class)
+	@Test
 	public void testReadEOF5() throws IOException {
 		byte[] data = ("a\r\n123456789a\r").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(EOFException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = EOFException.class)
+	@Test
 	public void testReadEOF6() throws IOException {
 		byte[] data = ("a\r\n123456789a\r\n").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(EOFException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = EOFException.class)
+	@Test
 	public void testReadEOF7() throws IOException {
 		byte[] data = ("a\r\n123456789a\r\n0\r\n\r").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(EOFException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = IOException.class)
+	@Test
 	public void testBadIn1() throws IOException {
 		byte[] data = ("-1").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(IOException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = IOException.class)
+	@Test
 	public void testBadIn2() throws IOException {
 		byte[] data = ("a\ra").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(IOException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = IOException.class)
+	@Test
 	public void testBadIn3() throws IOException {
 		byte[] data = ("a\r\n123456789aa").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(IOException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = IOException.class)
+	@Test
 	public void testBadIn4() throws IOException {
 		byte[] data = ("a\r\n123456789a\ra").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(IOException.class, () -> asBytes(in));
 	}
 
-	@Test(expected = IOException.class)
+	@Test
 	public void testBadIn5() throws IOException {
 		byte[] data = ("a\r\n123456789a\r\n0\r\n\r-").getBytes(US_ASCII);
 		ByteArrayInputStream underlying = new ByteArrayInputStream(data);
 		InputStream in = new ChunkedInputStream(underlying);
-		asBytes(in);
+		assertThrows(IOException.class, () -> asBytes(in));
 	}
 }

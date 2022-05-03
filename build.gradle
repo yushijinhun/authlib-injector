@@ -10,7 +10,7 @@ repositories {
 
 dependencies {
 	implementation 'org.ow2.asm:asm:9.3'
-	testImplementation 'junit:junit:4.13.2'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 }
 
 sourceCompatibility = 8
@@ -44,6 +44,10 @@ processResources {
 		rename('LICENSE', 'authlib-injector.txt')
 		into 'META-INF/licenses'
 	}
+}
+
+test {
+	useJUnitPlatform()
 }
 
 shadowJar {

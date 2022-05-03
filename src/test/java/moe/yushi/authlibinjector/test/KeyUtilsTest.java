@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,8 +17,9 @@
 package moe.yushi.authlibinjector.test;
 
 import static moe.yushi.authlibinjector.util.KeyUtils.decodePEMPublicKey;
-import static org.junit.Assert.assertArrayEquals;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 public class KeyUtilsTest {
 
@@ -34,14 +35,16 @@ public class KeyUtilsTest {
 				decodePEMPublicKey("-----BEGIN PUBLIC KEY-----\nf\n39/fw==\n-----END PUBLIC KEY-----\n"));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testDecodePublicKey3() {
-		decodePEMPublicKey("-----BEGIN PUBLIC KEY----- f39/fw== -----END PUBLIC KEY-----");
+		assertThrows(IllegalArgumentException.class,
+				() -> decodePEMPublicKey("-----BEGIN PUBLIC KEY----- f39/fw== -----END PUBLIC KEY-----"));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testDecodePublicKey4() {
-		decodePEMPublicKey("-----BEGIN PUBLIC KEY-----f39/fw==-----END NOT A PUBLIC KEY-----");
+		assertThrows(IllegalArgumentException.class,
+				() -> decodePEMPublicKey("-----BEGIN PUBLIC KEY-----f39/fw==-----END NOT A PUBLIC KEY-----"));
 	}
 
 }

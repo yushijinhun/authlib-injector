@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,16 +17,15 @@
 package moe.yushi.authlibinjector.internal.fi.iki.elonen;
 
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("resource")
 public class FixedLengthInputStreamTest {
@@ -58,10 +57,10 @@ public class FixedLengthInputStreamTest {
 		assertEquals(underlying.read(), 0x11);
 	}
 
-	@Test(expected = EOFException.class)
+	@Test
 	public void testReadEOF() throws IOException {
 		byte[] data = new byte[] { 0x11, 0x22, 0x33, 0x44, 0x55 };
 		InputStream in = new FixedLengthInputStream(new ByteArrayInputStream(data), 6);
-		asBytes(in);
+		assertThrows(EOFException.class, () -> asBytes(in));
 	}
 }
