@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,11 +16,18 @@
  */
 package moe.yushi.authlibinjector.transform.support;
 
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.H_INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
 import java.lang.invoke.MethodHandle;
+import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -31,6 +38,8 @@ import moe.yushi.authlibinjector.transform.CallbackMethod;
 import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
+import moe.yushi.authlibinjector.util.Logging;
+import moe.yushi.authlibinjector.util.Logging.Level;
 
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
@@ -46,6 +55,35 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	@CallbackMethod
+	public static boolean verifyPropertySignatureNew(Signature mojangSignatureObj, String propertyValue, String base64Signature) {
+		byte[] sig = Base64.getDecoder().decode(base64Signature);
+		byte[] data = propertyValue.getBytes();
+
+		try {
+			mojangSignatureObj.update(data);
+			if (mojangSignatureObj.verify(sig))
+				return true;
+		} catch (SignatureException e) {
+			Logging.log(DEBUG, "Failed to verify signature with Mojang's key", e);
+		}
+
+		for (PublicKey customKey : PUBLIC_KEYS) {
+			try {
+				Signature signature = Signature.getInstance("SHA1withRSA");
+				signature.initVerify(customKey);
+				signature.update(data);
+				if (signature.verify(sig))
+					return true;
+			} catch (GeneralSecurityException e) {
+				Logging.log(DEBUG, "Failed to verify signature with custom key " + customKey, e);
+			}
+		}
+
+		Logging.log(Level.WARNING, "Failed to verify property signature");
 		return false;
 	}
 
@@ -72,6 +110,32 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 					};
 				}
 
+			});
+		} else if ("com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo".equals(className)) {
+			return Optional.of(new ClassVisitor(ASM9, writer) {
+				@Override
+				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+					if ("validateProperty".equals(name) && "(Lcom/mojang/authlib/properties/Property;)Z".equals(desc)) {
+						ctx.markModified();
+
+						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+						mv.visitCode();
+						mv.visitVarInsn(ALOAD, 0);
+						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/yggdrasil/YggdrasilServicesKeyInfo", "signature", "()Ljava/security/Signature;", false);
+						mv.visitVarInsn(ALOAD, 1);
+						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", "getValue", "()Ljava/lang/String;", false);
+						mv.visitVarInsn(ALOAD, 1);
+						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", "getSignature", "()Ljava/lang/String;", false);
+						CallbackSupport.invoke(ctx, mv, YggdrasilKeyTransformUnit.class, "verifyPropertySignatureNew");
+						mv.visitInsn(IRETURN);
+						mv.visitMaxs(-1, -1);
+						mv.visitEnd();
+
+						return null;
+					} else {
+						return super.visitMethod(access, name, desc, signature, exceptions);
+					}
+				}
 			});
 		} else {
 			return Optional.empty();
