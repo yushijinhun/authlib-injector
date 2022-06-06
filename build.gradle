@@ -1,6 +1,6 @@
 plugins {
-	id 'com.github.johnrengelman.shadow' version '7.0.0'
-	id 'com.palantir.git-version' version '0.12.3'
+	id 'com.github.johnrengelman.shadow' version '7.1.2'
+	id 'com.palantir.git-version' version '0.13.0'
 	id 'java'
 }
 
@@ -9,8 +9,8 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.ow2.asm:asm:9.2'
-	testImplementation 'junit:junit:4.13.2'
+	implementation 'org.ow2.asm:asm:9.3'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 }
 
 sourceCompatibility = 8
@@ -44,6 +44,10 @@ processResources {
 		rename('LICENSE', 'authlib-injector.txt')
 		into 'META-INF/licenses'
 	}
+}
+
+test {
+	useJUnitPlatform()
 }
 
 shadowJar {

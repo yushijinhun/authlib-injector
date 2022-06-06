@@ -241,12 +241,13 @@ public class ClassTransformer implements ClassFileTransformer {
 				TransformHandle handle = new TransformHandle(loader, className, classfileBuffer);
 				TransformUnit[] unitsArray = units.toArray(new TransformUnit[0]);
 				handle.accept(unitsArray);
-				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 
 				Optional<byte[]> transformResult = handle.finish();
 				if (Config.printUntransformedClass && !transformResult.isPresent()) {
 					log(DEBUG, "No transformation is applied to [" + className + "]");
 				}
+
+				listeners.forEach(it -> it.onClassLoading(loader, className, handle.getFinalResult(), handle.getAppliedTransformers()));
 
 				long t2 = System.nanoTime();
 
