@@ -112,6 +112,11 @@ gradle
 
     当缺少消息签名密钥时, 玩家将无法进入设置了 enforce-secure-profile=true 选项的服务器.
     而当其他玩家的客户端在收到无有效签名的聊天消息时, 会在日志中记录警告.
+
+-Dauthlibinjector.usernameCheck={default|enabled|disabled}
+    是否启用玩家用户名检查, 若禁用, 则 authlib-injector 将关闭 Minecraft、BungeeCord 和 Paper 的用户名检查功能.
+    若验证服务器未设置 feature.usernameCheck 选项, 则默认禁用.
+    注意, 开启此功能将导致用户名包含非英文字符的玩家无法进入服务器.
 ```
 
 ## 捐助

@@ -277,8 +277,14 @@ public final class AuthlibInjector {
 		transformer.units.add(new CitizensTransformer());
 		transformer.units.add(new ConcatenateURLTransformUnit());
 		transformer.units.add(new BungeeCordAllowedCharactersTransformer());
-		transformer.units.add(new UsernameCharacterCheckTransformer());
-		transformer.units.add(new PaperUsernameCheckTransformer());
+
+		boolean usernameCheckDefault = Boolean.TRUE.equals(config.getMeta().get("feature.usernameCheck"));
+		if (Config.usernameCheck.isEnabled(usernameCheckDefault)) {
+			log(INFO, "Username check is enforced");
+		} else {
+			transformer.units.add(new UsernameCharacterCheckTransformer());
+			transformer.units.add(new PaperUsernameCheckTransformer());
+		}
 
 		transformer.units.add(new SkinWhitelistTransformUnit());
 		SkinWhitelistTransformUnit.getWhitelistedDomains().addAll(config.getSkinDomains());
