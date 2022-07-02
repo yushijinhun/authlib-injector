@@ -87,7 +87,7 @@ Configure Minecraft server with the following JVM parameter:
 
 -Dauthlibinjector.mojangAntiFeatures={default|enabled|disabled}
     Whether to turn on Minecraft's anti-features.
-    It's enabled by default if the authentication server does NOT send feature.enable_mojang_anti_features option.
+    It's disabled by default if the authentication server does NOT send feature.enable_mojang_anti_features option.
 
     These anti-features include:
      - Minecraft server blocklist
@@ -101,8 +101,13 @@ Configure Minecraft server with the following JVM parameter:
 -Dauthlibinjector.profileKey={default|enabled|disabled}
     Whether to enable the profile signing key feature. This feature is introduced in 22w17a, and is used to implement the multiplayer secure chat signing.
     If this this feature is enabled, Minecraft will send a POST request to /minecraftservices/player/certificates to retrieve the key pair issued by the authentication server.
-    It's enabled by default if the authentication server sends feature.enable_profile_key option.
+    It's disabled by default if the authentication server does NOT send feature.enable_profile_key option.
 
     If the profile signing key isn't present, the player will be unable to join servers that enable enforce-secure-profile=true option.
-    And other players' Minecraft client will log a warning when receiving an unsigned chat message.
+    And other players' Minecraft client will log a warning message when receiving an unsigned chat message.
+
+-Dauthlibinjector.usernameCheck={default|enabled|disabled}
+    Whether to enable username validation. If disabled, Minecraft, BungeeCord and Paper will NOT perform username validation.
+    It's disabled by default if the authentication server does NOT send feature.usernameCheck option.
+    Turning on this option will prevent players whose username contains special characters from joining the server.
 ```

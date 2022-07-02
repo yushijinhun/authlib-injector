@@ -24,10 +24,10 @@ import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 
 /**
- * Starting from 22w06a, Minecraft allows only certain ASCII characters (33 ~ 126)
- * in the username. This transformer removes the restriction.
+ * Disables PaperMC's username check.
+ * See <https://github.com/PaperMC/Paper/blob/master/patches/server/0823-Validate-usernames.patch>.
  */
-public class UsernameCharacterCheckTransformer implements TransformUnit {
+public class PaperUsernameCheckTransformer implements TransformUnit {
 
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext context) {
@@ -40,54 +40,14 @@ public class UsernameCharacterCheckTransformer implements TransformUnit {
 			public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 				return new MethodVisitor(ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
 
-					// States:
-					// 0 - initial state
-					// 1 - ldc_w "Invalid characters in username"
-					// 2 - iconst_0
-					// 3 - anewarray java/lang/Object
-					// 4 - invokestatic org/apache/commons/lang3/Validate.validState:(ZLjava/lang/String;[Ljava/lang/Object;)V
-					int state = 0;
-
 					@Override
-					public void visitLdcInsn(Object value) {
-						if (state == 0 && "Invalid characters in username".equals(value)) {
-							state++;
-						}
-						super.visitLdcInsn(value);
-					}
-
-					@Override
-					public void visitInsn(int opcode) {
-						if (state == 1 && opcode == ICONST_0) {
-							state++;
-						}
-						super.visitInsn(opcode);
-					}
-
-					@Override
-					public void visitTypeInsn(int opcode, String type) {
-						if (state == 2 && opcode == ANEWARRAY && "java/lang/Object".equals(type)) {
-							state++;
-						}
-						super.visitTypeInsn(opcode, type);
-					}
-
-					@Override
-					public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-						if (state == 3 &&
-								opcode == INVOKESTATIC &&
-								"org/apache/commons/lang3/Validate".equals(owner) &&
-								"validState".equals(name) &&
-								"(ZLjava/lang/String;[Ljava/lang/Object;)V".equals(descriptor)) {
+					public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+						if (opcode == GETFIELD && "iKnowThisMayNotBeTheBestIdeaButPleaseDisableUsernameValidation".equals(name)) {
 							context.markModified();
-							state++;
-
-							super.visitInsn(POP);
-							super.visitInsn(POP);
-							super.visitInsn(POP);
-
+							visitInsn(POP);
+							visitInsn(ICONST_1);
 						} else {
-							super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+							super.visitFieldInsn(opcode, owner, name, descriptor);
 						}
 					}
 				};
@@ -97,6 +57,6 @@ public class UsernameCharacterCheckTransformer implements TransformUnit {
 
 	@Override
 	public String toString() {
-		return "Username Character Check Transformer";
+		return "Paper Username Check Transformer";
 	}
 }
