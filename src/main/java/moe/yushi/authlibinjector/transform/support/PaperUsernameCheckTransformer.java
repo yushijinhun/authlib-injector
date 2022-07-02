@@ -57,6 +57,6 @@ public class PaperUsernameCheckTransformer implements TransformUnit {
 
 	@Override
 	public String toString() {
-		return "Paper Username Checker Transformer";
+		return "Paper Username Check Transformer";
 	}
 }

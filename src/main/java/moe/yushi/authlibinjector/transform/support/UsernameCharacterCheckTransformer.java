@@ -97,6 +97,6 @@ public class UsernameCharacterCheckTransformer implements TransformUnit {
 
 	@Override
 	public String toString() {
-		return "Username Character Checker Transformer";
+		return "Username Character Check Transformer";
 	}
 }

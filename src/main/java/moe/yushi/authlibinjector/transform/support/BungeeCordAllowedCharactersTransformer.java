@@ -25,10 +25,10 @@ import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 
 /**
- * Hacks BungeeCord to allow non-ASCII characters in username.
+ * Hacks BungeeCord to allow special characters to occur in the username.
  *
  * Since <https://github.com/SpigotMC/BungeeCord/commit/3008d7ef2f50de7e3d38e76717df72dac7fe0da3>,
- * BungeeCord allows only ASCII characters in username when online-mode is on.
+ * BungeeCord allows only certain characters to occur in the username when online-mode is on.
  */
 public class BungeeCordAllowedCharactersTransformer implements TransformUnit {
 
