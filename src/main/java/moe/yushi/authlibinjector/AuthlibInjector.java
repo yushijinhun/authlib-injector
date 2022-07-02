@@ -61,6 +61,7 @@ import moe.yushi.authlibinjector.transform.support.ConstantURLTransformUnit;
 import moe.yushi.authlibinjector.transform.support.MC52974Workaround;
 import moe.yushi.authlibinjector.transform.support.MC52974_1710Workaround;
 import moe.yushi.authlibinjector.transform.support.MainArgumentsTransformer;
+import moe.yushi.authlibinjector.transform.support.PaperUsernameCheckTransformer;
 import moe.yushi.authlibinjector.transform.support.ProxyParameterWorkaround;
 import moe.yushi.authlibinjector.transform.support.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.support.UsernameCharacterCheckTransformer;
@@ -277,6 +278,7 @@ public final class AuthlibInjector {
 		transformer.units.add(new ConcatenateURLTransformUnit());
 		transformer.units.add(new BungeeCordAllowedCharactersTransformer());
 		transformer.units.add(new UsernameCharacterCheckTransformer());
+		transformer.units.add(new PaperUsernameCheckTransformer());
 
 		transformer.units.add(new SkinWhitelistTransformUnit());
 		SkinWhitelistTransformUnit.getWhitelistedDomains().addAll(config.getSkinDomains());
