@@ -278,7 +278,7 @@ public final class AuthlibInjector {
 		transformer.units.add(new ConcatenateURLTransformUnit());
 		transformer.units.add(new BungeeCordAllowedCharactersTransformer());
 
-		boolean usernameCheckDefault = Boolean.TRUE.equals(config.getMeta().get("feature.usernameCheck"));
+		boolean usernameCheckDefault = Boolean.TRUE.equals(config.getMeta().get("feature.username_check"));
 		if (Config.usernameCheck.isEnabled(usernameCheckDefault)) {
 			log(INFO, "Username check is enforced");
 		} else {
