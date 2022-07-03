@@ -121,3 +121,13 @@ gradle
 
 ## 捐助
 BMCLAPI 为 authlib-injector 提供了[下载镜像站](https://github.com/yushijinhun/authlib-injector/wiki/%E8%8E%B7%E5%8F%96-authlib-injector#bmclapi-%E9%95%9C%E5%83%8F)。如果您想要支持 authlib-injector 的开发，您可以[捐助 BMCLAPI](https://bmclapidoc.bangbang93.com/)。
+
+## 许可
+本程序使用 [GNU Affero General Public License v3.0 or later](https://github.com/yushijinhun/authlib-injector/blob/develop/LICENSE) 许可，并附有以下例外：
+
+> **AGPL 的例外情况:**
+>
+> 作为特例，如果您的程序通过以下方式利用本作品，则相应的行为不会导致您的作品被 AGPL 协议涵盖。
+> 1. 您的程序通过打包的方式包含本作品未经修改的二进制形式，而没有静态或动态地链接到本作品；或
+> 2. 您的程序通过本作品提供的进程间通信接口（如 HTTP API）进行交互；或
+> 3. 您的程序将本作品作为 Java Agent 加载进 Java 虚拟机。

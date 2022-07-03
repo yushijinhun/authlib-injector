@@ -659,3 +659,17 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
+
+
+"AUTHLIB-INJECTOR" EXCEPTION TO THE AGPL
+
+  As a special exception, using this work in the following ways does not cause
+your program to be covered by the AGPL:
+
+    a) Bundling the unaltered binary form of this work in your program without
+    statically or dynamically linking to it; or
+
+    b) Interacting with this work through the provided inter-process
+    communication interface, such as the HTTP API; or
+
+    c) Loading this work as a Java Agent into a Java Virtual Machine.
