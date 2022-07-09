@@ -16,10 +16,11 @@
  */
 package moe.yushi.authlibinjector.transform.support;
 
+import static java.lang.invoke.MethodHandles.publicLookup;
+import static java.lang.invoke.MethodType.methodType;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM9;
-import static org.objectweb.asm.Opcodes.H_INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import java.lang.invoke.MethodHandle;
@@ -32,10 +33,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import moe.yushi.authlibinjector.transform.CallbackMethod;
-import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.Logging;
@@ -46,12 +45,14 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 	public static final List<PublicKey> PUBLIC_KEYS = new CopyOnWriteArrayList<>();
 
 	@CallbackMethod
-	public static boolean verifyPropertySignature(Object property, PublicKey mojangKey, MethodHandle verifyAction) throws Throwable {
-		if ((boolean) verifyAction.invoke(property, mojangKey)) {
+	public static boolean verifyPropertySignature(Object property, PublicKey mojangKey) throws Throwable {
+		MethodHandle verifyAction = publicLookup().bind(property, "isSignatureValid", methodType(boolean.class, PublicKey.class));
+
+		if ((boolean) verifyAction.invokeExact(mojangKey)) {
 			return true;
 		}
 		for (PublicKey customKey : PUBLIC_KEYS) {
-			if ((boolean) verifyAction.invoke(property, customKey)) {
+			if ((boolean) verifyAction.invokeExact(customKey)) {
 				return true;
 			}
 		}
@@ -101,8 +102,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 									&& "isSignatureValid".equals(name)
 									&& "(Ljava/security/PublicKey;)Z".equals(descriptor)) {
 								ctx.markModified();
-								super.visitLdcInsn(new Handle(H_INVOKEVIRTUAL, owner, name, descriptor, isInterface));
-								CallbackSupport.invoke(ctx, this, YggdrasilKeyTransformUnit.class, "verifyPropertySignature");
+								ctx.invokeCallback(this, YggdrasilKeyTransformUnit.class, "verifyPropertySignature");
 							} else {
 								super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
 							}
@@ -126,7 +126,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", "getValue", "()Ljava/lang/String;", false);
 						mv.visitVarInsn(ALOAD, 1);
 						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", "getSignature", "()Ljava/lang/String;", false);
-						CallbackSupport.invoke(ctx, mv, YggdrasilKeyTransformUnit.class, "verifyPropertySignatureNew");
+						ctx.invokeCallback(mv, YggdrasilKeyTransformUnit.class, "verifyPropertySignatureNew");
 						mv.visitInsn(IRETURN);
 						mv.visitMaxs(-1, -1);
 						mv.visitEnd();

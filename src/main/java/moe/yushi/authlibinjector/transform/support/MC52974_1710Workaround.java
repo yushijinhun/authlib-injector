@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,7 +33,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import moe.yushi.authlibinjector.AuthlibInjector;
 import moe.yushi.authlibinjector.transform.CallbackMethod;
-import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 import moe.yushi.authlibinjector.util.WeakIdentityHashMap;
@@ -120,7 +119,7 @@ public class MC52974_1710Workaround {
 								if (opcode == ARETURN) {
 									ctx.markModified();
 									super.visitInsn(DUP);
-									CallbackSupport.invoke(ctx, mv, MC52974_1710Workaround.class, "markGameProfile");
+									ctx.invokeCallback(mv, MC52974_1710Workaround.class, "markGameProfile");
 								}
 								super.visitInsn(opcode);
 							}
@@ -163,7 +162,7 @@ public class MC52974_1710Workaround {
 										super.visitMethodInsn(INVOKESTATIC, "net/minecraft/server/MinecraftServer", "func_71276_C", "()Lnet/minecraft/server/MinecraftServer;", false);
 									}
 									super.visitLdcInsn(isNotchName ? 1 : 0);
-									CallbackSupport.invoke(ctx, mv, MC52974_1710Workaround.class, "accessGameProfile");
+									ctx.invokeCallback(mv, MC52974_1710Workaround.class, "accessGameProfile");
 									super.visitTypeInsn(CHECKCAST, "com/mojang/authlib/GameProfile");
 								}
 							}

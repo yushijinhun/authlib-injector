@@ -17,17 +17,21 @@
 package moe.yushi.authlibinjector.transform;
 
 import java.util.List;
-import org.objectweb.asm.Handle;
+import java.util.function.Consumer;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 public interface TransformContext {
 
+	String getClassName();
+
+	boolean isInterface();
+
 	void markModified();
 
-	void requireMinimumClassVersion(int version);
-
-	void upgradeClassVersion(int version);
-
-	Handle acquireCallbackMetafactory();
-
 	List<String> getStringConstants();
+
+	void invokeCallback(MethodVisitor mv, Class<?> owner, String methodName);
+
+	void addGeneratedMethod(String name, Consumer<ClassVisitor> generator);
 }
