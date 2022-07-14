@@ -22,20 +22,24 @@ import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
 import static org.objectweb.asm.Opcodes.ACC_INTERFACE;
-import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.ASM9;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
 import moe.yushi.authlibinjector.Config;
 
 public class ClassTransformer implements ClassFileTransformer {
@@ -50,8 +54,6 @@ public class ClassTransformer implements ClassFileTransformer {
 		private class TransformContextImpl implements TransformContext {
 
 			public boolean modifiedMark;
-			public int minVersionMark = -1;
-			public int upgradedVersionMark = -1;
 			public boolean callbackMetafactoryRequested = false;
 
 			@Override
@@ -60,33 +62,38 @@ public class ClassTransformer implements ClassFileTransformer {
 			}
 
 			@Override
-			public void requireMinimumClassVersion(int version) {
-				if (this.minVersionMark < version) {
-					this.minVersionMark = version;
-				}
-			}
-
-			@Override
-			public void upgradeClassVersion(int version) {
-				if (this.upgradedVersionMark < version) {
-					this.upgradedVersionMark = version;
-				}
-			}
-
-			@Override
-			public Handle acquireCallbackMetafactory() {
-				this.callbackMetafactoryRequested = true;
-				return new Handle(
-						H_INVOKESTATIC,
-						className.replace('.', '/'),
-						CallbackSupport.METAFACTORY_NAME,
-						CallbackSupport.METAFACTORY_SIGNATURE,
-						TransformHandle.this.isInterface());
-			}
-
-			@Override
 			public List<String> getStringConstants() {
 				return TransformHandle.this.getStringConstants();
+			}
+
+			@Override
+			public String getClassName() {
+				return className;
+			}
+
+			@Override
+			public boolean isInterface() {
+				return TransformHandle.this.isInterface();
+			}
+
+			@Override
+			public void invokeCallback(MethodVisitor mv, Class<?> owner, String methodName) {
+				boolean useInvokeDynamic = (getClassVersion() & 0xffff) >= 50;
+
+				if (useInvokeDynamic) {
+					addCallbackMetafactory = true;
+					CallbackSupport.callWithInvokeDynamic(mv, owner, methodName, this);
+				} else {
+					CallbackSupport.callWithIntermediateMethod(mv, owner, methodName, this);
+				}
+			}
+
+			@Override
+			public void addGeneratedMethod(String name, Consumer<ClassVisitor> generator) {
+				if (generatedMethods == null) {
+					generatedMethods = new LinkedHashMap<>();
+				}
+				generatedMethods.put(name, generator);
 			}
 		}
 
@@ -97,9 +104,8 @@ public class ClassTransformer implements ClassFileTransformer {
 		private List<String> cachedConstants;
 
 		private List<TransformUnit> appliedTransformers;
-		private int minVersion = -1;
-		private int upgradedVersion = -1;
 		private boolean addCallbackMetafactory = false;
+		private Map<String, Consumer<ClassVisitor>> generatedMethods;
 
 		public TransformHandle(ClassLoader classLoader, String className, byte[] classBuffer) {
 			this.className = className;
@@ -121,6 +127,11 @@ public class ClassTransformer implements ClassFileTransformer {
 			if (cachedConstants == null)
 				cachedConstants = extractStringConstants(getClassReader());
 			return cachedConstants;
+		}
+
+		private int getClassVersion() {
+			ClassReader reader = getClassReader();
+			return reader.readInt(reader.getItem(1) - 7);
 		}
 
 		public void accept(TransformUnit... units) {
@@ -168,43 +179,77 @@ public class ClassTransformer implements ClassFileTransformer {
 					appliedTransformers = new ArrayList<>();
 				appliedTransformers.add(units[i]);
 
-				if (ctx.minVersionMark > this.minVersion) {
-					this.minVersion = ctx.minVersionMark;
-				}
-				if (ctx.upgradedVersionMark > this.upgradedVersion) {
-					this.upgradedVersion = ctx.upgradedVersionMark;
-				}
 				this.addCallbackMetafactory |= ctx.callbackMetafactoryRequested;
 
 				modified = true;
 			}
 
 			if (modified) {
-				classBuffer = writer.toByteArray();
-				cachedClassReader = null;
-				cachedConstants = null;
+				updateClassBuffer(writer.toByteArray());
 			}
+		}
+
+		private void injectCallbackMetafactory() {
+			log(DEBUG, "Adding callback metafactory");
+
+			int classVersion = getClassVersion();
+			int majorVersion = classVersion & 0xffff;
+
+			int newVersion;
+			if (majorVersion < 51) {
+				newVersion = 51;
+				log(DEBUG, "Upgrading class version from " + classVersion + " to " + newVersion);
+			} else {
+				newVersion = classVersion;
+			}
+
+			ClassReader reader = getClassReader();
+			ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+			ClassVisitor visitor = new ClassVisitor(ASM9, writer) {
+				@Override
+				public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+					super.visit(newVersion, access, name, signature, superName, interfaces);
+					CallbackSupport.insertMetafactory(this);
+				}
+			};
+			reader.accept(visitor, 0);
+			updateClassBuffer(writer.toByteArray());
+		}
+
+		private void injectGeneratedMethods() {
+			ClassReader reader = getClassReader();
+			ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+			ClassVisitor visitor = new ClassVisitor(ASM9, writer) {
+				@Override
+				public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+					super.visit(version, access, name, signature, superName, interfaces);
+					for (Entry<String, Consumer<ClassVisitor>> el : generatedMethods.entrySet()) {
+						log(DEBUG, "Adding generated method [" + el.getKey() + "]");
+						el.getValue().accept(this);
+					}
+				}
+			};
+			reader.accept(visitor, 0);
+			updateClassBuffer(writer.toByteArray());
+		}
+
+		private void updateClassBuffer(byte[] buf) {
+			classBuffer = buf;
+			cachedClassReader = null;
+			cachedConstants = null;
 		}
 
 		public Optional<byte[]> finish() {
 			if (appliedTransformers == null || appliedTransformers.isEmpty()) {
 				return Optional.empty();
-			} else {
-				if (addCallbackMetafactory) {
-					accept(new CallbackMetafactoryTransformer());
-				}
-				if (minVersion == -1 && upgradedVersion == -1) {
-					return Optional.of(classBuffer);
-				} else {
-					try {
-						accept(new ClassVersionTransformUnit(minVersion, upgradedVersion));
-						return Optional.of(classBuffer);
-					} catch (ClassVersionException e) {
-						log(WARNING, "Skipping [" + className + "], " + e.getMessage());
-						return Optional.empty();
-					}
-				}
 			}
+			if (addCallbackMetafactory) {
+				injectCallbackMetafactory();
+			}
+			if (generatedMethods != null) {
+				injectGeneratedMethods();
+			}
+			return Optional.of(classBuffer);
 		}
 
 		public List<TransformUnit> getAppliedTransformers() {

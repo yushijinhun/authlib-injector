@@ -111,3 +111,13 @@ Configure Minecraft server with the following JVM parameter:
     It's disabled by default if the authentication server does NOT send feature.usernameCheck option.
     Turning on this option will prevent players whose username contains special characters from joining the server.
 ```
+
+## License
+This work is licensed under the [GNU Affero General Public License v3.0](https://github.com/yushijinhun/authlib-injector/blob/develop/LICENSE) or later, with the "AUTHLIB-INJECTOR" exception.
+
+> **"AUTHLIB-INJECTOR" EXCEPTION TO THE AGPL**
+>
+> As a special exception, using this work in the following ways does not cause your program to be covered by the AGPL:
+> 1. Bundling the unaltered binary form of this work in your program without statically or dynamically linking to it; or
+> 2. Interacting with this work through the provided inter-process communication interface, such as the HTTP API; or
+> 3. Loading this work as a Java Agent into a Java Virtual Machine.

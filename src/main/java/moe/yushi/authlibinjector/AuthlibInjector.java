@@ -276,7 +276,6 @@ public final class AuthlibInjector {
 		transformer.units.add(new ConstantURLTransformUnit(urlProcessor));
 		transformer.units.add(new CitizensTransformer());
 		transformer.units.add(new ConcatenateURLTransformUnit());
-		transformer.units.add(new BungeeCordAllowedCharactersTransformer());
 
 		boolean usernameCheckDefault = Boolean.TRUE.equals(config.getMeta().get("feature.username_check"));
 		if (Config.usernameCheck.isEnabled(usernameCheckDefault)) {
@@ -284,6 +283,7 @@ public final class AuthlibInjector {
 		} else {
 			transformer.units.add(new UsernameCharacterCheckTransformer());
 			transformer.units.add(new PaperUsernameCheckTransformer());
+			transformer.units.add(new BungeeCordAllowedCharactersTransformer());
 		}
 
 		transformer.units.add(new SkinWhitelistTransformUnit());

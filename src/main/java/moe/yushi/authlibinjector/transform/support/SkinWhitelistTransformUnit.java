@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,7 +27,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import moe.yushi.authlibinjector.transform.CallbackMethod;
-import moe.yushi.authlibinjector.transform.CallbackSupport;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
 
@@ -64,6 +63,7 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 
 	@CallbackMethod
 	public static boolean isWhitelistedDomain(String url) {
+		System.out.println(url);
 		String domain;
 		try {
 			domain = new URI(url).getHost();
@@ -103,7 +103,7 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 						mv.visitCode();
 						mv.visitVarInsn(ALOAD, 0);
-						CallbackSupport.invoke(ctx, mv, SkinWhitelistTransformUnit.class, "isWhitelistedDomain");
+						ctx.invokeCallback(mv, SkinWhitelistTransformUnit.class, "isWhitelistedDomain");
 						mv.visitInsn(IRETURN);
 						mv.visitMaxs(-1, -1);
 						mv.visitEnd();
