@@ -110,9 +110,6 @@ gradle
     启用此功能后, Minecraft 会向 /minecraftservices/player/certificates 发送 POST 请求, 以获取由验证服务器颁发的密钥对.
     此功能需要验证服务器支持, 若验证服务器未设置 feature.enable_profile_key 选项, 则该功能默认禁用.
 
-    当缺少消息签名密钥时, 玩家将无法进入设置了 enforce-secure-profile=true 选项的服务器.
-    而当其他玩家的客户端在收到无有效签名的聊天消息时, 会在日志中记录警告.
-
 -Dauthlibinjector.usernameCheck={default|enabled|disabled}
     是否启用玩家用户名检查, 若禁用, 则 authlib-injector 将关闭 Minecraft、BungeeCord 和 Paper 的用户名检查功能.
     若验证服务器未设置 feature.usernameCheck 选项, 则默认禁用.

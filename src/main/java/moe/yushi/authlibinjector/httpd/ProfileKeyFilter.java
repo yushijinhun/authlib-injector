@@ -16,11 +16,21 @@
  */
 package moe.yushi.authlibinjector.httpd;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static moe.yushi.authlibinjector.util.IOUtils.CONTENT_TYPE_JSON;
 import java.io.IOException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Optional;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.IHTTPSession;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Response;
 import moe.yushi.authlibinjector.internal.fi.iki.elonen.Status;
+import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 
 /**
  * Intercepts Minecraft's request to https://api.minecraftservices.com/player/certificates,
@@ -36,9 +46,39 @@ public class ProfileKeyFilter implements URLFilter {
 	@Override
 	public Optional<Response> handle(String domain, String path, IHTTPSession session) throws IOException {
 		if (domain.equals("api.minecraftservices.com") && path.equals("/player/certificates") && session.getMethod().equals("POST")) {
-			return Optional.of(Response.newFixedLength(Status.NO_CONTENT, null, null));
+			return Optional.of(Response.newFixedLength(Status.OK, CONTENT_TYPE_JSON, makeDummyResponse().toJSONString()));
 		}
 		return Optional.empty();
+	}
+
+	private JSONObject makeDummyResponse() {
+		KeyPairGenerator generator;
+		try {
+			generator = KeyPairGenerator.getInstance("RSA");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+		generator.initialize(2048);
+		KeyPair keyPair = generator.generateKeyPair();
+
+		Base64.Encoder base64 = Base64.getMimeEncoder(76, "\n".getBytes(UTF_8));
+		String publicKeyPEM = "-----BEGIN RSA PUBLIC KEY-----\n" + base64.encodeToString(keyPair.getPublic().getEncoded()) + "\n-----END RSA PUBLIC KEY-----\n";
+		String privateKeyPEM = "-----BEGIN RSA PRIVATE KEY-----\n" + base64.encodeToString(keyPair.getPrivate().getEncoded()) + "\n-----END RSA PRIVATE KEY-----\n";
+
+		Instant now = Instant.now();
+		Instant expiresAt = now.plus(48, ChronoUnit.HOURS);
+		Instant refreshedAfter = now.plus(36, ChronoUnit.HOURS);
+
+		JSONObject response = new JSONObject();
+		JSONObject keyPairObj = new JSONObject();
+		keyPairObj.put("privateKey", privateKeyPEM);
+		keyPairObj.put("publicKey", publicKeyPEM);
+		response.put("keyPair", keyPairObj);
+		response.put("publicKeySignature", "AA==");
+		response.put("publicKeySignatureV2", "AA==");
+		response.put("expiresAt", DateTimeFormatter.ISO_INSTANT.format(expiresAt));
+		response.put("refreshedAfter", DateTimeFormatter.ISO_INSTANT.format(refreshedAfter));
+		return response;
 	}
 
 }
