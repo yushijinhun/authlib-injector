@@ -19,6 +19,7 @@ package moe.yushi.authlibinjector.transform.support;
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
@@ -26,6 +27,8 @@ import static org.objectweb.asm.Opcodes.IRETURN;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Base64;
@@ -78,6 +81,56 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 		return false;
 	}
 
+	@CallbackMethod
+	public static Signature createDummySignature() {
+		Signature sig = new Signature("authlib-injector-dummy-verify") {
+
+			@Override
+			protected boolean engineVerify(byte[] sigBytes) {
+				return true;
+			}
+
+			@Override
+			protected void engineUpdate(byte[] b, int off, int len) {
+
+			}
+
+			@Override
+			protected void engineUpdate(byte b) {
+			}
+
+			@Override
+			protected byte[] engineSign() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			protected void engineSetParameter(String param, Object value) {
+
+			}
+
+			@Override
+			protected void engineInitVerify(PublicKey publicKey) {
+			}
+
+			@Override
+			protected void engineInitSign(PrivateKey privateKey) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			protected Object engineGetParameter(String param) {
+				return null;
+			}
+		};
+		try {
+			sig.initVerify((PublicKey) null);
+		} catch (InvalidKeyException e) {
+			throw new RuntimeException(e);
+		}
+		return sig;
+	}
+
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
 		if ("com.mojang.authlib.properties.Property".equals(className)) {
@@ -124,6 +177,19 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 						mv.visitEnd();
 
 						return null;
+
+					} else if ("signature".equals(name) && "()Ljava/security/Signature;".equals(desc)) {
+						ctx.markModified();
+
+						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+						mv.visitCode();
+						ctx.invokeCallback(mv, YggdrasilKeyTransformUnit.class, "createDummySignature");
+						mv.visitInsn(ARETURN);
+						mv.visitMaxs(-1, -1);
+						mv.visitEnd();
+
+						return null;
+
 					} else {
 						return super.visitMethod(access, name, desc, signature, exceptions);
 					}

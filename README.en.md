@@ -103,9 +103,6 @@ Configure Minecraft server with the following JVM parameter:
     If this this feature is enabled, Minecraft will send a POST request to /minecraftservices/player/certificates to retrieve the key pair issued by the authentication server.
     It's disabled by default if the authentication server does NOT send feature.enable_profile_key option.
 
-    If the profile signing key isn't present, the player will be unable to join servers that enable enforce-secure-profile=true option.
-    And other players' Minecraft client will log a warning message when receiving an unsigned chat message.
-
 -Dauthlibinjector.usernameCheck={default|enabled|disabled}
     Whether to enable username validation. If disabled, Minecraft, BungeeCord and Paper will NOT perform username validation.
     It's disabled by default if the authentication server does NOT send feature.usernameCheck option.
