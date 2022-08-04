@@ -16,18 +16,18 @@
  */
 package moe.yushi.authlibinjector.transform.support;
 
-import static java.lang.invoke.MethodHandles.publicLookup;
-import static java.lang.invoke.MethodType.methodType;
+import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM9;
+import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.IRETURN;
-import java.lang.invoke.MethodHandle;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.security.Signature;
-import java.security.SignatureException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +37,7 @@ import org.objectweb.asm.MethodVisitor;
 import moe.yushi.authlibinjector.transform.CallbackMethod;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
+import moe.yushi.authlibinjector.util.KeyUtils;
 import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.util.Logging.Level;
 
@@ -44,33 +45,22 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 	public static final List<PublicKey> PUBLIC_KEYS = new CopyOnWriteArrayList<>();
 
-	@CallbackMethod
-	public static boolean verifyPropertySignature(Object property, PublicKey mojangKey) throws Throwable {
-		MethodHandle verifyAction = publicLookup().bind(property, "isSignatureValid", methodType(boolean.class, PublicKey.class));
+	static {
+		PUBLIC_KEYS.add(loadMojangPublicKey());
+	}
 
-		if ((boolean) verifyAction.invokeExact(mojangKey)) {
-			return true;
+	private static PublicKey loadMojangPublicKey() {
+		try (InputStream in = YggdrasilKeyTransformUnit.class.getResourceAsStream("/mojang_publickey.der")) {
+			return KeyUtils.parseX509PublicKey(asBytes(in));
+		} catch (GeneralSecurityException | IOException e) {
+			throw new RuntimeException("Failed to load Mojang public key", e);
 		}
-		for (PublicKey customKey : PUBLIC_KEYS) {
-			if ((boolean) verifyAction.invokeExact(customKey)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	@CallbackMethod
-	public static boolean verifyPropertySignatureNew(Signature mojangSignatureObj, String propertyValue, String base64Signature) {
+	public static boolean verifyPropertySignature(String propertyValue, String base64Signature) {
 		byte[] sig = Base64.getDecoder().decode(base64Signature);
 		byte[] data = propertyValue.getBytes();
-
-		try {
-			mojangSignatureObj.update(data);
-			if (mojangSignatureObj.verify(sig))
-				return true;
-		} catch (SignatureException e) {
-			Logging.log(DEBUG, "Failed to verify signature with Mojang's key", e);
-		}
 
 		for (PublicKey customKey : PUBLIC_KEYS) {
 			try {
@@ -80,7 +70,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 				if (signature.verify(sig))
 					return true;
 			} catch (GeneralSecurityException e) {
-				Logging.log(DEBUG, "Failed to verify signature with custom key " + customKey, e);
+				Logging.log(DEBUG, "Failed to verify signature with key " + customKey, e);
 			}
 		}
 
@@ -90,27 +80,31 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
-		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
+		if ("com.mojang.authlib.properties.Property".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					return new MethodVisitor(ASM9, super.visitMethod(access, name, desc, signature, exceptions)) {
-						@Override
-						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-							if (opcode == INVOKEVIRTUAL
-									&& "com/mojang/authlib/properties/Property".equals(owner)
-									&& "isSignatureValid".equals(name)
-									&& "(Ljava/security/PublicKey;)Z".equals(descriptor)) {
-								ctx.markModified();
-								ctx.invokeCallback(this, YggdrasilKeyTransformUnit.class, "verifyPropertySignature");
-							} else {
-								super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-							}
-						}
-					};
-				}
+					if ("isSignatureValid".equals(name) && "(Ljava/security/PublicKey;)Z".equals(desc)) {
+						ctx.markModified();
 
+						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+						mv.visitCode();
+						mv.visitVarInsn(ALOAD, 0);
+						mv.visitFieldInsn(GETFIELD, "com/mojang/authlib/properties/Property", "value", "Ljava/lang/String;");
+						mv.visitVarInsn(ALOAD, 0);
+						mv.visitFieldInsn(GETFIELD, "com/mojang/authlib/properties/Property", "signature", "Ljava/lang/String;");
+						ctx.invokeCallback(mv, YggdrasilKeyTransformUnit.class, "verifyPropertySignature");
+						mv.visitInsn(IRETURN);
+						mv.visitMaxs(-1, -1);
+						mv.visitEnd();
+
+						return null;
+					} else {
+						return super.visitMethod(access, name, desc, signature, exceptions);
+					}
+				}
 			});
+
 		} else if ("com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
@@ -120,13 +114,11 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 						mv.visitCode();
-						mv.visitVarInsn(ALOAD, 0);
-						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/yggdrasil/YggdrasilServicesKeyInfo", "signature", "()Ljava/security/Signature;", false);
 						mv.visitVarInsn(ALOAD, 1);
 						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", "getValue", "()Ljava/lang/String;", false);
 						mv.visitVarInsn(ALOAD, 1);
 						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", "getSignature", "()Ljava/lang/String;", false);
-						ctx.invokeCallback(mv, YggdrasilKeyTransformUnit.class, "verifyPropertySignatureNew");
+						ctx.invokeCallback(mv, YggdrasilKeyTransformUnit.class, "verifyPropertySignature");
 						mv.visitInsn(IRETURN);
 						mv.visitMaxs(-1, -1);
 						mv.visitEnd();
