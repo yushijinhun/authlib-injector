@@ -65,6 +65,7 @@ import moe.yushi.authlibinjector.transform.support.PaperUsernameCheckTransformer
 import moe.yushi.authlibinjector.transform.support.ProxyParameterWorkaround;
 import moe.yushi.authlibinjector.transform.support.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.support.UsernameCharacterCheckTransformer;
+import moe.yushi.authlibinjector.transform.support.VelocityIdentifiedKeyImplTransformUnit;
 import moe.yushi.authlibinjector.transform.support.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
@@ -291,6 +292,7 @@ public final class AuthlibInjector {
 
 		transformer.units.add(new YggdrasilKeyTransformUnit());
 		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
+		transformer.units.add(new VelocityIdentifiedKeyImplTransformUnit());
 
 		return transformer;
 	}
