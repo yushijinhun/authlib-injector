@@ -42,10 +42,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import moe.yushi.authlibinjector.httpd.AntiFeaturesFilter;
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
 import moe.yushi.authlibinjector.httpd.ProfileKeyFilter;
-import moe.yushi.authlibinjector.httpd.AntiFeaturesFilter;
 import moe.yushi.authlibinjector.httpd.QueryProfileFilter;
 import moe.yushi.authlibinjector.httpd.QueryUUIDsFilter;
 import moe.yushi.authlibinjector.httpd.URLFilter;
@@ -55,6 +55,7 @@ import moe.yushi.authlibinjector.transform.DumpClassListener;
 import moe.yushi.authlibinjector.transform.support.AuthServerNameInjector;
 import moe.yushi.authlibinjector.transform.support.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.support.BungeeCordAllowedCharactersTransformer;
+import moe.yushi.authlibinjector.transform.support.BungeeCordProfileKeyTransformUnit;
 import moe.yushi.authlibinjector.transform.support.CitizensTransformer;
 import moe.yushi.authlibinjector.transform.support.ConcatenateURLTransformUnit;
 import moe.yushi.authlibinjector.transform.support.ConstantURLTransformUnit;
@@ -65,6 +66,7 @@ import moe.yushi.authlibinjector.transform.support.PaperUsernameCheckTransformer
 import moe.yushi.authlibinjector.transform.support.ProxyParameterWorkaround;
 import moe.yushi.authlibinjector.transform.support.SkinWhitelistTransformUnit;
 import moe.yushi.authlibinjector.transform.support.UsernameCharacterCheckTransformer;
+import moe.yushi.authlibinjector.transform.support.VelocityProfileKeyTransformUnit;
 import moe.yushi.authlibinjector.transform.support.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
@@ -291,6 +293,8 @@ public final class AuthlibInjector {
 
 		transformer.units.add(new YggdrasilKeyTransformUnit());
 		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
+		transformer.units.add(new VelocityProfileKeyTransformUnit());
+		transformer.units.add(new BungeeCordProfileKeyTransformUnit());
 
 		return transformer;
 	}
