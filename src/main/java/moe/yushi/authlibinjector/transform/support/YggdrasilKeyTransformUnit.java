@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2023  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -105,6 +105,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 			}
 
 			@Override
+			@Deprecated
 			protected void engineSetParameter(String param, Object value) {
 
 			}
@@ -119,6 +120,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 			}
 
 			@Override
+			@Deprecated
 			protected Object engineGetParameter(String param) {
 				return null;
 			}

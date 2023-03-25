@@ -1,6 +1,6 @@
 plugins {
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
-	id 'com.palantir.git-version' version '0.13.0'
+	id 'com.palantir.git-version' version '2.0.0'
 	id 'java'
 }
 
@@ -9,12 +9,13 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.ow2.asm:asm:9.3'
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+	implementation 'org.ow2.asm:asm:9.4'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
 }
 
 tasks.withType(JavaCompile) {
 	options.release = 8
+	options.deprecation = true
 }
 
 def buildNumber = System.getenv('AI_BUILD_NUMBER')
