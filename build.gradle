@@ -13,7 +13,9 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 }
 
-sourceCompatibility = 8
+tasks.withType(JavaCompile) {
+	options.release = 8
+}
 
 def buildNumber = System.getenv('AI_BUILD_NUMBER')
 def gitInfo = versionDetails()
