@@ -19,10 +19,10 @@ jobs:
         java-version: 8
 
     - name: Build
-      run: gradle
+      run: ./gradlew
 
     - name: Test
-      run: gradle test
+      run: ./gradlew test
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v2

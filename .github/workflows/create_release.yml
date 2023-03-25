@@ -81,8 +81,8 @@ jobs:
         run: |
           export AI_BUILD_NUMBER=${{ steps.parse_pr.outputs.build_number }}
           export AI_VERSION_NUMBER=${{ steps.parse_pr.outputs.version_number }}
-          gradle
-          gradle test
+          ./gradlew
+          ./gradlew test
           asset_path=$(echo build/libs/*.jar)
           echo "Build output is at $asset_path"
           echo "::set-output name=asset_path::$asset_path"
