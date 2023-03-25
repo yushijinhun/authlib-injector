@@ -92,7 +92,7 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
-		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className)) {
+		if ("com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService".equals(className) || "com.mojang.authlib.yggdrasil.TextureUrlChecker".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM9, writer) {
 
 				@Override
