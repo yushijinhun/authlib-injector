@@ -14,7 +14,7 @@
 您可以从[这里](https://authlib-injector.yushi.moe/)获取最新的 authlib-injector。
 
 ## 构建
-构建依赖：Gradle、JDK 8+。
+构建依赖：Gradle、JDK 17+（目标 Java 版本为 8）。
 
 执行以下命令：
 ```

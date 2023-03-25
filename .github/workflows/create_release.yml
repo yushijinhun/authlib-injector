@@ -66,14 +66,16 @@ jobs:
             Build number: ${{ steps.parse_pr.outputs.build_number }}  
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ steps.parse_pr.outputs.commit }}
 
-      - name: Setup JDK 8
-        uses: actions/setup-java@v1
+      - name: Setup JDK
+        uses: actions/setup-java@v3
         with:
-          java-version: 8
+          distribution: temurin
+          java-version: 17
+          cache: gradle
 
       - id: build
         name: Build

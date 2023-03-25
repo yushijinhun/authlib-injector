@@ -14,7 +14,7 @@ authlib-injector enables you to build a Minecraft authentication system offering
 You can download the latest authlib-injector build from [here](https://authlib-injector.yushi.moe/).
 
 ## Build
-Dependencies: Gradle, JDK 8+
+Dependencies: Gradle, JDK 17+. The target Java platform version is 8.
 
 Run:
 ```
