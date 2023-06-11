@@ -52,6 +52,7 @@ import moe.yushi.authlibinjector.httpd.URLFilter;
 import moe.yushi.authlibinjector.httpd.URLProcessor;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
 import moe.yushi.authlibinjector.transform.DumpClassListener;
+import moe.yushi.authlibinjector.transform.support.AccountTypeTransformer;
 import moe.yushi.authlibinjector.transform.support.AuthServerNameInjector;
 import moe.yushi.authlibinjector.transform.support.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.support.BungeeCordAllowedCharactersTransformer;
@@ -295,6 +296,7 @@ public final class AuthlibInjector {
 		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
 		transformer.units.add(new VelocityProfileKeyTransformUnit());
 		transformer.units.add(new BungeeCordProfileKeyTransformUnit());
+		MainArgumentsTransformer.getArgumentsListeners().add(new AccountTypeTransformer()::transform);
 
 		return transformer;
 	}
