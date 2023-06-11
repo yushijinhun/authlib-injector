@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2023  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,12 +46,14 @@ import moe.yushi.authlibinjector.httpd.AntiFeaturesFilter;
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
 import moe.yushi.authlibinjector.httpd.ProfileKeyFilter;
+import moe.yushi.authlibinjector.httpd.PublickeysFilter;
 import moe.yushi.authlibinjector.httpd.QueryProfileFilter;
 import moe.yushi.authlibinjector.httpd.QueryUUIDsFilter;
 import moe.yushi.authlibinjector.httpd.URLFilter;
 import moe.yushi.authlibinjector.httpd.URLProcessor;
 import moe.yushi.authlibinjector.transform.ClassTransformer;
 import moe.yushi.authlibinjector.transform.DumpClassListener;
+import moe.yushi.authlibinjector.transform.support.AccountTypeTransformer;
 import moe.yushi.authlibinjector.transform.support.AuthServerNameInjector;
 import moe.yushi.authlibinjector.transform.support.AuthlibLogInterceptor;
 import moe.yushi.authlibinjector.transform.support.BungeeCordAllowedCharactersTransformer;
@@ -257,6 +259,8 @@ public final class AuthlibInjector {
 			filters.add(new ProfileKeyFilter());
 		}
 
+		filters.add(new PublickeysFilter());
+
 		return filters;
 	}
 
@@ -295,6 +299,7 @@ public final class AuthlibInjector {
 		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
 		transformer.units.add(new VelocityProfileKeyTransformUnit());
 		transformer.units.add(new BungeeCordProfileKeyTransformUnit());
+		MainArgumentsTransformer.getArgumentsListeners().add(new AccountTypeTransformer()::transform);
 
 		return transformer;
 	}

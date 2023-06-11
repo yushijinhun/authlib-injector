@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2023  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -128,7 +128,18 @@ public class AuthlibLogInterceptor implements TransformUnit {
 		Array.set(appenderRefs, 0, appenderRef);
 
 		Object loggerConfig;
-		{
+		try {
+			Object builder = classLoggerConfig.getDeclaredMethod("newBuilder").invoke(null);
+			Class<?> classBuilder = cl.loadClass("org.apache.logging.log4j.core.config.LoggerConfig$Builder");
+			classBuilder.getMethod("withConfig", classConfiguration).invoke(builder, configuration);
+			classBuilder.getMethod("withAdditivity", boolean.class).invoke(builder, false);
+			classBuilder.getMethod("withLevel", classLevel).invoke(builder, classLevel.getDeclaredField("ALL").get(null));
+			classBuilder.getMethod("withLoggerName", String.class).invoke(builder, loggerName);
+			classBuilder.getMethod("withIncludeLocation", String.class).invoke(builder, authlibPackageName);
+			classBuilder.getMethod("withRefs", appenderRefs.getClass()).invoke(builder, appenderRefs);
+			loggerConfig = classBuilder.getMethod("build").invoke(builder);
+		} catch (NoSuchMethodException ex) {
+			ex.printStackTrace();
 			Map<String, Object> values = new HashMap<>();
 			values.put("additivity", false);
 			values.put("level", classLevel.getDeclaredField("ALL").get(null));
