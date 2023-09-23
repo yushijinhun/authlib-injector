@@ -38,6 +38,7 @@ jobs:
           build_number=$(grep -Pom1 '@@release\.build_number=\K.*(?=@@)' <<< $release_body)
           version_number=$(grep -Pom1 '@@release\.version_number=\K.*(?=@@)' <<< $release_body)
           asset_name='${{ github.event.release.assets[0].name }}'
+          release_published_at='${{ github.event.release.published_at }}'
 
           cd ~/deploy
           git config --local user.name "github-actions[bot]"
@@ -49,12 +50,14 @@ jobs:
           jq -n \
             --arg build_number "$build_number" \
             --arg version "$version_number" \
+            --arg release_time "$release_published_at" \
             --arg download_url "https://authlib-injector.yushi.moe/artifact/$build_number/$asset_name" \
             --arg sha256 "$sha256" \
             '
               {
                 "build_number": $build_number|tonumber,
                 "version": $version,
+                "release_time": $release_time,
                 "download_url": $download_url,
                 "checksums": {
                   "sha256": $sha256
