@@ -47,6 +47,7 @@ import moe.yushi.authlibinjector.util.Logging.Level;
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 	public static final List<PublicKey> PUBLIC_KEYS = new CopyOnWriteArrayList<>();
+	private boolean isSignature = false;
 
 	static {
 		PUBLIC_KEYS.add(loadMojangPublicKey());
@@ -139,6 +140,9 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+					if ("signature".equals(name)) {
+						isSignature = true;
+					}
 					if ("isSignatureValid".equals(name) && "(Ljava/security/PublicKey;)Z".equals(desc)) {
 						ctx.markModified();
 
@@ -170,9 +174,9 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 						mv.visitCode();
 						mv.visitVarInsn(ALOAD, 1);
-						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", "getValue", "()Ljava/lang/String;", false);
+						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", isSignature ? "value" : "getValue", "()Ljava/lang/String;", false);
 						mv.visitVarInsn(ALOAD, 1);
-						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", "getSignature", "()Ljava/lang/String;", false);
+						mv.visitMethodInsn(INVOKEVIRTUAL, "com/mojang/authlib/properties/Property", isSignature ? "signature" : "getSignature", "()Ljava/lang/String;", false);
 						ctx.invokeCallback(mv, YggdrasilKeyTransformUnit.class, "verifyPropertySignature");
 						mv.visitInsn(IRETURN);
 						mv.visitMaxs(-1, -1);
