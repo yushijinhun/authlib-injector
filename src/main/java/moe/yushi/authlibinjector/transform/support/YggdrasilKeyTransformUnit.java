@@ -139,15 +139,14 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					"value".equals(name) && "()Ljava/lang/String;".equals(desc)
+					if ("value".equals(name) && "()Ljava/lang/String;".equals(desc)) {
 						MethodVisitor mv = writer.visitMethod(access, "getValue", desc, signature, exceptions);
 						mv.visitVarInsn(ALOAD, 0);
 						mv.visitFieldInsn(GETFIELD, "com/mojang/authlib/properties/Property", "value", "Ljava/lang/String;");
 						mv.visitInsn(ARETURN);
 						mv.visitMaxs(-1, -1);
 						mv.visitEnd();
-					}
-					"signature".equals(name) && "()Ljava/lang/String;".equals(desc)
+					} else if ("signature".equals(name) && "()Ljava/lang/String;".equals(desc)) {
 						MethodVisitor mv = writer.visitMethod(access, "getSignature", desc, signature, exceptions);
 						mv.visitVarInsn(ALOAD, 0);
 						mv.visitFieldInsn(GETFIELD, "com/mojang/authlib/properties/Property", "signature", "Ljava/lang/String;");
