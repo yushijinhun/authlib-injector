@@ -1,7 +1,7 @@
 name: deploy_release
 on:
   release:
-    types: [published, edited]
+    types: [published]
 jobs:
   deploy_release:
     if: contains(github.event.release.body, '@@release.trigger_deploy@@')
