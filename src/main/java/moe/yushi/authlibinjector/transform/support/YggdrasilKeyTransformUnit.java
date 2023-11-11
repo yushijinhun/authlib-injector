@@ -47,10 +47,13 @@ import moe.yushi.authlibinjector.util.Logging.Level;
 
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
-	public static final List<PublicKey> PUBLIC_KEYS = new CopyOnWriteArrayList<>();
+	public static final List<PublicKey> PLAYER_CERTIFICATE_PUBLIC_KEYS = new CopyOnWriteArrayList<>();
+	public static final List<PublicKey> PROFILE_PROPERTY_PUBLIC_KEYS = new CopyOnWriteArrayList<>();
 
 	static {
-		PUBLIC_KEYS.add(loadMojangPublicKey());
+		PublicKey mojangPublicKey = loadMojangPublicKey();
+		PLAYER_CERTIFICATE_PUBLIC_KEYS.add(mojangPublicKey);
+		PROFILE_PROPERTY_PUBLIC_KEYS.add(mojangPublicKey);
 	}
 
 	private static PublicKey loadMojangPublicKey() {
@@ -91,7 +94,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 		byte[] sig = Base64.getDecoder().decode(base64Signature);
 		byte[] data = propertyValue.getBytes();
 
-		for (PublicKey customKey : PUBLIC_KEYS) {
+		for (PublicKey customKey : PROFILE_PROPERTY_PUBLIC_KEYS) {
 			try {
 				Signature signature = Signature.getInstance("SHA1withRSA");
 				signature.initVerify(customKey);

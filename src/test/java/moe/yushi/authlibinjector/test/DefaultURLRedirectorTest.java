@@ -18,6 +18,7 @@ package moe.yushi.authlibinjector.test;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 public class DefaultURLRedirectorTest {
 
 	private String apiRoot = "https://yggdrasil.example.com/";
-	private DefaultURLRedirector redirector = new DefaultURLRedirector(new APIMetadata(apiRoot, emptyList(), emptyMap(), Optional.empty()));
+	private DefaultURLRedirector redirector = new DefaultURLRedirector(new APIMetadata(apiRoot, emptyList(), emptyMap(), emptySet(), emptySet()));
 
 	private void testTransform(String domain, String path, String output) {
 		assertEquals(redirector.redirect(domain, path).get(), output);
