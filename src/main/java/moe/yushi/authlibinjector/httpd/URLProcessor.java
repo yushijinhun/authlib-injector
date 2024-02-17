@@ -188,7 +188,7 @@ public class URLProcessor {
 		conn.setDoOutput(clientIn != null);
 		requestHeaders.forEach(conn::setRequestProperty);
 
-		if (clientIn != null) {
+		if (clientIn != null && !method.equalsIgnoreCase("GET") && !method.equalsIgnoreCase("HEAD")) {
 			try (OutputStream upstreamOut = conn.getOutputStream()) {
 				transfer(clientIn, upstreamOut);
 			}
