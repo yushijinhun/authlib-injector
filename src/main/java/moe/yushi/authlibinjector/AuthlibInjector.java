@@ -296,7 +296,7 @@ public final class AuthlibInjector {
 		SkinWhitelistTransformUnit.getWhitelistedDomains().addAll(config.getSkinDomains());
 
 		transformer.units.add(new YggdrasilKeyTransformUnit());
-		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
+		YggdrasilKeyTransformUnit.PUBLIC_KEYS.addAll(config.getDecodedPublickeys());
 		transformer.units.add(new VelocityProfileKeyTransformUnit());
 		transformer.units.add(new BungeeCordProfileKeyTransformUnit());
 		MainArgumentsTransformer.getArgumentsListeners().add(new AccountTypeTransformer()::transform);
