@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  Haowei Wen <yushijinhun@gmail.com> and contributors
+ * Copyright (C) 2024  Haowei Wen <yushijinhun@gmail.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -49,12 +49,15 @@ public class QueryUUIDsFilter implements URLFilter {
 
 	@Override
 	public boolean canHandle(String domain) {
-		return domain.equals("api.mojang.com");
+		return domain.equals("api.mojang.com") || domain.equals("api.minecraftservices.com");
 	}
 
 	@Override
 	public Optional<Response> handle(String domain, String path, IHTTPSession session) throws IOException {
-		if (domain.equals("api.mojang.com") && path.equals("/profiles/minecraft") && session.getMethod().equals("POST")) {
+		if (
+			(domain.equals("api.mojang.com") && path.equals("/profiles/minecraft") && session.getMethod().equals("POST")) ||
+			(domain.equals("api.minecraftservices.com") && path.equals("/minecraft/profile/lookup/bulk/byname") && session.getMethod().equals("POST"))
+		) {
 			Set<String> request = new LinkedHashSet<>();
 			asJsonArray(parseJson(asString(asBytes(session.getInputStream()))))
 					.forEach(element -> request.add(asJsonString(element)));
