@@ -36,8 +36,12 @@ gradle
     开启此选项后, 日志仅会输出到控制台.
 
     需要注意的是, authlib-injector 的日志是不会输出到 Minecraft 服务端/客户端的日志文件中的.
-
     每次启动时, 日志文件都会被清空. 如果有多个进程使用同一个日志文件, 则只有最早启动的会成功打开日志文件.
+    
+-Dauthlibinjector.logFile
+    指定日志文件输出位置.
+    可以填写绝对路径，也可以填写相对路径。
+    在 -Dauthlibinjector.noLogFile 选项开启后，本选项将会失效。
 
 -Dauthlibinjector.mojangNamespace={default|enabled|disabled}
     设置是否启用 Mojang 命名空间 (@mojang 后缀).
