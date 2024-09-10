@@ -6,7 +6,7 @@
 [![ci status](https://img.shields.io/github/actions/workflow/status/yushijinhun/authlib-injector/ci.yml?branch=develop)](https://github.com/yushijinhun/authlib-injector/actions?query=workflow%3ACI)
 [![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/develop/LICENSE)
 
-authlib-injector provides a Minecraft authentication system offering all the features that genuine Minecraft has.
+authlib-injector allows you to build your own Minecraft authentication system, offering all the features that the official Minecraft one has.
 
 **[Visit the wiki](https://github.com/yushijinhun/authlib-injector/wiki) for documents and detailed descriptions.**
 
@@ -32,7 +32,7 @@ Configure Minecraft server with the following JVM parameter:
 ```
 -Dauthlibinjector.mojangNamespace={default|enabled|disabled}
     Whether to enable Mojang namespace (@mojang suffix).
-    Enabled by default if the authentication server does NOT have feature.no_mojang_namespace option.
+    Enabled by default if the authentication server does NOT send the feature.no_mojang_namespace option.
 
     If enabled, virtual/emulated player <username>@mojang will have the same skin as the premium (Mojang) player with the same username.
     For example,
