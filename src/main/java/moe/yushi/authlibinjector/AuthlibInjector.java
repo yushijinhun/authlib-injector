@@ -298,6 +298,10 @@ public final class AuthlibInjector {
 		transformer.units.add(new YggdrasilKeyTransformUnit());
 		YggdrasilKeyTransformUnit.PLAYER_CERTIFICATE_PUBLIC_KEYS.addAll(config.getPlayerCertificateKeys());
 		YggdrasilKeyTransformUnit.PROFILE_PROPERTY_PUBLIC_KEYS.addAll(config.getProfilePropertyKeys());
+
+		log(INFO, "Loaded " + YggdrasilKeyTransformUnit.PLAYER_CERTIFICATE_PUBLIC_KEYS.size() + " player certificate public keys");
+		log(INFO, "Loaded " + YggdrasilKeyTransformUnit.PROFILE_PROPERTY_PUBLIC_KEYS.size() + " profile property public keys");
+
 		transformer.units.add(new VelocityProfileKeyTransformUnit());
 		transformer.units.add(new BungeeCordProfileKeyTransformUnit());
 		MainArgumentsTransformer.getArgumentsListeners().add(new AccountTypeTransformer()::transform);

@@ -51,6 +51,14 @@ public final class KeyUtils {
 		}
 	}
 
+	public static PublicKey parseSignaturePublicKeyBase64DER(String base64Der) throws UncheckedIOException {
+		try {
+			return parseX509PublicKey(Base64.getDecoder().decode(base64Der));
+		} catch (IllegalArgumentException | GeneralSecurityException e) {
+			throw newUncheckedIOException("Bad signature public key", e);
+		}
+	}
+
 	private KeyUtils() {}
 
 }
