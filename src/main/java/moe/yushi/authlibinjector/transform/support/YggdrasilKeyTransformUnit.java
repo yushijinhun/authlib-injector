@@ -18,7 +18,10 @@ package moe.yushi.authlibinjector.transform.support;
 
 import static java.lang.invoke.MethodHandles.publicLookup;
 import static java.lang.invoke.MethodType.methodType;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toSet;
 import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
+import static moe.yushi.authlibinjector.util.IOUtils.asString;
 import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
@@ -26,6 +29,7 @@ import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandle;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -33,35 +37,58 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Base64;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+import moe.yushi.authlibinjector.internal.org.json.simple.JSONArray;
+import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.transform.CallbackMethod;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
+import moe.yushi.authlibinjector.util.JsonUtils;
 import moe.yushi.authlibinjector.util.KeyUtils;
 import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.util.Logging.Level;
 
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
-	public static final List<PublicKey> PLAYER_CERTIFICATE_PUBLIC_KEYS = new CopyOnWriteArrayList<>();
-	public static final List<PublicKey> PROFILE_PROPERTY_PUBLIC_KEYS = new CopyOnWriteArrayList<>();
+	public static final Set<PublicKey> PLAYER_CERTIFICATE_PUBLIC_KEYS = new CopyOnWriteArraySet<>();
+	public static final Set<PublicKey> PROFILE_PROPERTY_PUBLIC_KEYS = new CopyOnWriteArraySet<>();
 
 	static {
-		PublicKey mojangPublicKey = loadMojangPublicKey();
-		PLAYER_CERTIFICATE_PUBLIC_KEYS.add(mojangPublicKey);
-		PROFILE_PROPERTY_PUBLIC_KEYS.add(mojangPublicKey);
+		// Load Mojang public keys from JSON file obtained from
+		// https://api.minecraftservices.com/publickeys
+		try (InputStream in = YggdrasilKeyTransformUnit.class.getResourceAsStream("/mojang_publickeys.json")) {
+			JSONObject keysJson = JsonUtils.asJsonObject(JsonUtils.parseJson(asString(asBytes(in))));
+
+			Set<PublicKey> playerCertificateKeys =
+					ofNullable(keysJson.get("playerCertificateKeys"))
+							.map(JsonUtils::asJsonArray)
+							.map(k -> ParseJSONPublicKeys(k))
+							.orElseGet(HashSet::new);
+			PLAYER_CERTIFICATE_PUBLIC_KEYS.addAll(playerCertificateKeys);
+
+			Set<PublicKey> profilePropertyKeys =
+					ofNullable(keysJson.get("profilePropertyKeys"))
+							.map(JsonUtils::asJsonArray)
+							.map(k -> ParseJSONPublicKeys(k))
+							.orElseGet(HashSet::new);
+			PROFILE_PROPERTY_PUBLIC_KEYS.addAll(profilePropertyKeys);
+		} catch (IOException | UncheckedIOException e) {
+			throw new RuntimeException("Failed to load Mojang public keys", e);
+		}
 	}
 
-	private static PublicKey loadMojangPublicKey() {
-		try (InputStream in = YggdrasilKeyTransformUnit.class.getResourceAsStream("/mojang_publickey.der")) {
-			return KeyUtils.parseX509PublicKey(asBytes(in));
-		} catch (GeneralSecurityException | IOException e) {
-			throw new RuntimeException("Failed to load Mojang public key", e);
-		}
+	private static Set<PublicKey> ParseJSONPublicKeys(JSONArray array) {
+		return array.stream()
+				.map(JsonUtils::asJsonObject)
+				.map(p -> p.get("publicKey"))
+				.map(JsonUtils::asJsonString)
+				.map(KeyUtils::parseSignaturePublicKeyBase64DER)
+				.collect(toSet());
 	}
 
 	@CallbackMethod
