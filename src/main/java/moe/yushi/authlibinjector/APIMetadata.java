@@ -59,6 +59,9 @@ public class APIMetadata {
 						.map(JsonUtils::asJsonString)
 						.map(KeyUtils::parseSignaturePublicKey);
 
+		Set<PublicKey> playerCertificateKeys = new HashSet<PublicKey>();
+		Set<PublicKey> profilePropertyKeys = new HashSet<PublicKey>();
+
 		signaturePublickey.ifPresent(playerCertificateKeys::add);
 		signaturePublickey.ifPresent(profilePropertyKeys::add);
 

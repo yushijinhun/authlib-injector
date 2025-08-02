@@ -72,6 +72,7 @@ import moe.yushi.authlibinjector.transform.support.VelocityProfileKeyTransformUn
 import moe.yushi.authlibinjector.transform.support.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
+import moe.yushi.authlibinjector.yggdrasil.PublicKeys;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public final class AuthlibInjector {
@@ -119,6 +120,33 @@ public final class AuthlibInjector {
 			}
 		}
 		return Optional.ofNullable(prefetched);
+	}
+
+	public static Optional<PublicKeys> fetchPublicKeys(String apiUrl) {
+		String publicKeysUrl = apiUrl + "minecraftservices/publickeys";
+
+		log(INFO, "Fetching public keys from " + publicKeysUrl);
+
+		String publicKeysResponse;
+		try {
+			HttpURLConnection connection = (HttpURLConnection) new URL(publicKeysUrl).openConnection();
+			InputStream in = connection.getInputStream();
+			publicKeysResponse = asString(asBytes(in));
+		} catch (IOException e) {
+			log(ERROR, "Failed to fetch public keys: " + e);
+			return Optional.empty();
+		}
+
+		log(DEBUG, "Public keys: " + publicKeysResponse);
+
+		PublicKeys publicKeys;
+		try {
+			publicKeys = PublicKeys.parse(publicKeysResponse);
+		} catch (UncheckedIOException e) {
+			log(ERROR, "Failed to parse public keys: " + e);
+			return Optional.empty();
+		}
+		return Optional.of(publicKeys);
 	}
 
 	private static APIMetadata fetchAPIMetadata(String apiUrl) {
@@ -198,6 +226,25 @@ public final class AuthlibInjector {
 			throw new InitializationException(e);
 		}
 		log(DEBUG, "Parsed metadata: " + metadata);
+
+		boolean publicKeyFetchingDefault = Boolean.TRUE.equals(metadata.getMeta().get("feature.enable_public_key_fetching"));
+		if (Config.profileKey.isEnabled(publicKeyFetchingDefault)) {
+			Optional<PublicKeys> maybePublicKeys = fetchPublicKeys(apiUrl);
+			if (maybePublicKeys.isPresent()) {
+				PublicKeys publicKeys = maybePublicKeys.get();
+				metadata = new APIMetadata(
+					metadata.getApiRoot(),
+					metadata.getSkinDomains(),
+					metadata.getMeta(),
+					publicKeys.playerCertificateKeys,
+					publicKeys.profilePropertyKeys
+				);
+				log(DEBUG, "Updated metadata with fetched public keys: " + metadata);
+			} else {
+				log(DEBUG, "Falling back to public keys from metadata.");
+			}
+		}
+
 		return metadata;
 	}
 

@@ -52,6 +52,7 @@ import moe.yushi.authlibinjector.util.JsonUtils;
 import moe.yushi.authlibinjector.util.KeyUtils;
 import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.util.Logging.Level;
+import moe.yushi.authlibinjector.yggdrasil.PublicKeys;
 
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
@@ -67,28 +68,19 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 			Set<PublicKey> playerCertificateKeys =
 					ofNullable(keysJson.get("playerCertificateKeys"))
 							.map(JsonUtils::asJsonArray)
-							.map(k -> ParseJSONPublicKeys(k))
+							.map(PublicKeys::parsePublicKeysArray)
 							.orElseGet(HashSet::new);
 			PLAYER_CERTIFICATE_PUBLIC_KEYS.addAll(playerCertificateKeys);
 
 			Set<PublicKey> profilePropertyKeys =
 					ofNullable(keysJson.get("profilePropertyKeys"))
 							.map(JsonUtils::asJsonArray)
-							.map(k -> ParseJSONPublicKeys(k))
+							.map(PublicKeys::parsePublicKeysArray)
 							.orElseGet(HashSet::new);
 			PROFILE_PROPERTY_PUBLIC_KEYS.addAll(profilePropertyKeys);
 		} catch (IOException | UncheckedIOException e) {
 			throw new RuntimeException("Failed to load Mojang public keys", e);
 		}
-	}
-
-	private static Set<PublicKey> ParseJSONPublicKeys(JSONArray array) {
-		return array.stream()
-				.map(JsonUtils::asJsonObject)
-				.map(p -> p.get("publicKey"))
-				.map(JsonUtils::asJsonString)
-				.map(KeyUtils::parseSignaturePublicKeyBase64DER)
-				.collect(toSet());
 	}
 
 	@CallbackMethod
