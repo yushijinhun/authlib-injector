@@ -101,6 +101,7 @@ public abstract class NanoHTTPD {
 				outputStream = this.acceptSocket.getOutputStream();
 				HTTPSession session = new HTTPSession(this.inputStream, outputStream, (InetSocketAddress) this.acceptSocket.getRemoteSocketAddress());
 				while (!this.acceptSocket.isClosed()) {
+                    if(session.Disconnected) break;
 					session.execute(NanoHTTPD.this::serve);
 				}
 			} catch (ConnectionCloseException e) {
