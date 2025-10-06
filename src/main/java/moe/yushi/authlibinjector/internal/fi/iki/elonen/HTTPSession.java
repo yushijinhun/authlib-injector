@@ -95,8 +95,6 @@ class HTTPSession implements IHTTPSession {
 	private boolean isServing;
 	private final Object servingLock = new Object();
 
-    public boolean Disconnected;
-
 	public HTTPSession(InputStream inputStream, OutputStream outputStream, InetSocketAddress remoteAddr) {
 		this.inputStream = new BufferedInputStream(inputStream, BUFSIZE);
 		this.outputStream = outputStream;
@@ -270,13 +268,14 @@ class HTTPSession implements IHTTPSession {
 			if (!keepAlive || "close".equals(r.getHeader("connection"))) {
 				throw new ConnectionCloseException();
 			}
-		} catch (SocketException | SocketTimeoutException e) {
-            // treat socket timeouts the same way we treat socket exceptions
-            // i.e. close the stream & finalAccept object by throwing the
-            // exception up the call stack.
-
+		} catch (SocketException e) {
 			// throw it out to close socket object (finalAccept)
 			throw e;
+		} catch (SocketTimeoutException ste) {
+			// treat socket timeouts the same way we treat socket exceptions
+			// i.e. close the stream & finalAccept object by throwing the
+			// exception up the call stack.
+			throw ste;
 		} catch (IOException ioe) {
 			Response resp = Response.newFixedLength(Status.INTERNAL_ERROR, CONTENT_TYPE_TEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
 			resp.send(this.outputStream);
@@ -286,7 +285,6 @@ class HTTPSession implements IHTTPSession {
 			resp.send(this.outputStream);
 			NanoHTTPD.safeClose(this.outputStream);
 		} finally {
-            Disconnected = true;
 			NanoHTTPD.safeClose(r);
 		}
 	}
