@@ -164,40 +164,37 @@ public class Response implements Closeable {
 	/**
 	 * Sends given response to the socket.
 	 */
-	protected void send(OutputStream outputStream) {
+	protected void send(OutputStream outputStream) throws IOException {
+		if (this.status == null) {
+			throw new IllegalStateException("sendResponse(): Status can't be null.");
+		}
+
 		SimpleDateFormat gmtFrmt = new SimpleDateFormat("E, d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
 		gmtFrmt.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-		try {
-			if (this.status == null) {
-				throw new Error("sendResponse(): Status can't be null.");
-			}
-			PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, new ContentType(this.mimeType).getEncoding())), false);
-			pw.append("HTTP/1.1 ").append(this.status.getDescription()).append(" \r\n");
-			if (this.mimeType != null) {
-				printHeader(pw, "Content-Type", this.mimeType);
-			}
-			if (getHeader("date") == null) {
-				printHeader(pw, "Date", gmtFrmt.format(new Date()));
-			}
-			this.headers.forEach((name, value) -> printHeader(pw, name, value));
-			if (getHeader("connection") == null) {
-				printHeader(pw, "Connection", (this.keepAlive ? "keep-alive" : "close"));
-			}
-			long pending = this.data != null ? this.contentLength : 0;
-			if (!"HEAD".equals(this.requestMethod) && this.chunkedTransfer) {
-				printHeader(pw, "Transfer-Encoding", "chunked");
-			} else {
-				pending = sendContentLengthHeaderIfNotAlreadyPresent(pw, pending);
-			}
-			pw.append("\r\n");
-			pw.flush();
-			sendBodyWithCorrectTransferAndEncoding(outputStream, pending);
-			outputStream.flush();
-			NanoHTTPD.safeClose(this.data);
-		} catch (IOException ioe) {
-			log(ERROR, "Could not send response to the client", ioe);
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, new ContentType(this.mimeType).getEncoding())), false);
+		pw.append("HTTP/1.1 ").append(this.status.getDescription()).append(" \r\n");
+		if (this.mimeType != null) {
+			printHeader(pw, "Content-Type", this.mimeType);
 		}
+		if (getHeader("date") == null) {
+			printHeader(pw, "Date", gmtFrmt.format(new Date()));
+		}
+		this.headers.forEach((name, value) -> printHeader(pw, name, value));
+		if (getHeader("connection") == null) {
+			printHeader(pw, "Connection", (this.keepAlive ? "keep-alive" : "close"));
+		}
+		long pending = this.data != null ? this.contentLength : 0;
+		if (!"HEAD".equals(this.requestMethod) && this.chunkedTransfer) {
+			printHeader(pw, "Transfer-Encoding", "chunked");
+		} else {
+			pending = sendContentLengthHeaderIfNotAlreadyPresent(pw, pending);
+		}
+		pw.append("\r\n");
+		pw.flush();
+		sendBodyWithCorrectTransferAndEncoding(outputStream, pending);
+		outputStream.flush();
+		NanoHTTPD.safeClose(this.data);
 	}
 
 	protected void printHeader(PrintWriter pw, String key, String value) {
