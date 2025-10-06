@@ -19,35 +19,81 @@ package moe.yushi.authlibinjector.httpd;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
 import moe.yushi.authlibinjector.APIMetadata;
+import moe.yushi.authlibinjector.UrlsMetadata;
 
 public class DefaultURLRedirector implements URLRedirector {
 
-	private Map<String, String> domainMapping = new HashMap<>();
-	private String apiRoot;
+    private static final Map<String, DomainMapping> DOMAIN_MAPPINGS = new HashMap<>();
 
-	public DefaultURLRedirector(APIMetadata config) {
-		initDomainMapping();
+    private Map<String, String> domainMapping = new HashMap<>();
+    private APIMetadata config;
 
-		apiRoot = config.getApiRoot();
-	}
+    static {
+        DOMAIN_MAPPINGS.put("api.mojang.com", new DomainMapping(UrlsMetadata::getApiURL, "api"));
+        DOMAIN_MAPPINGS.put("authserver.mojang.com", new DomainMapping(UrlsMetadata::getAuthserverUrl, "authserver"));
+        DOMAIN_MAPPINGS.put("sessionserver.mojang.com", new DomainMapping(UrlsMetadata::getSessionserverUrl, "sessionserver"));
+        DOMAIN_MAPPINGS.put("skins.minecraft.net", new DomainMapping(UrlsMetadata::getSkinsUrl, "skins"));
+        DOMAIN_MAPPINGS.put("api.minecraftservices.com", new DomainMapping(UrlsMetadata::getMinecraftservicesUrl, "minecraftservices"));
+    }
 
-	private void initDomainMapping() {
-		domainMapping.put("api.mojang.com", "api");
-		domainMapping.put("authserver.mojang.com", "authserver");
-		domainMapping.put("sessionserver.mojang.com", "sessionserver");
-		domainMapping.put("skins.minecraft.net", "skins");
-		domainMapping.put("api.minecraftservices.com", "minecraftservices");
-	}
+    public DefaultURLRedirector(APIMetadata config) {
+        this.config = config;
+        initDomainMapping();
+    }
 
-	@Override
-	public Optional<String> redirect(String domain, String path) {
-		String subdirectory = domainMapping.get(domain);
-		if (subdirectory == null) {
-			return Optional.empty();
-		}
+    private void initDomainMapping() {
+        String apiRoot = config.getApiRoot();
 
-		return Optional.of(apiRoot + subdirectory + path);
-	}
+        Optional<UrlsMetadata> urlsRedefining = config.getUrlsRedefining();
+        for (Map.Entry<String, DomainMapping> entry : DOMAIN_MAPPINGS.entrySet()) {
+            String domain = entry.getKey();
+            DomainMapping mapping = entry.getValue();
+
+            String targetUrl = urlsRedefining.flatMap(mapping.urlProvider::getUrl).orElse(apiRoot + mapping.defaultPath);
+            domainMapping.put(domain, targetUrl);
+        }
+    }
+
+    @Override
+    public Optional<String> redirect(String domain, String path) {
+        String urlBasis = domainMapping.get(domain);
+        if (urlBasis == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(urlBasis + path);
+    }
+
+    @Override
+    public boolean UseFallback(String domain) {
+        if (!domainMapping.containsKey(domain)) return false;
+        if (!config.getFallbackUrlsRedefining().isPresent()) return false;
+
+        UrlsMetadata urls = config.getFallbackUrlsRedefining().get();
+        DomainMapping mapping = DOMAIN_MAPPINGS.get(domain);
+
+        Optional<String> url = mapping.urlProvider.getUrl(urls);
+        if (!url.isPresent()) return false;
+
+        domainMapping.put(domain, url.get());
+        return true;
+    }
+
+    @FunctionalInterface
+    private interface UrlProvider {
+        Optional<String> getUrl(UrlsMetadata urls);
+    }
+
+    private static final class DomainMapping {
+        final UrlProvider urlProvider;
+        final String defaultPath;
+
+        DomainMapping(UrlProvider urlProvider, String defaultPath) {
+            this.urlProvider = urlProvider;
+            this.defaultPath = defaultPath;
+        }
+    }
 
 }

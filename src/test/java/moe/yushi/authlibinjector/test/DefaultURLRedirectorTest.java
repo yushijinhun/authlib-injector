@@ -27,7 +27,7 @@ import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
 public class DefaultURLRedirectorTest {
 
 	private String apiRoot = "https://yggdrasil.example.com/";
-	private DefaultURLRedirector redirector = new DefaultURLRedirector(new APIMetadata(apiRoot, emptyList(), emptyMap(), Optional.empty()));
+	private DefaultURLRedirector redirector = new DefaultURLRedirector(new APIMetadata(apiRoot, emptyList(), emptyMap(), Optional.empty(), Optional.empty(), Optional.empty()));
 
 	private void testTransform(String domain, String path, String output) {
 		assertEquals(redirector.redirect(domain, path).get(), output);

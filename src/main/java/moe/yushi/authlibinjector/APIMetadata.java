@@ -27,71 +27,122 @@ import static java.util.stream.Collectors.toList;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
+
 import java.io.UncheckedIOException;
 import java.security.PublicKey;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
+
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
 import moe.yushi.authlibinjector.util.KeyUtils;
 
 public class APIMetadata {
 
-	public static APIMetadata parse(String apiRoot, String metadataResponse) throws UncheckedIOException {
-		JSONObject response = asJsonObject(parseJson(metadataResponse));
+    public static APIMetadata parse(String apiRoot, String metadataResponse) throws UncheckedIOException {
+        JSONObject response = asJsonObject(parseJson(metadataResponse));
 
-		List<String> skinDomains =
-				ofNullable(response.get("skinDomains"))
-						.map(it -> asJsonArray(it).stream()
-								.map(JsonUtils::asJsonString)
-								.collect(toList()))
-						.orElse(emptyList());
+        List<String> skinDomains =
+                ofNullable(response.get("skinDomains"))
+                        .map(it -> asJsonArray(it).stream()
+                                .map(JsonUtils::asJsonString)
+                                .collect(toList()))
+                        .orElse(emptyList());
 
-		Optional<PublicKey> decodedPublickey =
-				ofNullable(response.get("signaturePublickey"))
-						.map(JsonUtils::asJsonString)
-						.map(KeyUtils::parseSignaturePublicKey);
+        Optional<PublicKey> decodedPublickey =
+                ofNullable(response.get("signaturePublickey"))
+                        .map(JsonUtils::asJsonString)
+                        .map(KeyUtils::parseSignaturePublicKey);
 
-		Map<String, Object> meta =
-				ofNullable(response.get("meta"))
-						.map(it -> (Map<String, Object>) new TreeMap<>(asJsonObject(it)))
-						.orElse(emptyMap());
+        Map<String, Object> meta =
+                ofNullable(response.get("meta"))
+                        .map(it -> (Map<String, Object>) new TreeMap<>(asJsonObject(it)))
+                        .orElse(emptyMap());
 
-		return new APIMetadata(apiRoot, unmodifiableList(skinDomains), unmodifiableMap(meta), decodedPublickey);
-	}
+        Optional<Map<String, Object>> urlRedefinitions =
+                ofNullable(response.get("urlsRedefining"))
+                        .map(it -> new TreeMap<>(asJsonObject(it)));
 
-	private String apiRoot;
-	private List<String> skinDomains;
-	private Optional<PublicKey> decodedPublickey;
-	private Map<String, Object> meta;
+        Optional<Map<String, Object>> fallbackUrlRedefinitions =
+                ofNullable(response.get("fallbackUrlsRedefining"))
+                        .map(it -> new TreeMap<>(asJsonObject(it)));
 
-	public APIMetadata(String apiRoot, List<String> skinDomains, Map<String, Object> meta, Optional<PublicKey> decodedPublickey) {
-		this.apiRoot = requireNonNull(apiRoot);
-		this.skinDomains = requireNonNull(skinDomains);
-		this.meta = requireNonNull(meta);
-		this.decodedPublickey = requireNonNull(decodedPublickey);
-	}
+        return new APIMetadata(apiRoot, unmodifiableList(skinDomains), unmodifiableMap(meta), decodedPublickey, parseUrlsMetadata(urlRedefinitions), parseUrlsMetadata(fallbackUrlRedefinitions));
+    }
 
-	public String getApiRoot() {
-		return apiRoot;
-	}
+    private String apiRoot;
+    private Optional<UrlsMetadata> UrlsRedefining;
+    private Optional<UrlsMetadata> FallbackUrlsRedefining;
+    private List<String> skinDomains;
+    private Optional<PublicKey> decodedPublickey;
+    private Map<String, Object> meta;
 
-	public List<String> getSkinDomains() {
-		return skinDomains;
-	}
+    public APIMetadata(String apiRoot, List<String> skinDomains, Map<String, Object> meta, Optional<PublicKey> decodedPublickey, Optional<UrlsMetadata> urlsRedefining, Optional<UrlsMetadata> fallbackUrlsRedefining) {
+        this.apiRoot = requireNonNull(apiRoot);
+        this.skinDomains = requireNonNull(skinDomains);
+        this.meta = requireNonNull(meta);
+        this.decodedPublickey = requireNonNull(decodedPublickey);
+        this.UrlsRedefining = requireNonNull(urlsRedefining);
+        this.FallbackUrlsRedefining = requireNonNull(fallbackUrlsRedefining);
+    }
 
-	public Map<String, Object> getMeta() {
-		return meta;
-	}
+    public String getApiRoot() {
+        return apiRoot;
+    }
 
-	public Optional<PublicKey> getDecodedPublickey() {
-		return decodedPublickey;
-	}
+    public Optional<UrlsMetadata> getUrlsRedefining() {
+        return UrlsRedefining;
+    }
 
-	@Override
-	public String toString() {
-		return format("APIMetadata [apiRoot={0}, skinDomains={1}, decodedPublickey={2}, meta={3}]", apiRoot, skinDomains, decodedPublickey, meta);
-	}
+    public Optional<UrlsMetadata> getFallbackUrlsRedefining() {
+        return FallbackUrlsRedefining;
+    }
+
+    public List<String> getSkinDomains() {
+        return skinDomains;
+    }
+
+    public Map<String, Object> getMeta() {
+        return meta;
+    }
+
+    public Optional<PublicKey> getDecodedPublickey() {
+        return decodedPublickey;
+    }
+
+    @Override
+    public String toString() {
+        return format("APIMetadata [apiRoot={0}, skinDomains={1}, decodedPublickey={2}, meta={3}]", apiRoot, skinDomains, decodedPublickey, meta);
+    }
+
+    private static Optional<UrlsMetadata> parseUrlsMetadata(Optional<Map<String, Object>> data) {
+        if (!data.isPresent()) return Optional.empty();
+
+        Optional<String> apiURL = Optional.empty();
+        Optional<String> authserverUrl = Optional.empty();
+        Optional<String> sessionserverUrl = Optional.empty();
+        Optional<String> skinsUrl = Optional.empty();
+        Optional<String> minecraftservicesUrl = Optional.empty();
+
+        for (Map.Entry<String, Object> entity : data.get().entrySet()) {
+            switch (entity.getKey()){
+                case "api":
+                    apiURL = Optional.of(JsonUtils.asJsonString(entity.getValue()));
+                    break;
+                case "authserver":
+                    authserverUrl = Optional.of(JsonUtils.asJsonString(entity.getValue()));
+                    break;
+                case "sessionserver":
+                    sessionserverUrl = Optional.of(JsonUtils.asJsonString(entity.getValue()));
+                    break;
+                case "skins":
+                    skinsUrl = Optional.of(JsonUtils.asJsonString(entity.getValue()));
+                    break;
+                case "minecraftservices":
+                    minecraftservicesUrl = Optional.of(JsonUtils.asJsonString(entity.getValue()));
+                    break;
+            }
+        }
+
+        return Optional.of(new UrlsMetadata(apiURL, authserverUrl, sessionserverUrl, skinsUrl, minecraftservicesUrl));
+    }
 }
