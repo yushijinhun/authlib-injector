@@ -74,8 +74,8 @@ public class ProfileKeyFilter implements URLFilter {
 		keyPairObj.put("privateKey", privateKeyPEM);
 		keyPairObj.put("publicKey", publicKeyPEM);
 		response.put("keyPair", keyPairObj);
-		response.put("publicKeySignature", "AA==");
-		response.put("publicKeySignatureV2", "AA==");
+		response.put("publicKeySignature", "");
+		response.put("publicKeySignatureV2", "");
 		response.put("expiresAt", DateTimeFormatter.ISO_INSTANT.format(expiresAt));
 		response.put("refreshedAfter", DateTimeFormatter.ISO_INSTANT.format(refreshedAfter));
 		return response;
