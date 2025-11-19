@@ -132,3 +132,4 @@ BMCLAPI 为 authlib-injector 提供了[下载镜像站](https://github.com/yushi
 > 1. 您的程序通过打包的方式包含本作品未经修改的二进制形式，而没有静态或动态地链接到本作品；或
 > 2. 您的程序通过本作品提供的进程间通信接口（如 HTTP API）进行交互；或
 > 3. 您的程序将本作品作为 Java Agent 加载进 Java 虚拟机。
+
