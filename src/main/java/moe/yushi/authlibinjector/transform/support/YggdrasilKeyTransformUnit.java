@@ -88,7 +88,13 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 			return false;
 		}
 
-		byte[] sig = Base64.getDecoder().decode(base64Signature);
+		byte[] sig;
+		try {
+			sig = Base64.getDecoder().decode(base64Signature);
+		} catch (IllegalArgumentException e) {
+			Logging.log(Level.ERROR, "Malformed signature encoding on property " + propertyObj.toString(), e);
+			return false;
+		}
 		byte[] data = propertyValue.getBytes();
 
 		for (PublicKey customKey : PUBLIC_KEYS) {
