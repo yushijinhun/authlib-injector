@@ -1,6 +1,10 @@
  * [English](https://github.com/yushijinhun/authlib-injector/blob/develop/README.en.md)
  * **简体中文(Chinese Simplified)**
 
+> **This project is in maintenance mode and not accepting new features.** If you’d like to take over development, contact me through my GitHub profile: [@yushijinhun](https://github.com/yushijinhun).
+>
+> **本项目目前仅做维护，不再新增功能。**
+
 # authlib-injector
 [![latest release](https://img.shields.io/github/v/tag/yushijinhun/authlib-injector?color=yellow&include_prereleases&label=version&sort=semver&style=flat-square)](https://github.com/yushijinhun/authlib-injector/releases)
 [![ci status](https://img.shields.io/github/actions/workflow/status/yushijinhun/authlib-injector/ci.yml?branch=develop)](https://github.com/yushijinhun/authlib-injector/actions?query=workflow%3ACI)
