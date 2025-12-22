@@ -8,9 +8,9 @@
 [![ci status](https://img.shields.io/github/actions/workflow/status/yushijinhun/authlib-injector/ci.yml?branch=develop)](https://github.com/yushijinhun/authlib-injector/actions?query=workflow%3ACI)
 [![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/develop/LICENSE)
 
-authlib-injector enables you to build a Minecraft authentication system offering all the features that genuine Minecraft has.
+authlib-injector allows you to build your own Minecraft authentication system, offering all the features that the official Minecraft one has.
 
-**[See the wiki](https://github.com/yushijinhun/authlib-injector/wiki) for documents and detailed descriptions.**
+**[Visit the wiki](https://github.com/yushijinhun/authlib-injector/wiki) for documents and detailed descriptions.**
 
 ## Download
 You can download the latest authlib-injector build from [here](https://authlib-injector.yushi.moe/).
@@ -34,24 +34,24 @@ Configure Minecraft server with the following JVM parameter:
 ```
 -Dauthlibinjector.mojangNamespace={default|enabled|disabled}
     Whether to enable Mojang namespace (@mojang suffix).
-    It's enabled by default if the authentication server does NOT send feature.no_mojang_namespace option.
+    Enabled by default if the authentication server does NOT send the feature.no_mojang_namespace option.
 
-    If enabled, virtual player <username>@mojang will have the same skin as premium (Mojang) player <username>.
+    If enabled, virtual/emulated player <username>@mojang will have the same skin as the premium (Mojang) player with the same username.
     For example,
      - /give @p minecraft:skull 1 3 {SkullOwner:"Notch@mojang"}
      - /npc skin Notch@mojang
     will display Notch's skin.
 
-    Note that the virtual player does NOT have the same UUID as its corresponding premium player.
-    To distinguish virtual players from actual ones, the most significant bit of time_hi_and_version is set to 1 (see RFC 4122 section 4.1.3).
+    Note that the virtual/emulated player does NOT have the same UUID as its corresponding premium player.
+    To distinguish virtual/emulated players from actual ones, the most significant bit of time_hi_and_version is set to 1 (see RFC 4122 section 4.1.3).
     For example:
       069a79f4-44e9-4726-a5be-fca90e38aaf5 Notch
       069a79f4-44e9-c726-a5be-fca90e38aaf5 Notch@mojang
-    We use this approach because, in RFC 4122, UUID version has only 6 possible values (0~5), which means the most significant is always 0.
-    In fact, Mojang uses version-4 (random) UUID, so its corresponding virtual player has a version-12 UUID.
+    This is used as in RFC 4122, UUID version has only 6 possible values (0~5), which means the most significant is always 0.
+    In fact, Mojang uses version-4 (random) UUID, so its corresponding virtual/emulated player has a version-12 UUID.
 
 -Dauthlibinjector.mojangProxy={proxy server URL}
-    Use proxy when accessing Mojang authentication service.
+    Use a proxy server when accessing Mojang authentication service.
     Only SOCKS protocol is supported.
     URL format: socks://<host>:<port>
 
@@ -60,7 +60,7 @@ Configure Minecraft server with the following JVM parameter:
 
 -Dauthlibinjector.legacySkinPolyfill={default|enabled|disabled}
     Whether to polyfill legacy skin API, namely 'GET /skins/MinecraftSkins/{username}.png'.
-    It's enabled by default if the authentication server does NOT send feature.legacy_skin_api option.
+    Enabled by default if the authentication server does NOT send feature.legacy_skin_api option.
 
 -Dauthlibinjector.debug (equals -Dauthlibinjector.debug=verbose,authlib)
  or -Dauthlibinjector.debug={comma-separated debug options}
@@ -74,10 +74,11 @@ Configure Minecraft server with the following JVM parameter:
     Ignore specified packages. Classes in these packages will not be analyzed or modified.
 
 -Dauthlibinjector.disableHttpd
-    Disable local HTTP server.
-    Features (see below) depending on local HTTP server will be unavailable:
+    Disable the local HTTP server.
+    The features below depend on the local HTTP server:
      - Mojang namespace
      - Legacy skin API polyfill
+    They will be unavailable if the local HTTP server is disabled.
 
 -Dauthlibinjector.httpdPort={port}
     Sets the port used by the local HTTP server, defaults to 0 (randomly chosen).
