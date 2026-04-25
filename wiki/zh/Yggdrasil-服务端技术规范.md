@@ -133,7 +133,7 @@ UUID.nameUUIDFromBytes(("OfflinePlayer:" + characterName).getBytes(StandardChars
 
 角色属性（`properties`）及数字签名（`signature`）在无特殊说明的情况下不需要包含。
 
-`signature` 是属性值的数字签名，使用 Base64 编码。签名算法为 SHA1withRSA，见 [PKCS #1](https://www.rfc-editor.org/rfc/rfc2437.txt)。关于签名密钥的详细介绍，见 [签名密钥对](签名密钥对)。
+`signature` 是属性值的数字签名，使用 Base64 编码。签名算法为 SHA1withRSA，见 [PKCS #1](https://www.rfc-editor.org/rfc/rfc2437.txt)。关于签名密钥的详细介绍，见 [签名密钥对](签名密钥对.md)。
 
 角色属性中可以包含以下项目：
 
