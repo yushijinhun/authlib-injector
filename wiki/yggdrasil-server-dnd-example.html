@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<title>DnD 方式添加 Yggdrasil 服务端演示 / Demonstration of adding an Yggdrasil server via drag-and-drop</title>
+</head>
+
+<body>
+	<p>
+		将下方的文本拖至启动器 / Drag the text below to the launcher:
+	</p>
+	<p>
+		<span id="dndLabel" draggable="true" ondragstart="dndLabel_dragstart(event);">example.yggdrasil.yushi.moe</span>
+	</p>
+
+	<script>
+		function dndLabel_dragstart(event) {
+			let yggdrasilApiRoot = "https://example.yggdrasil.yushi.moe/";
+			let uri = "authlib-injector:yggdrasil-server:" + encodeURIComponent(yggdrasilApiRoot);
+			event.dataTransfer.setData("text/plain", uri);
+			event.dataTransfer.dropEffect = "copy";
+		}
+	</script>
+</body>
+
+</html>
