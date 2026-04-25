@@ -1,4 +1,6 @@
-## 简介
+# Home
+
+### 简介
 该项目的目标：
  * 为修改 Minecraft ，使其使用自定义 Yggdrasil 服务提供工具
  * 为自定义 Yggdrasil 服务端、使用自定义 Yggdrasil 服务的启动器提供技术规范
@@ -11,7 +13,7 @@
 
 > 开发者交流 QQ 群：926979364，Telegram 群：[@authlib_injector](https://t.me/authlib_injector)。欢迎启动器或皮肤站开发者加入。普通用户请勿加群，可能会听不懂。
 
-## 相关项目
+### 相关项目
  * [yggdrasil-mock](https://github.com/yushijinhun/yggdrasil-mock)
    * Yggdrasil 服务端规范的参考实现，以及 Yggdrasil API 的测试用例
    * 基于此项目的 Yggdrasil 服务端演示站点：[auth-demo.yushi.moe](https://github.com/yushijinhun/yggdrasil-mock/wiki/演示站点)
@@ -26,9 +28,9 @@
  * [LaunchHelper](https://github.com/Codex-in-somnio/LaunchHelper)
    * 想在 Multicraft 面板服上使用 authlib-injector，可以尝试此项目
 
-## 推荐的公共验证服务器
+### 推荐的公共验证服务器
  * [LittleSkin](https://littlesk.in/)
  * [Ely.by](https://ely.by/)
 
-## 捐助
+### 捐助
 BMCLAPI 为 authlib-injector 提供了下载镜像站。如果您想要支持 authlib-injector 的开发，您可以[捐助 BMCLAPI](https://bmclapidoc.bangbang93.com/)。

@@ -1,8 +1,10 @@
-## 获取 authlib-injector
+# 在 Minecraft 服务端使用 authlib injector
+
+### 获取 authlib-injector
 
 首先你需要从[此处](https://authlib-injector.yushi.moe/)下载最新版本的 authlib-injector。
 
-## 原版服务端 / Spigot / Paper / ...
+### 原版服务端 / Spigot / Paper / ...
 > 自 authlib-injector v1.2.0 以后，需要设置 `enforce-secure-profile` 为 `true`，这一点与先前版本不同！
 >
 > 如果您在 MC 1.19+ 上遇到聊天消息签名相关的问题，请阅读：  
@@ -37,10 +39,10 @@ java -jar minecraft_server.1.12.2.jar nogui
 java -javaagent:authlib-injector.jar=https://example.yggdrasil.yushi.moe -jar minecraft_server.1.12.2.jar nogui
 ```
 
-## BungeeCord / Velocity
+### BungeeCord / Velocity
 如果使用 BungeeCord 或 Velocity，那么在所有服务端**以及 BungeeCord / Velocity** 上都需要加载 authlib-injector（方法见上），同时开启 `enforce-secure-chat`。但应只有 BungeeCord / Velocity 打开 `online-mode`，后端 MC 服务端应关闭 `online-mode`。
 
-## 调用 Mojang 皮肤
+### 调用 Mojang 皮肤
 加载 authlib-injector 后，所有皮肤默认都是从指定的验证服务器处获取的。例如：
 * `/give @p minecraft:skull 1 3 {SkullOwner:"notch"}`
 * （Citizens2 插件）`/npc skin notch`
@@ -53,7 +55,7 @@ java -javaagent:authlib-injector.jar=https://example.yggdrasil.yushi.moe -jar mi
 
 详细说明见 [README § 参数](https://github.com/yushijinhun/authlib-injector#参数) 中的 `-Dauthlibinjector.mojangNamespace` 选项。
 
-### 通过代理访问 Mojang
+#### 通过代理访问 Mojang
 调用 Mojang 皮肤的功能需要 MC 服务端能够访问 Mojang API。如果你的服务端要通过代理才能访问 Mojang，那么你可以在启动时添加以下 **JVM 参数**来指定代理：
 ```
 -Dauthlibinjector.mojangProxy=socks://<host>:<port>
