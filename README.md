@@ -8,7 +8,7 @@
 # authlib-injector
 [![latest release](https://img.shields.io/github/v/tag/yushijinhun/authlib-injector?color=yellow&include_prereleases&label=version&sort=semver&style=flat-square)](https://github.com/yushijinhun/authlib-injector/releases)
 [![ci status](https://img.shields.io/github/actions/workflow/status/yushijinhun/authlib-injector/ci.yml?branch=develop)](https://github.com/yushijinhun/authlib-injector/actions?query=workflow%3ACI)
-[![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/develop/LICENSE)
+[![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/develop/COPYING.md)
 
 通过运行时修改 authlib 实现游戏外登录，并为 Yggdrasil 服务端的实现提供规范。
 
@@ -124,7 +124,9 @@ gradle
 BMCLAPI 为 authlib-injector 提供了[下载镜像站](https://github.com/yushijinhun/authlib-injector/wiki/%E8%8E%B7%E5%8F%96-authlib-injector#bmclapi-%E9%95%9C%E5%83%8F)。如果您想要支持 authlib-injector 的开发，您可以[捐助 BMCLAPI](https://bmclapidoc.bangbang93.com/)。
 
 ## 许可
-本程序使用 [GNU Affero General Public License v3.0 or later](https://github.com/yushijinhun/authlib-injector/blob/develop/LICENSE) 许可，并附有以下例外：
+`wiki` 子目录中的文件采用 [CC BY-SA 4.0](CC-BY-SA-4.0.txt) 许可。
+
+所有其他文件均在 GNU Affero General Public License v3.0 或更高版本下许可，并附带“AUTHLIB-INJECTOR”例外。AGPLv3 的完整文本（包括 authlib-injector 例外）可在 [AGPLv3-with-authlib-injector-exception.txt](AGPLv3-with-authlib-injector-exception.txt) 中获取。
 
 > **AGPL 的例外情况:**
 >
