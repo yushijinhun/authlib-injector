@@ -8,7 +8,7 @@ First, you need to download the latest version of authlib-injector from [here](h
 > Since authlib-injector v1.2.0, you need to set `enforce-secure-profile` to `true`, which is different from previous versions!
 >
 > If you encounter issues related to chat message signing on MC 1.19+, please read:
-> :point_right: [authlib-injector v1.2.0 Upgrade FAQ #174](https://github.com/yushijinhun/authlib-injector/discussions/174) :point_left:
+> 👉 [authlib-injector v1.2.0 Upgrade FAQ #174](https://github.com/yushijinhun/authlib-injector/discussions/174) 👈
 
 Please set `online-mode` to `true` in the server's `server.properties`. For 1.19+ servers, you also need to **set `enforce-secure-profile` to `true`**.
 

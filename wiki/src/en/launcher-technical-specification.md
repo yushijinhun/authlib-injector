@@ -66,7 +66,7 @@ The API address is a component of the URI and should be [encoded](https://develo
 The drag effect is copy (`copy`).
 
 ##### HTML Example
-> [Demo Page](https://rawcdn.githack.com/yushijinhun/authlib-injector/refs/heads/develop/wiki/yggdrasil-server-dnd-example.html)
+> [Demo Page](../yggdrasil-server-dnd-example.html)
 
 Add `draggable="true"` to the DOM node that needs to be dragged, and handle the `dragstart` event:
 ```html

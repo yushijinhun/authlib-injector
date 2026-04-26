@@ -8,7 +8,7 @@
 > 自 authlib-injector v1.2.0 以后，需要设置 `enforce-secure-profile` 为 `true`，这一点与先前版本不同！
 >
 > 如果您在 MC 1.19+ 上遇到聊天消息签名相关的问题，请阅读：  
-> :point_right: [authlib-injector v1.2.0 升级常见问题解答 FAQ #174](https://github.com/yushijinhun/authlib-injector/discussions/174) :point_left:
+> 👉 [authlib-injector v1.2.0 升级常见问题解答 FAQ #174](https://github.com/yushijinhun/authlib-injector/discussions/174) 👈
 
 请将服务端 `server.properties` 中的 `online-mode` 设置为 `true`。对于 1.19+ 的服务端，还需要**设置`enforce-secure-profile` 为 `true`**。
 

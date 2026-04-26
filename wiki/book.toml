@@ -1,0 +1,9 @@
+[book]
+authors = ["authlib-injector contributors"]
+language = "zh"
+src = "src"
+title = "authlib-injector wiki"
+
+[output.html]
+admonitions = true
+git-repository-url = "https://github.com/yushijinhun/authlib-injector"
