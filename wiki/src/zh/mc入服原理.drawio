@@ -1,0 +1,85 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0">
+  <diagram id="mc入服原理" name="mc入服原理">
+    <mxGraphModel dx="770" dy="1186" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="container" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="380" width="730" x="20" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="player-other-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;fontSize=13;" value="......" vertex="1">
+          <mxGeometry height="70" width="100" x="30" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="player-other-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;fontSize=13;" value="其他玩家的 MC&lt;br&gt;客户端" vertex="1">
+          <mxGeometry height="70" width="100" x="140" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="player-waiting" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;fontSize=13;" value="待进服玩家的&lt;br&gt; MC 客户端" vertex="1">
+          <mxGeometry height="70" width="100" x="290" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="mc-server" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;fontSize=13;" value="MC服务端" vertex="1">
+          <mxGeometry height="70" width="100" x="290" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="yggdrasil" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;fontSize=13;" value="Yggdrasil 端" vertex="1">
+          <mxGeometry height="70" width="100" x="510" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1" edge="1" parent="1" source="mc-server" style="endArrow=classic;html=1;strokeWidth=2;" target="player-waiting" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1-label" connectable="0" parent="arrow1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=13;labelBackgroundColor=#ffffff;" value="1. 发送 serverId" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="10" y="-9" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow2" edge="1" parent="1" source="player-waiting" style="endArrow=classic;html=1;strokeWidth=2;" target="yggdrasil" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2-label" connectable="0" parent="arrow2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=13;labelBackgroundColor=#ffffff;" value="2. joinServer" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow3" edge="1" parent="1" source="mc-server" style="endArrow=classic;html=1;strokeWidth=2;" target="yggdrasil" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="560" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow3-label" connectable="0" parent="arrow3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=13;labelBackgroundColor=#ffffff;" value="3. hasJoinedServer" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="-12" y="-19" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow4" edge="1" parent="1" source="yggdrasil" style="endArrow=classic;html=1;strokeWidth=2;" target="mc-server" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="130" />
+              <mxPoint x="640" y="365" />
+              <mxPoint x="340" y="365" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow4-label" connectable="0" parent="arrow4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=13;labelBackgroundColor=#ffffff;" value="4. 该玩家的 Profile（带有 properties 和签名）" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="-31" y="-13" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow5" edge="1" parent="1" source="mc-server" style="endArrow=classic;html=1;strokeWidth=2;" target="player-other-2" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="190" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow5-label" connectable="0" parent="arrow5" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=13;labelBackgroundColor=#ffffff;" value="5. 新进服玩家的 Profile" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="10" y="-9" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="explanation" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=13;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:left;&quot;&gt;&lt;span style=&quot;font-size: 13px;&quot;&gt;1. 服务端向待进服的玩家发送 serverId，其可以被视为一个随机的字符串。&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;text-align:left;&quot;&gt;&lt;br&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;text-align:left;&quot;&gt;&lt;span style=&quot;font-size: 13px;&quot;&gt;2. 客户端将该 serverId 连同自己的 accessToken 发送给 Yggdrasil 端，请求验证。&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;text-align:left;&quot;&gt;&lt;br&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;text-align:left;&quot;&gt;&lt;span style=&quot;font-size: 13px;&quot;&gt;3. 服务端将 serverId 及玩家的名字发送给 Yggdrasil 端，查询玩家是否已完成验证。&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;text-align:left;&quot;&gt;&lt;br&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;text-align:left;&quot;&gt;&lt;span style=&quot;font-size: 13px;&quot;&gt;4. 若玩家验证成功，则 Yggdrasil 端将玩家的 Profile 返回给服务端，其中包含材质信息和数字签名。&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;text-align:left;&quot;&gt;&lt;br&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;text-align:left;&quot;&gt;&lt;span style=&quot;font-size: 13px;&quot;&gt;5. 服务端将该玩家的 Profile 分发给服内所有玩家。&lt;/span&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="160" width="660" x="30" y="420" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
