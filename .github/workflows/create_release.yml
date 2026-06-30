@@ -66,7 +66,7 @@ jobs:
             Build number: ${{ steps.parse_pr.outputs.build_number }}  
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.parse_pr.outputs.commit }}
 
