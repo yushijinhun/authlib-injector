@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import moe.yushi.authlibinjector.httpd.AntiFeaturesFilter;
 import moe.yushi.authlibinjector.httpd.DefaultURLRedirector;
+import moe.yushi.authlibinjector.httpd.FloodgateGlobalLinkingFilter;
 import moe.yushi.authlibinjector.httpd.LegacySkinAPIFilter;
 import moe.yushi.authlibinjector.httpd.ProfileKeyFilter;
 import moe.yushi.authlibinjector.httpd.PublickeysFilter;
@@ -257,6 +258,11 @@ public final class AuthlibInjector {
 		boolean profileKeyDefault = Boolean.TRUE.equals(config.getMeta().get("feature.enable_profile_key"));
 		if (!Config.profileKey.isEnabled(profileKeyDefault)) {
 			filters.add(new ProfileKeyFilter());
+		}
+
+		boolean floodgateGlobalLinkingDefault = Boolean.TRUE.equals(config.getMeta().get("feature.floodgate_global_linking"));
+		if (floodgateGlobalLinkingDefault) {
+			filters.add(new FloodgateGlobalLinkingFilter(config.getApiRoot()));
 		}
 
 		filters.add(new PublickeysFilter());

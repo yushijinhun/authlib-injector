@@ -171,7 +171,7 @@ public class URLProcessor {
 	private static final Set<String> ignoredHeaders = new HashSet<>(Arrays.asList("host", "expect", "connection", "keep-alive", "transfer-encoding"));
 
 	@SuppressWarnings("resource")
-	private Response reverseProxy(IHTTPSession session, String upstream) throws IOException {
+	static Response reverseProxy(IHTTPSession session, String upstream) throws IOException {
 		String method = session.getMethod();
 
 		String url = session.getQueryParameterString() == null ? upstream : upstream + "?" + session.getQueryParameterString();
