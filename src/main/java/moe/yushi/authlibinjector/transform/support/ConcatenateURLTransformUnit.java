@@ -48,7 +48,7 @@ public class ConcatenateURLTransformUnit implements TransformUnit {
 
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
-		if ("com.mojang.authlib.HttpAuthenticationService".equals(className)) {
+		if ("com.mojang.authlib.HttpAuthenticationService".equals(className) || "com.mojang.authlib.HttpDiscoveryService".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {

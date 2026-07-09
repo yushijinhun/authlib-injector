@@ -104,7 +104,34 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 						ctx.markModified();
 						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 						mv.visitCode();
+						// These classes declare isAllowedTextureDomain as a static method,
+						// so the String argument is in local slot 0.
 						mv.visitVarInsn(ALOAD, 0);
+						ctx.invokeCallback(mv, SkinWhitelistTransformUnit.class, "isWhitelistedDomain");
+						mv.visitInsn(IRETURN);
+						mv.visitMaxs(-1, -1);
+						mv.visitEnd();
+						return null;
+					} else {
+						return super.visitMethod(access, name, desc, signature, exceptions);
+					}
+				}
+
+			});
+		} else if ("com.mojang.authlib.services.MinecraftServicesDiscoveryService".equals(className)) {
+			// In com.mojang.authlib 10+, isAllowedTextureDomain became an
+			// instance method on this class, so the String argument is in
+			// local slot 1 (slot 0 is `this`).
+			return Optional.of(new ClassVisitor(ASM9, writer) {
+
+				@Override
+				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+					if (("isWhitelistedDomain".equals(name) || "isAllowedTextureDomain".equals(name)) &&
+							"(Ljava/lang/String;)Z".equals(desc)) {
+						ctx.markModified();
+						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+						mv.visitCode();
+						mv.visitVarInsn(ALOAD, 1);
 						ctx.invokeCallback(mv, SkinWhitelistTransformUnit.class, "isWhitelistedDomain");
 						mv.visitInsn(IRETURN);
 						mv.visitMaxs(-1, -1);

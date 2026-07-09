@@ -189,7 +189,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 				}
 			});
 
-		} else if ("com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo".equals(className)) {
+		} else if ("com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo".equals(className) || "com.mojang.authlib.services.MinecraftServicesKeyInfo".equals(className)) {
 			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
