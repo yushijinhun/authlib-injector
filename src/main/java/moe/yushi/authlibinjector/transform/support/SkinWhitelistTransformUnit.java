@@ -19,6 +19,8 @@ package moe.yushi.authlibinjector.transform.support;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.IRETURN;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.log;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -63,7 +65,7 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 
 	@CallbackMethod
 	public static boolean isWhitelistedDomain(String url) {
-		System.out.println(url);
+		log(DEBUG, "Checking texture URL whitelist: " + url);
 		String domain;
 		try {
 			domain = new URI(url).getHost();
