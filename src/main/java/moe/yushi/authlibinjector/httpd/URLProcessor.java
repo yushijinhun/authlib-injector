@@ -123,6 +123,7 @@ public class URLProcessor {
 	}
 
 	private NanoHTTPD createHttpd() {
+		final URLProcessor urlProcessor = this;
 		return new NanoHTTPD("127.0.0.1", Config.httpdPort) {
 			@Override
 			public Response serve(IHTTPSession session) {
@@ -139,7 +140,7 @@ public class URLProcessor {
 						if (filter.canHandle(domain)) {
 							Optional<Response> result;
 							try {
-								result = filter.handle(domain, path, session);
+								result = filter.handle(urlProcessor, domain, path, session);
 							} catch (Throwable e) {
 								log(WARNING, "An error occurred while processing request [" + session.getUri() + "]", e);
 								return Response.newFixedLength(Status.INTERNAL_ERROR, CONTENT_TYPE_TEXT, "Internal Server Error");

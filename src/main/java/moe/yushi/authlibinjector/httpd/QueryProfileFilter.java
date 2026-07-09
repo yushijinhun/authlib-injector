@@ -51,7 +51,7 @@ public class QueryProfileFilter implements URLFilter {
 	}
 
 	@Override
-	public Optional<Response> handle(String domain, String path, IHTTPSession session) throws IOException {
+	public Optional<Response> handle(URLProcessor urlProcessor, String domain, String path, IHTTPSession session) throws IOException {
 		if (!domain.equals("sessionserver.mojang.com"))
 			return empty();
 		Matcher matcher = PATH_REGEX.matcher(path);

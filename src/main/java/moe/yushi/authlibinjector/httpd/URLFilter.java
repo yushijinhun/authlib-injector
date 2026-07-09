@@ -37,5 +37,5 @@ public interface URLFilter {
 	 */
 	boolean canHandle(String domain);
 
-	Optional<Response> handle(String domain, String path, IHTTPSession session) throws IOException;
+	Optional<Response> handle(URLProcessor urlProcessor, String domain, String path, IHTTPSession session) throws IOException;
 }

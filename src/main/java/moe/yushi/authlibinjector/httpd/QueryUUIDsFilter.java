@@ -53,7 +53,7 @@ public class QueryUUIDsFilter implements URLFilter {
 	}
 
 	@Override
-	public Optional<Response> handle(String domain, String path, IHTTPSession session) throws IOException {
+	public Optional<Response> handle(URLProcessor urlProcessor, String domain, String path, IHTTPSession session) throws IOException {
 		if (
 			(domain.equals("api.mojang.com") && path.equals("/profiles/minecraft") && session.getMethod().equals("POST")) ||
 			(domain.equals("api.minecraftservices.com") && path.equals("/minecraft/profile/lookup/bulk/byname") && session.getMethod().equals("POST"))
