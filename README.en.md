@@ -1,16 +1,14 @@
  * **English**
  * [简体中文(Chinese Simplified)](https://github.com/yushijinhun/authlib-injector/blob/develop/README.md)
 
-> **This project is in maintenance mode and not accepting new features.** If you’d like to take over development, contact me through my GitHub profile: [@yushijinhun](https://github.com/yushijinhun).
-
 # authlib-injector
 [![latest release](https://img.shields.io/github/v/tag/yushijinhun/authlib-injector?color=yellow&include_prereleases&label=version&sort=semver&style=flat-square)](https://github.com/yushijinhun/authlib-injector/releases)
 [![ci status](https://img.shields.io/github/actions/workflow/status/yushijinhun/authlib-injector/ci.yml?branch=develop)](https://github.com/yushijinhun/authlib-injector/actions?query=workflow%3ACI)
-[![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/develop/LICENSE)
+[![license agpl-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square)](https://github.com/yushijinhun/authlib-injector/blob/develop/COPYING.md)
 
 authlib-injector enables you to build a Minecraft authentication system offering all the features that genuine Minecraft has.
 
-**[See the wiki](https://github.com/yushijinhun/authlib-injector/wiki) for documents and detailed descriptions.**
+**[See the wiki](https://yushijinhun.github.io/authlib-injector) for documents and detailed descriptions.**
 
 ## Download
 You can download the latest authlib-injector build from [here](https://authlib-injector.yushi.moe/).
@@ -112,7 +110,9 @@ Configure Minecraft server with the following JVM parameter:
 ```
 
 ## License
-This work is licensed under the [GNU Affero General Public License v3.0](https://github.com/yushijinhun/authlib-injector/blob/develop/LICENSE) or later, with the "AUTHLIB-INJECTOR" exception.
+Files in the `wiki` subdirectory are licensed as [CC BY-SA 4.0](CC-BY-SA-4.0.txt).
+
+All other files are licensed under the GNU Affero General Public License v3.0 or later, with the "AUTHLIB-INJECTOR" exception. The full text of the AGPLv3, including the authlib-injector exception, is available in [AGPLv3-with-authlib-injector-exception.txt](AGPLv3-with-authlib-injector-exception.txt).
 
 > **"AUTHLIB-INJECTOR" EXCEPTION TO THE AGPL**
 >

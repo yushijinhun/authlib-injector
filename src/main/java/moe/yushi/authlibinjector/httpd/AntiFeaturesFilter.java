@@ -39,7 +39,7 @@ public class AntiFeaturesFilter implements URLFilter {
 	}
 
 	@Override
-	public Optional<Response> handle(String domain, String path, IHTTPSession session) throws IOException {
+	public Optional<Response> handle(URLProcessor urlProcessor, String domain, String path, IHTTPSession session) throws IOException {
 		if (domain.equals("api.minecraftservices.com") && path.equals("/privileges") && session.getMethod().equals("GET")) {
 			return Optional.of(Response.newFixedLength(Status.OK, CONTENT_TYPE_JSON, RESPONSE_PRIVILEGES));
 		} else if (domain.equals("api.minecraftservices.com") && path.equals("/player/attributes") && session.getMethod().equals("GET")) {

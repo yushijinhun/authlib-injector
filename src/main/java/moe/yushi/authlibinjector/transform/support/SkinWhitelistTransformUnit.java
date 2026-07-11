@@ -19,6 +19,8 @@ package moe.yushi.authlibinjector.transform.support;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.IRETURN;
+import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static moe.yushi.authlibinjector.util.Logging.log;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -63,7 +65,7 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 
 	@CallbackMethod
 	public static boolean isWhitelistedDomain(String url) {
-		System.out.println(url);
+		log(DEBUG, "Checking texture URL whitelist: " + url);
 		String domain;
 		try {
 			domain = new URI(url).getHost();
@@ -102,7 +104,34 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 						ctx.markModified();
 						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 						mv.visitCode();
+						// These classes declare isAllowedTextureDomain as a static method,
+						// so the String argument is in local slot 0.
 						mv.visitVarInsn(ALOAD, 0);
+						ctx.invokeCallback(mv, SkinWhitelistTransformUnit.class, "isWhitelistedDomain");
+						mv.visitInsn(IRETURN);
+						mv.visitMaxs(-1, -1);
+						mv.visitEnd();
+						return null;
+					} else {
+						return super.visitMethod(access, name, desc, signature, exceptions);
+					}
+				}
+
+			});
+		} else if ("com.mojang.authlib.services.MinecraftServicesDiscoveryService".equals(className)) {
+			// In com.mojang.authlib 10+, isAllowedTextureDomain became an
+			// instance method on this class, so the String argument is in
+			// local slot 1 (slot 0 is `this`).
+			return Optional.of(new ClassVisitor(ASM9, writer) {
+
+				@Override
+				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+					if (("isWhitelistedDomain".equals(name) || "isAllowedTextureDomain".equals(name)) &&
+							"(Ljava/lang/String;)Z".equals(desc)) {
+						ctx.markModified();
+						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+						mv.visitCode();
+						mv.visitVarInsn(ALOAD, 1);
 						ctx.invokeCallback(mv, SkinWhitelistTransformUnit.class, "isWhitelistedDomain");
 						mv.visitInsn(IRETURN);
 						mv.visitMaxs(-1, -1);

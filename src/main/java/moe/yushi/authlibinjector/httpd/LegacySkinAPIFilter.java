@@ -58,7 +58,7 @@ public class LegacySkinAPIFilter implements URLFilter {
 	}
 
 	@Override
-	public Optional<Response> handle(String domain, String path, IHTTPSession session) {
+	public Optional<Response> handle(URLProcessor urlProcessor, String domain, String path, IHTTPSession session) {
 		if (!domain.equals("skins.minecraft.net"))
 			return empty();
 		Matcher matcher = PATH_SKINS.matcher(path);

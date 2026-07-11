@@ -1,0 +1,77 @@
+{
+  "environment" : "prod",
+  "product" : "minecraft",
+  "discovery" : {
+    "authentication" : {
+      "endpoints" : {
+        "getPublicKeys" : {
+          "uri" : "https://api.minecraftservices.com/publickeys"
+        },
+        "loginXbox" : {
+          "uri" : "https://api.minecraftservices.com/authentication/login_with_xbox"
+        }
+      }
+    },
+    "session" : {
+      "endpoints" : {
+        "getProfileById" : {
+          "uri" : "https://sessionserver.mojang.com/session/minecraft/profile/{profileId}"
+        },
+        "verify" : {
+          "uri" : "https://sessionserver.mojang.com/session/minecraft/hasJoined"
+        },
+        "join" : {
+          "uri" : "https://sessionserver.mojang.com/session/minecraft/join"
+        }
+      }
+    },
+    "player" : {
+      "endpoints" : {
+        "updatePresence" : {
+          "uri" : "https://api.minecraftservices.com/presence"
+        },
+        "sendReport" : {
+          "uri" : "https://api.minecraftservices.com/player/report"
+        },
+        "getAttributes" : {
+          "uri" : "https://api.minecraftservices.com/player/attributes"
+        },
+        "getFriends" : {
+          "uri" : "https://api.minecraftservices.com/friends"
+        },
+        "getCertificates" : {
+          "uri" : "https://api.minecraftservices.com/player/certificates"
+        },
+        "updateAttributes" : {
+          "uri" : "https://api.minecraftservices.com/player/attributes"
+        },
+        "updateFriends" : {
+          "uri" : "https://api.minecraftservices.com/friends"
+        },
+        "getBlocklist" : {
+          "uri" : "https://api.minecraftservices.com/privacy/blocklist"
+        }
+      }
+    },
+    "profiles" : {
+      "endpoints" : {
+        "getManyByName" : {
+          "uri" : "https://api.mojang.com/profiles/minecraft"
+        },
+        "getByName" : {
+          "uri" : "https://api.mojang.com/users/profiles/minecraft/{name}"
+        },
+        "getTexture" : {
+          "validUris" : [ "https://textures.minecraft.net/texture/{textureId}", "http://textures.minecraft.net/texture/{textureId}" ]
+        }
+      }
+    },
+    "telemetry" : {
+      "endpoints" : {
+        "sendEvents" : {
+          "uri" : "https://api.minecraftservices.com/events"
+        }
+      }
+    }
+  }
+}

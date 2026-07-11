@@ -43,8 +43,8 @@ jar {
 }
 
 processResources {
-	from('LICENSE') {
-		rename('LICENSE', 'authlib-injector.txt')
+	from('AGPLv3-with-authlib-injector-exception.txt') {
+		rename('AGPLv3-with-authlib-injector-exception.txt', 'authlib-injector.txt')
 		into 'META-INF/licenses'
 	}
 }
