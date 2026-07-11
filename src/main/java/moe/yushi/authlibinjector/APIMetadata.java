@@ -19,19 +19,24 @@ package moe.yushi.authlibinjector;
 import static java.text.MessageFormat.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonArray;
 import static moe.yushi.authlibinjector.util.JsonUtils.asJsonObject;
 import static moe.yushi.authlibinjector.util.JsonUtils.parseJson;
 import java.io.UncheckedIOException;
 import java.security.PublicKey;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.util.JsonUtils;
@@ -49,29 +54,38 @@ public class APIMetadata {
 								.collect(toList()))
 						.orElse(emptyList());
 
-		Optional<PublicKey> decodedPublickey =
+		Optional<PublicKey> signaturePublickey =
 				ofNullable(response.get("signaturePublickey"))
 						.map(JsonUtils::asJsonString)
 						.map(KeyUtils::parseSignaturePublicKey);
+
+		Set<PublicKey> playerCertificateKeys = new HashSet<PublicKey>();
+		Set<PublicKey> profilePropertyKeys = new HashSet<PublicKey>();
+
+		signaturePublickey.ifPresent(playerCertificateKeys::add);
+		signaturePublickey.ifPresent(profilePropertyKeys::add);
 
 		Map<String, Object> meta =
 				ofNullable(response.get("meta"))
 						.map(it -> (Map<String, Object>) new TreeMap<>(asJsonObject(it)))
 						.orElse(emptyMap());
 
-		return new APIMetadata(apiRoot, unmodifiableList(skinDomains), unmodifiableMap(meta), decodedPublickey);
+		return new APIMetadata(apiRoot, unmodifiableList(skinDomains), unmodifiableMap(meta), unmodifiableSet(playerCertificateKeys), unmodifiableSet(profilePropertyKeys));
 	}
 
 	private String apiRoot;
 	private List<String> skinDomains;
-	private Optional<PublicKey> decodedPublickey;
+	private Set<PublicKey> playerCertificateKeys;
+	private Set<PublicKey> profilePropertyKeys;
 	private Map<String, Object> meta;
 
-	public APIMetadata(String apiRoot, List<String> skinDomains, Map<String, Object> meta, Optional<PublicKey> decodedPublickey) {
+	public APIMetadata(String apiRoot, List<String> skinDomains, Map<String, Object> meta,
+	                   Set<PublicKey> playerCertificateKeys, Set<PublicKey> profilePropertyKeys) {
 		this.apiRoot = requireNonNull(apiRoot);
 		this.skinDomains = requireNonNull(skinDomains);
 		this.meta = requireNonNull(meta);
-		this.decodedPublickey = requireNonNull(decodedPublickey);
+		this.playerCertificateKeys = requireNonNull(playerCertificateKeys);
+		this.profilePropertyKeys = requireNonNull(profilePropertyKeys);
 	}
 
 	public String getApiRoot() {
@@ -86,12 +100,16 @@ public class APIMetadata {
 		return meta;
 	}
 
-	public Optional<PublicKey> getDecodedPublickey() {
-		return decodedPublickey;
+	public Set<PublicKey> getPlayerCertificateKeys() {
+		return playerCertificateKeys;
+	}
+
+	public Set<PublicKey> getProfilePropertyKeys() {
+		return profilePropertyKeys;
 	}
 
 	@Override
 	public String toString() {
-		return format("APIMetadata [apiRoot={0}, skinDomains={1}, decodedPublickey={2}, meta={3}]", apiRoot, skinDomains, decodedPublickey, meta);
+		return format("APIMetadata [apiRoot={0}, skinDomains={1}, playerCertificateKeys={2}, profilePropertyKeys={3}, meta={4}]", apiRoot, skinDomains, playerCertificateKeys, profilePropertyKeys, meta);
 	}
 }

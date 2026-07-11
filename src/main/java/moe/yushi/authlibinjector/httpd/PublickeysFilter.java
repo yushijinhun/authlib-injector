@@ -48,10 +48,15 @@ public class PublickeysFilter implements URLFilter {
 		JSONArray profilePropertyKeys = new JSONArray();
 		JSONArray playerCertificateKeys = new JSONArray();
 
-		for (PublicKey key : YggdrasilKeyTransformUnit.PUBLIC_KEYS) {
+		for (PublicKey key : YggdrasilKeyTransformUnit.PROFILE_PROPERTY_PUBLIC_KEYS) {
 			JSONObject entry = new JSONObject();
 			entry.put("publicKey", Base64.getEncoder().encodeToString(key.getEncoded()));
 			profilePropertyKeys.add(entry);
+		}
+
+		for (PublicKey key : YggdrasilKeyTransformUnit.PLAYER_CERTIFICATE_PUBLIC_KEYS) {
+			JSONObject entry = new JSONObject();
+			entry.put("publicKey", Base64.getEncoder().encodeToString(key.getEncoded()));
 			playerCertificateKeys.add(entry);
 		}
 
