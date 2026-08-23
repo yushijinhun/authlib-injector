@@ -554,14 +554,32 @@ After clearing the texture, the texture of that type will revert to default.
 ## Extended API
 The following APIs are designed to facilitate automatic configuration for authlib-injector.
 
+### API Location Indication (ALI)
+API Location Indication (ALI) is an HTTP response header field `X-Authlib-Injector-API-Location`, which serves the purpose of service discovery. The value of ALI is a relative URL or an absolute URL, pointing to the Yggdrasil API associated with the current page.
+
+By using ALI, users only need to enter an address associated with the Yggdrasil API, without inputting the actual API address. For example, `https://skin.example.com/api/yggdrasil/` can be simplified to `skin.example.com`. Launchers supporting ALI will request `(https://)skin.example.com`, recognize the ALI header field in the response, and find the real API address based on it.
+
+Skin sites can enable ALI on the homepage or site-wide. The method to enable ALI is to add the `X-Authlib-Injector-API-Location` header field to the HTTP response, for example:
+
+```
+X-Authlib-Injector-API-Location: /api/yggdrasil/  # Use relative URL
+X-Authlib-Injector-API-Location: https://skin.example.com/api/yggdrasil/  # Absolute URL is also allowed, supports cross-origin
+```
+
+When a page's ALI points to itself, this ALI will be ignored.
+
 ### API Metadata Retrieval
-`GET /`
+`GET (API Location)`
 
 Response Format:
 ```javascript
 {
 	"meta": {
 		// Server metadata, content arbitrary
+	},
+	"serverRoutes": { // Route discovery bindings
+		"Domain": "Replacement destination"
+		// ,...
 	},
 	"skinDomains": [ // Texture domain whitelist
 		"Domain matching rule 1"
@@ -582,6 +600,50 @@ The texture whitelist defaults to include two rules: `.minecraft.net` and `.moja
 	* For example, `.example.com` matches `a.example.com`, `b.a.example.com`, but **does not match** `example.com`.
 * If the rule **does not start** with `.` (dot), the matched domain must be **exactly the same** as the rule.
 	* For example, `example.com` matches `example.com`, but **does not match** `a.example.com`, `eexample.com`.
+
+#### Route Discovery
+`serverRoutes` binds domains to replacement destinations, and is the mechanism used for route discovery. Because support is inferred from the presence of the `serverRoutes` field, no separate capability flag is needed.
+
+##### Legacy Discovery
+Historically, routes were discovered as hardcoded subpaths under the API Location, e.g. `(API Location)/sessionserver`. Legacy discovery remains supported for the services it already covers, and is used as the fallback for those services when no matching `serverRoutes` entry is present. Those services, and their subpaths under the API Location, are:
+
+* `api.mojang.com` (`api`)
+* `authserver.mojang.com` (`authserver`)
+* `sessionserver.mojang.com` (`sessionserver`)
+* `api.minecraftservices.com` (`minecraftservices`)
+
+Legacy discovery is, however, closed to extension:
+
+* No new service will be added to legacy discovery; it stays frozen at the services it already supports.
+* New routes must not be placed under the API Location, which is reserved for legacy discovery. Any newly introduced route is discovered through `serverRoutes` instead.
+
+Servers are strongly recommended to continue supporting legacy discovery for the benefit of clients that do not implement `serverRoutes`.
+
+##### Allowed Domains
+The keys of `serverRoutes` are limited to a fixed set of domains. A client only honors entries whose key is one of the following:
+
+* `api.mojang.com`
+* `authserver.mojang.com`
+* `sessionserver.mojang.com`
+* `api.minecraftservices.com`
+* `discovery.minecraftservices.com`
+* `signaling-afd.franchise.minecraft-services.net`
+* `mcoapi.minecraft.net`
+* `pc.realms.minecraft.net`
+* `www.minecraft.net`
+
+An entry with any other key is ignored. The list of allowed domains is subject to change in the future.
+
+##### Format
+`serverRoutes` is a JSON object mapping each domain to its replacement. An entry applies to every request for that domain, regardless of path. Duplicate keys are undefined and should not be emitted.
+
+Each key must be one of the [allowed domains](#allowed-domains): a bare host, with no protocol, port, or path. Matching considers the host only, case-insensitively; the request's protocol and port are ignored.
+
+Each value may include a protocol, port, and path, but must not end in a trailing slash. The destination is the value with the request's path appended. Any path already in the value is kept, so value `skin.example.com/session` with request path `/foo` gives `skin.example.com/session/foo`.
+
+If a value specifies a protocol, it is used. When omitted, the client inherits the API Location's protocol. Omitting the protocol is recommended, though specifying one is allowed.
+
+An entry that violates any of these rules (for example, a value with a trailing slash) is ignored; the other entries still apply, and requests the ignored entry would have matched fall back as usual.
 
 #### Metadata in `meta`
 There is no mandatory requirement for the content in `meta`; the following fields are all optional.
@@ -630,6 +692,13 @@ The type of the `links` field is an object, which can contain:
         },
         "feature.non_email_login": true
     },
+    "serverRoutes": {
+        "authserver.mojang.com": "skin.example.com/api/yggdrasil/authserver",
+        "sessionserver.mojang.com": "https://session.example.com",
+        "api.mojang.com": "http://account.example.com:8080",
+        "api.minecraftservices.com": "services.example.com",
+        "discovery.minecraftservices.com": "https://skin.example.com/api/discovery"
+    },
     "skinDomains": [
         "example.com",
         ".example.com"
@@ -637,20 +706,6 @@ The type of the `links` field is an object, which can contain:
     "signaturePublickey": "-----BEGIN PUBLIC KEY-----\nMIICIj... (omitted) ...EAAQ==\n-----END PUBLIC KEY-----\n"
 }
 ```
-
-## API Location Indication (ALI)
-API Location Indication (ALI) is an HTTP response header field `X-Authlib-Injector-API-Location`, which serves the purpose of service discovery. The value of ALI is a relative URL or an absolute URL, pointing to the Yggdrasil API associated with the current page.
-
-By using ALI, users only need to enter an address associated with the Yggdrasil API, without inputting the actual API address. For example, `https://skin.example.com/api/yggdrasil/` can be simplified to `skin.example.com`. Launchers supporting ALI will request `(https://)skin.example.com`, recognize the ALI header field in the response, and find the real API address based on it.
-
-Skin sites can enable ALI on the homepage or site-wide. The method to enable ALI is to add the `X-Authlib-Injector-API-Location` header field to the HTTP response, for example:
-
-```
-X-Authlib-Injector-API-Location: /api/yggdrasil/  # Use relative URL
-X-Authlib-Injector-API-Location: https://skin.example.com/api/yggdrasil/  # Absolute URL is also allowed, supports cross-origin
-```
-
-When a page's ALI points to itself, this ALI will be ignored.
 
 ## See Also
 
