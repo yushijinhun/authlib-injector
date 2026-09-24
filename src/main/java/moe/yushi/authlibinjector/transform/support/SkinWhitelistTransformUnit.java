@@ -39,6 +39,29 @@ public class SkinWhitelistTransformUnit implements TransformUnit {
 		if (pattern.isEmpty()) {
 			return false;
 		}
+
+		// support wildcards, e.g. "*.example.com" or "example.*"
+		// a lone "*" matches any domain, disabling the whitelist
+		String[] literals = pattern.split("\\*", -1);
+		if (literals.length > 1) {
+			// the first literal must be a prefix, the last one a suffix, and those
+			// in between must occur in order, without overlapping
+			int suffixStart = domain.length() - literals[literals.length - 1].length();
+			if (!domain.startsWith(literals[0]) || suffixStart < literals[0].length()
+					|| !domain.endsWith(literals[literals.length - 1])) {
+				return false;
+			}
+			int offset = literals[0].length();
+			for (int i = 1; i < literals.length - 1; i++) {
+				int idx = domain.indexOf(literals[i], offset);
+				if (idx < 0 || idx + literals[i].length() > suffixStart) {
+					return false;
+				}
+				offset = idx + literals[i].length();
+			}
+			return true;
+		}
+
 		if (pattern.startsWith(".")) {
 			return domain.endsWith(pattern);
 		} else {

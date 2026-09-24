@@ -57,4 +57,69 @@ public class SkinWhitelistTest {
 	public void testNonDotNotMatchesOther() {
 		assertFalse(domainMatches("example.com", "eexample.com"));
 	}
+
+	@Test
+	public void testWildcardMatchesAnyDomain() {
+		assertTrue(domainMatches("*", "example.com"));
+	}
+
+	@Test
+	public void testWildcardMatchesSubdomain() {
+		assertTrue(domainMatches("*", "a.example.com"));
+	}
+
+	@Test
+	public void testWildcardMatchesOfficialDomain() {
+		assertTrue(domainMatches("*", "textures.minecraft.net"));
+	}
+
+	@Test
+	public void testWildcardMatchesEmptyDomain() {
+		assertTrue(domainMatches("*", ""));
+	}
+
+	@Test
+	public void testWildcardSuffixMatchesSubdomain() {
+		assertTrue(domainMatches("*.example.com", "a.example.com"));
+	}
+
+	@Test
+	public void testWildcardSuffixMatchesSubdomain2() {
+		assertTrue(domainMatches("*.example.com", "b.a.example.com"));
+	}
+
+	@Test
+	public void testWildcardSuffixNotMatchesToplevel() {
+		assertFalse(domainMatches("*.example.com", "example.com"));
+	}
+
+	@Test
+	public void testWildcardSuffixNotMatchesOther() {
+		assertFalse(domainMatches("*.example.com", "aexample.com"));
+	}
+
+	@Test
+	public void testWildcardPrefixMatches() {
+		assertTrue(domainMatches("example.*", "example.com"));
+	}
+
+	@Test
+	public void testWildcardPrefixNotMatchesSubdomain() {
+		assertFalse(domainMatches("example.*", "a.example.com"));
+	}
+
+	@Test
+	public void testWildcardInfixMatches() {
+		assertTrue(domainMatches("ex*le.com", "example.com"));
+	}
+
+	@Test
+	public void testMultipleWildcardsMatch() {
+		assertTrue(domainMatches("*.*.example.com", "a.b.example.com"));
+	}
+
+	@Test
+	public void testMultipleWildcardsNotMatches() {
+		assertFalse(domainMatches("*.*.example.com", "a.example.com"));
+	}
 }
