@@ -583,6 +583,9 @@ Minecraft 仅会从白名单中的域名下载材质。如果材质 URL 的域�
   * 例如 `.example.com` 匹配 `a.example.com`、`b.a.example.com`，**不匹配** `example.com`。
 * 如果规则**不以** `.`（dot）开头，则匹配的域名须与规则**完全相同**。
   * 例如 `example.com` 匹配 `example.com`，**不匹配** `a.example.com`、`eexample.com`。
+* 若规则中包含 `*`（星号），则每个 `*` 可匹配任意长度的字符序列（包括空序列）。
+  * 例如 `*.example.com` 匹配 `a.example.com`、`b.a.example.com`，**不匹配** `example.com`。
+* 特殊规则 `*` 匹配任意域名。当 `skinDomains` 包含该规则时，白名单被禁用，即允许从任意域名加载材质。
 
 #### `meta` 中的元数据
 `meta` 中的内容没有强制要求，以下字段均为可选。

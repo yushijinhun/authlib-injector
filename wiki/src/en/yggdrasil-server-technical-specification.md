@@ -582,6 +582,9 @@ The texture whitelist defaults to include two rules: `.minecraft.net` and `.moja
 	* For example, `.example.com` matches `a.example.com`, `b.a.example.com`, but **does not match** `example.com`.
 * If the rule **does not start** with `.` (dot), the matched domain must be **exactly the same** as the rule.
 	* For example, `example.com` matches `example.com`, but **does not match** `a.example.com`, `eexample.com`.
+* If the rule contains `*` (asterisk), each `*` matches any sequence of characters (including the empty one).
+	* For example, `*.example.com` matches `a.example.com`, `b.a.example.com`, but **does not match** `example.com`.
+* The special rule `*` matches any domain. When `skinDomains` contains this rule, the whitelist is disabled, and textures can be loaded from any domain.
 
 #### Metadata in `meta`
 There is no mandatory requirement for the content in `meta`; the following fields are all optional.

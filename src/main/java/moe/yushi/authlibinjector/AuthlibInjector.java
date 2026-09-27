@@ -306,6 +306,9 @@ public final class AuthlibInjector {
 
 		transformer.units.add(new SkinWhitelistTransformUnit());
 		SkinWhitelistTransformUnit.getWhitelistedDomains().addAll(config.getSkinDomains());
+		if (SkinWhitelistTransformUnit.getWhitelistedDomains().stream().anyMatch(p -> p.matches("\\*+"))) {
+			log(INFO, "Texture domain whitelist is disabled (skinDomains wildcard)");
+		}
 
 		transformer.units.add(new YggdrasilKeyTransformUnit());
 		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
