@@ -20,10 +20,7 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static moe.yushi.authlibinjector.util.Logging.Level.INFO;
 import static moe.yushi.authlibinjector.util.Logging.Level.WARNING;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -45,8 +42,15 @@ public final class Logging {
 			log(INFO, "Logging to file is disabled");
 			return null;
 		}
-
-		Path logfilePath = Paths.get("authlib-injector.log").toAbsolutePath();
+		
+		String logFileProperty = System.getProperty("authlibinjector.logFile");
+		Path logfilePath;
+		if (logFileProperty == null) {
+			logfilePath = Paths.get("authlib-injector.log").toAbsolutePath();
+		} else {
+			logfilePath = new File(logFileProperty).toPath().toAbsolutePath();
+		}
+		
 		try {
 			FileChannel channel = FileChannel.open(logfilePath, CREATE, WRITE);
 			if (channel.tryLock() == null) {
