@@ -18,47 +18,48 @@ package moe.yushi.authlibinjector.transform.support;
 
 import static java.lang.invoke.MethodHandles.publicLookup;
 import static java.lang.invoke.MethodType.methodType;
-import static moe.yushi.authlibinjector.util.IOUtils.asBytes;
-import static moe.yushi.authlibinjector.util.Logging.Level.DEBUG;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNull;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.IRETURN;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
-import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import moe.yushi.authlibinjector.transform.CallbackMethod;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
-import moe.yushi.authlibinjector.util.KeyUtils;
 import moe.yushi.authlibinjector.util.Logging;
 import moe.yushi.authlibinjector.util.Logging.Level;
+import moe.yushi.authlibinjector.util.MultiKeySignature;
+import moe.yushi.authlibinjector.yggdrasil.PublicKeyManager;
+import moe.yushi.authlibinjector.yggdrasil.PublicKeyManager.Purpose;
+import moe.yushi.authlibinjector.yggdrasil.PublicKeys;
 
 public class YggdrasilKeyTransformUnit implements TransformUnit {
 
-	public static final List<PublicKey> PUBLIC_KEYS = new CopyOnWriteArrayList<>();
+	private static volatile PublicKeyManager keyManager = PublicKeyManager.fixed(PublicKeys.mojang());
 
-	static {
-		PUBLIC_KEYS.add(loadMojangPublicKey());
+	public static PublicKeys getPublicKeys() {
+		return keyManager.currentKeys();
 	}
 
-	private static PublicKey loadMojangPublicKey() {
-		try (InputStream in = YggdrasilKeyTransformUnit.class.getResourceAsStream("/mojang_publickey.der")) {
-			return KeyUtils.parseX509PublicKey(asBytes(in));
-		} catch (GeneralSecurityException | IOException e) {
-			throw new RuntimeException("Failed to load Mojang public key", e);
-		}
+	public static void setPublicKeys(PublicKeys keys) {
+		setPublicKeyManager(PublicKeyManager.fixed(keys));
+	}
+
+	public static PublicKeyManager getPublicKeyManager() {
+		return keyManager;
+	}
+
+	public static synchronized void setPublicKeyManager(PublicKeyManager manager) {
+		PublicKeyManager previous = keyManager;
+		keyManager = requireNonNull(manager);
+		if (previous != manager) previous.close();
 	}
 
 	@CallbackMethod
@@ -89,80 +90,23 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 		}
 
 		byte[] sig;
+		if (base64Signature == null || propertyValue == null) {
+			return false;
+		}
 		try {
 			sig = Base64.getDecoder().decode(base64Signature);
 		} catch (IllegalArgumentException e) {
 			Logging.log(Level.ERROR, "Malformed signature encoding on property " + propertyObj.toString(), e);
 			return false;
 		}
-		byte[] data = propertyValue.getBytes();
+		byte[] data = propertyValue.getBytes(UTF_8);
 
-		for (PublicKey customKey : PUBLIC_KEYS) {
-			try {
-				Signature signature = Signature.getInstance("SHA1withRSA");
-				signature.initVerify(customKey);
-				signature.update(data);
-				if (signature.verify(sig))
-					return true;
-			} catch (GeneralSecurityException e) {
-				Logging.log(DEBUG, "Failed to verify signature with key " + customKey, e);
-			}
-		}
-
-		Logging.log(Level.WARNING, "Failed to verify property signature");
-		return false;
+		return keyManager.verify(Purpose.PROFILE_PROPERTY, data, sig);
 	}
 
 	@CallbackMethod
-	public static Signature createDummySignature() {
-		Signature sig = new Signature("authlib-injector-dummy-verify") {
-
-			@Override
-			protected boolean engineVerify(byte[] sigBytes) {
-				return true;
-			}
-
-			@Override
-			protected void engineUpdate(byte[] b, int off, int len) {
-
-			}
-
-			@Override
-			protected void engineUpdate(byte b) {
-			}
-
-			@Override
-			protected byte[] engineSign() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			@Deprecated
-			protected void engineSetParameter(String param, Object value) {
-
-			}
-
-			@Override
-			protected void engineInitVerify(PublicKey publicKey) {
-			}
-
-			@Override
-			protected void engineInitSign(PrivateKey privateKey) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			@Deprecated
-			protected Object engineGetParameter(String param) {
-				return null;
-			}
-		};
-		try {
-			sig.initVerify((PublicKey) null);
-		} catch (InvalidKeyException e) {
-			throw new RuntimeException(e);
-		}
-		return sig;
+	public static Signature createCertificateSignature() {
+		return new MultiKeySignature((data, signature) -> keyManager.verify(Purpose.PLAYER_CERTIFICATE, data, signature));
 	}
 
 	@Override
@@ -211,7 +155,7 @@ public class YggdrasilKeyTransformUnit implements TransformUnit {
 
 						MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 						mv.visitCode();
-						ctx.invokeCallback(mv, YggdrasilKeyTransformUnit.class, "createDummySignature");
+						ctx.invokeCallback(mv, YggdrasilKeyTransformUnit.class, "createCertificateSignature");
 						mv.visitInsn(ARETURN);
 						mv.visitMaxs(-1, -1);
 						mv.visitEnd();

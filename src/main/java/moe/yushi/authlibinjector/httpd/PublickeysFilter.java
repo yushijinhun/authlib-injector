@@ -27,6 +27,7 @@ import moe.yushi.authlibinjector.internal.fi.iki.elonen.Status;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONArray;
 import moe.yushi.authlibinjector.internal.org.json.simple.JSONObject;
 import moe.yushi.authlibinjector.transform.support.YggdrasilKeyTransformUnit;
+import moe.yushi.authlibinjector.yggdrasil.PublicKeys;
 
 public class PublickeysFilter implements URLFilter {
 
@@ -38,7 +39,9 @@ public class PublickeysFilter implements URLFilter {
 	@Override
 	public Optional<Response> handle(URLProcessor urlProcessor, String domain, String path, IHTTPSession session) throws IOException {
 		if (domain.equals("api.minecraftservices.com") && path.equals("/publickeys") && session.getMethod().equals("GET")) {
-			return Optional.of(Response.newFixedLength(Status.OK, CONTENT_TYPE_JSON, makePublickeysResponse().toJSONString()));
+			Response response = Response.newFixedLength(Status.OK, CONTENT_TYPE_JSON, makePublickeysResponse().toJSONString());
+			response.addHeader("Cache-Control", "no-store");
+			return Optional.of(response);
 		}
 		return Optional.empty();
 	}
@@ -48,10 +51,15 @@ public class PublickeysFilter implements URLFilter {
 		JSONArray profilePropertyKeys = new JSONArray();
 		JSONArray playerCertificateKeys = new JSONArray();
 
-		for (PublicKey key : YggdrasilKeyTransformUnit.PUBLIC_KEYS) {
+		PublicKeys keys = YggdrasilKeyTransformUnit.getPublicKeyManager().getKeys();
+		for (PublicKey key : keys.getProfilePropertyKeys()) {
 			JSONObject entry = new JSONObject();
 			entry.put("publicKey", Base64.getEncoder().encodeToString(key.getEncoded()));
 			profilePropertyKeys.add(entry);
+		}
+		for (PublicKey key : keys.getPlayerCertificateKeys()) {
+			JSONObject entry = new JSONObject();
+			entry.put("publicKey", Base64.getEncoder().encodeToString(key.getEncoded()));
 			playerCertificateKeys.add(entry);
 		}
 

@@ -17,19 +17,37 @@
 package moe.yushi.authlibinjector.transform.support;
 
 import static org.objectweb.asm.Opcodes.ASM9;
-import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.IRETURN;
+import java.security.GeneralSecurityException;
 import java.util.Optional;
+import java.util.UUID;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import moe.yushi.authlibinjector.transform.TransformContext;
 import moe.yushi.authlibinjector.transform.TransformUnit;
+import moe.yushi.authlibinjector.transform.CallbackMethod;
+import moe.yushi.authlibinjector.util.CertificateSignatureVerifier;
+import moe.yushi.authlibinjector.util.KeyUtils;
 
 /**
- * Hacks BungeeCord to bypass profile key signature validation.
+ * Lets BungeeCord validate profile keys against the configured certificate trust set.
  * See https://github.com/SpigotMC/BungeeCord/commit/78ca16dfe3bf9a21d5c054a1884d4f5f198a62bc .
  */
 public class BungeeCordProfileKeyTransformUnit implements TransformUnit {
+
+	@CallbackMethod
+	public static boolean verifyCertificate(Object key, UUID holder) {
+		try {
+			Class<?> type = key.getClass();
+			return CertificateSignatureVerifier.verify(
+					KeyUtils.parseX509PublicKey((byte[]) type.getMethod("getKey").invoke(key)),
+					((Number) type.getMethod("getExpiry").invoke(key)).longValue(), holder,
+					(byte[]) type.getMethod("getSignature").invoke(key));
+		} catch (ReflectiveOperationException | GeneralSecurityException | RuntimeException e) {
+			return false;
+		}
+	}
 
 	@Override
 	public Optional<ClassVisitor> transform(ClassLoader classLoader, String className, ClassVisitor writer, TransformContext ctx) {
@@ -37,12 +55,15 @@ public class BungeeCordProfileKeyTransformUnit implements TransformUnit {
 			return Optional.of(new ClassVisitor(ASM9, writer) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-					if ("check".equals(name) && "(Lnet/md_5/bungee/protocol/PlayerPublicKey;Ljava/util/UUID;)Z".equals(descriptor)) {
+					if ("check".equals(name) && ("(Lnet/md_5/bungee/protocol/PlayerPublicKey;Ljava/util/UUID;)Z".equals(descriptor)
+							|| "(Lnet/md_5/bungee/protocol/data/PlayerPublicKey;Ljava/util/UUID;)Z".equals(descriptor))) {
 						ctx.markModified();
 
 						MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 						mv.visitCode();
-						mv.visitInsn(ICONST_1);
+						mv.visitVarInsn(ALOAD, 0);
+						mv.visitVarInsn(ALOAD, 1);
+						ctx.invokeCallback(mv, BungeeCordProfileKeyTransformUnit.class, "verifyCertificate");
 						mv.visitInsn(IRETURN);
 						mv.visitMaxs(-1, -1);
 						mv.visitEnd();

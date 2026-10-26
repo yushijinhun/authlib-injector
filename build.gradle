@@ -51,6 +51,13 @@ processResources {
 
 test {
 	useJUnitPlatform()
+	dependsOn shadowJar
+	// Packaged-agent tests launch a child JVM with the shaded agent and test fixtures.
+	inputs.file(tasks.named('shadowJar').flatMap { it.archiveFile }).withPropertyName('agentJar')
+	doFirst {
+		systemProperty 'authlib.agentJar', shadowJar.archiveFile.get().asFile.absolutePath
+		systemProperty 'authlib.testClasses', sourceSets.test.output.classesDirs.asPath
+	}
 }
 
 shadowJar {

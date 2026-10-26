@@ -74,6 +74,8 @@ import moe.yushi.authlibinjector.transform.support.VelocityProfileKeyTransformUn
 import moe.yushi.authlibinjector.transform.support.YggdrasilKeyTransformUnit;
 import moe.yushi.authlibinjector.yggdrasil.CustomYggdrasilAPIProvider;
 import moe.yushi.authlibinjector.yggdrasil.MojangYggdrasilAPIProvider;
+import moe.yushi.authlibinjector.yggdrasil.PublicKeyLoader;
+import moe.yushi.authlibinjector.yggdrasil.PublicKeyManager;
 import moe.yushi.authlibinjector.yggdrasil.YggdrasilClient;
 
 public final class AuthlibInjector {
@@ -101,6 +103,18 @@ public final class AuthlibInjector {
 		log(INFO, "Version: " + AuthlibInjector.class.getPackage().getImplementationVersion());
 
 		APIMetadata apiMetadata = fetchAPIMetadata(apiUrl);
+		try {
+			if (PublicKeyLoader.isEnabled(apiMetadata) && Config.httpdDisabled) {
+				throw new IOException("Public key fetching requires the local HTTP server; remove authlibinjector.disableHttpd");
+			}
+			PublicKeyManager keyManager = PublicKeyManager.forMetadata(apiMetadata);
+			YggdrasilKeyTransformUnit.setPublicKeyManager(keyManager);
+			log(INFO, keyManager.isDynamic() ? "Lazy public-key fetching enabled (refresh on use and in background)"
+					: "Using legacy static public keys");
+		} catch (IOException e) {
+			log(ERROR, "Failed to load trusted public keys: " + e.getMessage());
+			throw new InitializationException(e);
+		}
 		classTransformer = createTransformer(apiMetadata);
 		instrumentation.addTransformer(classTransformer, retransformSupported);
 
@@ -311,7 +325,6 @@ public final class AuthlibInjector {
 		}
 
 		transformer.units.add(new YggdrasilKeyTransformUnit());
-		config.getDecodedPublickey().ifPresent(YggdrasilKeyTransformUnit.PUBLIC_KEYS::add);
 		transformer.units.add(new VelocityProfileKeyTransformUnit());
 		transformer.units.add(new BungeeCordProfileKeyTransformUnit());
 		MainArgumentsTransformer.getArgumentsListeners().add(new AccountTypeTransformer()::transform);
