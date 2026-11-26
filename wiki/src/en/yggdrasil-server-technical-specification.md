@@ -141,6 +141,7 @@ Profile attributes can contain the following items:
 | :--- | :--- |
 | textures | (Optional) Base64-encoded JSON string containing the profile's texture information. See [§`textures` Texture Information Attribute](#textures-texture-information-attribute). |
 | uploadableTextures | (Optional) Texture types that this profile can upload. This is an attribute defined by authlib-injector. See [§`uploadableTextures` Uploadable Texture Types](#uploadabletextures-uploadable-texture-types) |
+| textureWidthLimits | (Optional) The maximum width of each texture type that this profile can upload. This is an attribute defined by authlib-injector. See [§`textureWidthLimits` Texture Width Limits](#texturewidthlimits-texture-width-limits) |
 
 ##### `textures` Texture Information Attribute
 The following is the format of texture information. After Base64-encoding this JSON, it becomes the value of the `textures` profile attribute.
@@ -175,6 +176,17 @@ For example, if the value of the `uploadableTextures` attribute is `skin`, it me
 If the `uploadableTextures` attribute does not exist, no type of texture can be uploaded for this profile.
 
 For an introduction to the texture upload interface, please refer to [§Texture Upload](#texture-upload).
+
+##### `textureWidthLimits` Texture Width Limits
+> **Note:** This profile attribute is defined by the authlib-injector documentation. Profile attributes returned by Mojang do not include this item.
+
+Some authentication servers accept textures larger than the standard 64x64 skin and 64x32 cape. The `textureWidthLimits` profile attribute indicates the maximum width, in pixels, of each type of texture the profile can upload, so that clients can check a texture before uploading it.
+
+The value of this attribute is a comma-separated list of `type:width` entries, where `type` is a texture type as in `uploadableTextures` and `width` is the maximum width. A width of `0` means there is no limit on the width.
+
+For example, if the value of the `textureWidthLimits` attribute is `skin:128,cape:2048`, skins up to 128 pixels wide and capes up to 2048 pixels wide can be uploaded for this profile.
+
+Entries for texture types that are not in `uploadableTextures` are ignored. If a texture type has no entry, or the `textureWidthLimits` attribute does not exist, the maximum width of that texture type is 64.
 
 ##### Texture URL Specification
 Minecraft uses the texture hash as the identifier for the texture. Whenever the client downloads a texture, it caches it locally. If a texture with the same hash is needed later, the cache will be used directly.
@@ -523,7 +535,7 @@ DELETE /api/user/profile/{uuid}/{textureType}
 
 Set or clear the texture for the specified profile.
 
-> Not all profiles can upload skins and capes. To get the texture types currently uploadable by the profile, see [§`uploadableTextures` Uploadable Texture Types](#uploadabletextures-uploadable-texture-types).
+> Not all profiles can upload skins and capes. To get the texture types currently uploadable by the profile, see [§`uploadableTextures` Uploadable Texture Types](#uploadabletextures-uploadable-texture-types). To get the maximum width of each, see [§`textureWidthLimits` Texture Width Limits](#texturewidthlimits-texture-width-limits).
 
 Request Parameters:
 
